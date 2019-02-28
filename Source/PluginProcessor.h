@@ -12,6 +12,11 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 
+#define FFT_ORDER 10 // 9: 512 samples
+#define FFT_SIZE (1 << FFT_ORDER)
+#define MAX_INPUT_CHANNELS 2
+#define MAX_OUTPUT_CHANNELS 2
+
 //==============================================================================
 /**
 */
@@ -54,8 +59,18 @@ public:
     //==============================================================================
     void getStateInformation (MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
+    
+    // Project specific
+    bool hpEnable = 1;
 
 private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JucebeamAudioProcessor)
+    
+    // Project specific
+    dsp::FFT fft;
+    float fftData[2 * FFT_SIZE];
+    AudioBuffer<float> inputBuffer;
+    AudioBuffer<float> olaBuffer;
+    
 };
