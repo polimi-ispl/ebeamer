@@ -20,9 +20,16 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     setSize (400, 300);
     
     // Hp Enable button
-    hpEnableButton.setButtonText("Enable HP filter");
+    hpEnableButton.setButtonText("Low-cut");
     hpEnableButton.addListener(this);
     addAndMakeVisible(hpEnableButton);
+    
+    // Steering direction slider
+    steeringDirectionSlider.setRange(-1, 1, 0.1);
+    steeringDirectionSlider.addListener(this);
+    steeringDirectionSlider.setSliderStyle(Slider::LinearHorizontal);
+    steeringDirectionSlider.setTextBoxStyle(Slider::NoTextBox,false,0,0);
+    addAndMakeVisible(steeringDirectionSlider);
     
 }
 
@@ -38,7 +45,7 @@ void JucebeamAudioProcessorEditor::paint (Graphics& g)
 
     g.setColour (Colours::white);
     g.setFont (15.0f);
-    g.drawFittedText ("Beam", 100, 10, 200, 40, Justification::left, 1);
+    g.drawFittedText ("eStick Beamer", 100, 0, 200, 40, Justification::centred, 1);
 }
 
 void JucebeamAudioProcessorEditor::resized()
@@ -46,12 +53,25 @@ void JucebeamAudioProcessorEditor::resized()
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
     
-    hpEnableButton.setBounds(20, 40, 150, 40);
+    hpEnableButton.setBounds(20, 40, 150, 20);
     hpEnableButton.setToggleState(processor.hpEnable,NotificationType::dontSendNotification);
     
+    steeringDirectionSlider.setBounds(20, 80, 360, 20);
+    steeringDirectionSlider.setValue(processor.steeringDirection);
 }
 
 void JucebeamAudioProcessorEditor::buttonClicked(Button *button)
 {
-    processor.hpEnable = hpEnableButton.getToggleState();
+    if (button == &hpEnableButton)
+    {
+        processor.hpEnable = hpEnableButton.getToggleState();
+    }
+}
+
+void JucebeamAudioProcessorEditor::sliderValueChanged(Slider *slider)
+{
+    if (slider == &steeringDirectionSlider)
+    {
+        processor.steeringDirection = slider->getValue();
+    }
 }

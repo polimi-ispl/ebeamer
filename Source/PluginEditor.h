@@ -17,7 +17,8 @@
 /**
 */
 class JucebeamAudioProcessorEditor  : public AudioProcessorEditor,
-                                      private ToggleButton::Listener
+                                      private ToggleButton::Listener,
+                                      private Slider::Listener
 {
 public:
     JucebeamAudioProcessorEditor (JucebeamAudioProcessor&);
@@ -33,8 +34,11 @@ private:
     JucebeamAudioProcessor& processor;
     
     // Project specific
-    void buttonClicked(Button *button) override;
     ToggleButton hpEnableButton;
+    void buttonClicked(Button *button) override;
+    
+    Slider steeringDirectionSlider;
+    void sliderValueChanged(Slider *slider) override;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JucebeamAudioProcessorEditor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JucebeamAudioProcessorEditor);
 };

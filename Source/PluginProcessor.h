@@ -61,7 +61,8 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     
     // Project specific
-    bool hpEnable = 1;
+    bool hpEnable = 0;
+    float steeringDirection = 0;
 
 private:
     //==============================================================================
