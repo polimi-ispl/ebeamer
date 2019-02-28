@@ -12,7 +12,7 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 
-#define FFT_ORDER 8 // 10: 1024 samples
+#define FFT_ORDER 10 // 10: 1024 samples
 #define FFT_SIZE (1 << FFT_ORDER)
 #define MAX_FFT_BLOCK_LEN (1 << (FFT_ORDER - 1))
 #define MAX_INPUT_CHANNELS 2
@@ -63,7 +63,7 @@ public:
     
     // Project specific
     bool hpEnable = 0;
-    bool bypass = 0;
+    bool bypass = 1;
     float steeringDirection = 0;
 
 private:
