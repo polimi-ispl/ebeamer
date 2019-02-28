@@ -22,14 +22,10 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
                        .withOutput ("Output", AudioChannelSet::stereo(), true)
                      #endif
                        ),
-                        fft(FFT_ORDER),
-                        inputBuffer(MAX_INPUT_CHANNELS,FFT_SIZE),
-                        olaBuffer(MAX_INPUT_CHANNELS,FFT_SIZE)
+                        fft(FFT_ORDER)
 #endif
 {
-    // Clear block and ola buffers and output buffer
-    inputBuffer.clear();
-    olaBuffer.clear();
+    
 }
 
 JucebeamAudioProcessor::~JucebeamAudioProcessor()
@@ -103,12 +99,17 @@ void JucebeamAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
+    
+    olaBuffer = AudioBuffer<float>(getTotalNumOutputChannels(),FFT_SIZE);
+    olaBuffer.clear();
+    
 }
 
 void JucebeamAudioProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
+    
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -143,33 +144,12 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
     
     int blockNumSamples = buffer.getNumSamples();
     
-    // Prepare OLA output
-    for (int outChannel = 0; outChannel < totalNumOutputChannels; ++outChannel)
-    {
-        if (blockNumSamples <= FFT_SIZE)
-        {
-            // Move previous ola backward
-            FloatVectorOperations::copy(olaBuffer.getWritePointer(outChannel), olaBuffer.getReadPointer(outChannel,FFT_SIZE - blockNumSamples), FFT_SIZE - blockNumSamples);
-            // Clear new ola region
-            FloatVectorOperations::clear(olaBuffer.getWritePointer(outChannel,FFT_SIZE - blockNumSamples), blockNumSamples);
-        }
-    }
-    
     for (int inChannel = 0; inChannel < totalNumInputChannels; ++inChannel)
     {
-        const float* channelData = buffer.getReadPointer(inChannel);
-        
-        if (blockNumSamples <= FFT_SIZE)
-        {
-            // Move previous blocks backward
-            FloatVectorOperations::copy(inputBuffer.getWritePointer(inChannel), inputBuffer.getReadPointer(inChannel,FFT_SIZE - blockNumSamples), FFT_SIZE - blockNumSamples);
-            // Copy new channel data into channel buffer
-            FloatVectorOperations::copy(inputBuffer.getWritePointer(inChannel,FFT_SIZE - blockNumSamples), channelData, blockNumSamples);
-        }
         
         // Fill fft data buffer
         FloatVectorOperations::clear(fftInput, 2*FFT_SIZE);
-        FloatVectorOperations::copy(fftInput, inputBuffer.getReadPointer(inChannel),FFT_SIZE);
+        FloatVectorOperations::copy(fftInput, buffer.getReadPointer(inChannel),blockNumSamples);
         
         // Forward channel FFT
         fft.performRealOnlyForwardTransform(fftInput,true);
@@ -177,9 +157,9 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
         // Output channel dependent processing
         for (int outChannel = 0; outChannel < totalNumOutputChannels; ++outChannel)
         {
+            FloatVectorOperations::copy(fftOutput,fftInput,2*FFT_SIZE);
             if (inChannel == outChannel)
             {
-                FloatVectorOperations::copy(fftOutput,fftInput,2*FFT_SIZE);
                 
                 // (inChannel,outChannel) specific processing
                 if (hpEnable)
@@ -190,9 +170,14 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
                 // Inverse FFT
                 fft.performRealOnlyInverseTransform(fftOutput);
                 
-                // OLA
-                if (blockNumSamples <= FFT_SIZE)
+                if (bypass)
                 {
+                    // OLA
+                    olaBuffer.addFrom(outChannel, 0, buffer, inChannel, 0,  blockNumSamples);
+                }
+                else
+                {
+                    // OLA
                     olaBuffer.addFrom(outChannel, 0, fftOutput, FFT_SIZE);
                 }
             }
@@ -204,6 +189,11 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
     {
         // Copy to buffer
         buffer.copyFrom(outChannel, 0, olaBuffer, outChannel, 0, blockNumSamples);
+        
+        // Shift OLA buffer
+        FloatVectorOperations::copy(olaBuffer.getWritePointer(outChannel), &(olaBuffer.getReadPointer(outChannel)[blockNumSamples]), FFT_SIZE-blockNumSamples);
+        olaBuffer.clear(outChannel, FFT_SIZE-blockNumSamples, blockNumSamples);
+        
     }
 }
 

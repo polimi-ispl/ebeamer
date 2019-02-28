@@ -34,7 +34,7 @@ private:
     JucebeamAudioProcessor& processor;
     
     // Project specific
-    ToggleButton hpEnableButton;
+    ToggleButton hpEnableButton, bypassButton;
     void buttonClicked(Button *button) override;
     
     Slider steeringDirectionSlider;

@@ -24,6 +24,11 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     hpEnableButton.addListener(this);
     addAndMakeVisible(hpEnableButton);
     
+    // Hp Enable button
+    bypassButton.setButtonText("Bypass");
+    bypassButton.addListener(this);
+    addAndMakeVisible(bypassButton);
+    
     // Steering direction slider
     steeringDirectionSlider.setRange(-1, 1, 0.1);
     steeringDirectionSlider.addListener(this);
@@ -53,8 +58,11 @@ void JucebeamAudioProcessorEditor::resized()
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
     
-    hpEnableButton.setBounds(20, 40, 150, 20);
+    hpEnableButton.setBounds(20, 40, 100, 20);
     hpEnableButton.setToggleState(processor.hpEnable,NotificationType::dontSendNotification);
+    
+    bypassButton.setBounds(150, 40, 100, 20);
+    bypassButton.setToggleState(processor.bypass,NotificationType::dontSendNotification);
     
     steeringDirectionSlider.setBounds(20, 80, 360, 20);
     steeringDirectionSlider.setValue(processor.steeringDirection);
@@ -65,6 +73,10 @@ void JucebeamAudioProcessorEditor::buttonClicked(Button *button)
     if (button == &hpEnableButton)
     {
         processor.hpEnable = hpEnableButton.getToggleState();
+    }
+    else if (button == &bypassButton)
+    {
+        processor.bypass = bypassButton.getToggleState();
     }
 }
 
