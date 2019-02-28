@@ -167,44 +167,43 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
             FloatVectorOperations::copy(inputBuffer.getWritePointer(inChannel,FFT_SIZE - blockNumSamples), channelData, blockNumSamples);
         }
         
-        
         // Fill fft data buffer
-        /*FloatVectorOperations::clear(fftData, sizeof (fftData));
-        FloatVectorOperations::copy(fftData, inputBuffer.getReadPointer(inChannel),FFT_SIZE);
-         
+        FloatVectorOperations::clear(fftInput, 2*FFT_SIZE);
+        FloatVectorOperations::copy(fftInput, inputBuffer.getReadPointer(inChannel),FFT_SIZE);
+        
         // Forward channel FFT
-        fft.performRealOnlyForwardTransform(fftData,true);
-        */
+        fft.performRealOnlyForwardTransform(fftInput,true);
+        
         // Output channel dependent processing
         for (int outChannel = 0; outChannel < totalNumOutputChannels; ++outChannel)
         {
-            // (inChannel,outChannel) specific processing
-            /*if (hpEnable)
+            if (inChannel == outChannel)
             {
-                zeromem (fftData, FFT_SIZE>>1);
-            }
-            
-            // Inverse FFT
-            fft.performRealOnlyInverseTransform(fftData);
-            */
-            // OLA
-            if (blockNumSamples <= FFT_SIZE)
-            {
-                //olaBuffer.addFrom(outChannel, 0, fftData, FFT_SIZE);
-                olaBuffer.addFrom(outChannel, 0, inputBuffer, inChannel, 0, FFT_SIZE);
+                FloatVectorOperations::copy(fftOutput,fftInput,2*FFT_SIZE);
+                
+                // (inChannel,outChannel) specific processing
+                if (hpEnable)
+                {
+                    FloatVectorOperations::clear(fftOutput, FFT_SIZE>>3);
+                }
+                
+                // Inverse FFT
+                fft.performRealOnlyInverseTransform(fftOutput);
+                
+                // OLA
+                if (blockNumSamples <= FFT_SIZE)
+                {
+                    olaBuffer.addFrom(outChannel, 0, fftOutput, FFT_SIZE);
+                }
             }
         }
-        
     }
     
     // Prepare OLA output
     for (int outChannel = 0; outChannel < totalNumOutputChannels; ++outChannel)
     {
-        float* channelData = buffer.getWritePointer (outChannel);
-        // Clear channel buffer
-        buffer.clear(outChannel, 0, blockNumSamples);
         // Copy to buffer
-        FloatVectorOperations::copy(channelData,olaBuffer.getReadPointer(outChannel),blockNumSamples);
+        buffer.copyFrom(outChannel, 0, olaBuffer, outChannel, 0, blockNumSamples);
     }
 }
 

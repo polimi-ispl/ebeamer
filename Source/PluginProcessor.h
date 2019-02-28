@@ -69,7 +69,8 @@ private:
     
     // Project specific
     dsp::FFT fft;
-    float fftData[2 * FFT_SIZE];
+    float fftInput[2 * FFT_SIZE];
+    float fftOutput[2 * FFT_SIZE];
     AudioBuffer<float> inputBuffer;
     AudioBuffer<float> olaBuffer;
     
