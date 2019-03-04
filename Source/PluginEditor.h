@@ -37,7 +37,10 @@ private:
     ToggleButton passThroughButton, bypassButton;
     void buttonClicked(Button *button) override;
     
-    Slider steeringDirectionSlider;
+    Label steeringDirectionLeftLabel;
+    Label steeringDirectionRightLabel;
+    Slider steeringDirectionLeftSlider;
+    Slider steeringDirectionRightSlider;
     void sliderValueChanged(Slider *slider) override;
     
     ToggleButton algorithmDASidealButton, algorithmDASmeasuredButton;

@@ -12,11 +12,10 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 
-#define FFT_ORDER 10 // 10: 1024 samples
-#define FFT_SIZE (1 << FFT_ORDER)
-#define MAX_FFT_BLOCK_LEN (1 << (FFT_ORDER - 1))
-#define NUM_FILTERS 1
-#define NUM_MICS 16
+#define FFT_SIZE 1024
+#define FIR_LEN 512
+#define MAX_FFT_BLOCK_LEN (FFT_SIZE - FIR_LEN)
+
 
 //==============================================================================
 /**
@@ -64,7 +63,7 @@ public:
     // Project specific
     bool passThrough = false;
     bool bypass = false;
-    int steeringDirection = 0;
+    float steeringDirections[2] = {0};
     
     typedef enum{UNSPECIFIED,DAS_IDEAL,DAS_MEASURED} algorithmType;
     algorithmType algorithm = DAS_IDEAL;

@@ -41,12 +41,29 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     addAndMakeVisible(algorithmDASmeasuredButton);
     
     // Steering direction slider
-    steeringDirectionSlider.setRange(0,24,1);
-    steeringDirectionSlider.setValue(processor.steeringDirection);
-    steeringDirectionSlider.addListener(this);
-    steeringDirectionSlider.setSliderStyle(Slider::LinearHorizontal);
-    steeringDirectionSlider.setTextBoxStyle(Slider::NoTextBox,false,0,0);
-    addAndMakeVisible(steeringDirectionSlider);
+    steeringDirectionLeftSlider.setRange(-1,1,0.01);
+    steeringDirectionLeftSlider.setValue(processor.steeringDirections[0]);
+    steeringDirectionLeftSlider.addListener(this);
+    steeringDirectionLeftSlider.setSliderStyle(Slider::LinearHorizontal);
+    steeringDirectionLeftSlider.setTextBoxStyle(Slider::NoTextBox,false,0,0);
+    addAndMakeVisible(steeringDirectionLeftSlider);
+    
+    steeringDirectionLeftLabel.setText ("Left", dontSendNotification);
+    steeringDirectionLeftLabel.attachToComponent (&steeringDirectionLeftSlider, true);
+    addAndMakeVisible(steeringDirectionLeftLabel);
+    
+    steeringDirectionRightSlider.setRange(-1,1,0.01);
+    steeringDirectionRightSlider.setValue(processor.steeringDirections[0]);
+    steeringDirectionRightSlider.addListener(this);
+    steeringDirectionRightSlider.setSliderStyle(Slider::LinearHorizontal);
+    steeringDirectionRightSlider.setTextBoxStyle(Slider::NoTextBox,false,0,0);
+    addAndMakeVisible(steeringDirectionRightSlider);
+    
+    steeringDirectionRightLabel.setText ("Right", dontSendNotification);
+    steeringDirectionRightLabel.attachToComponent (&steeringDirectionRightSlider, true);
+    addAndMakeVisible(steeringDirectionRightLabel);
+    
+    
     
 }
 
@@ -70,20 +87,23 @@ void JucebeamAudioProcessorEditor::resized()
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
     
-    passThroughButton.setBounds(20, 40, 130, 20);
+    passThroughButton.setBounds(20, 50, 130, 20);
     passThroughButton.setToggleState(processor.passThrough,NotificationType::dontSendNotification);
     
-    bypassButton.setBounds(150, 40, 130, 20);
+    bypassButton.setBounds(150, 50, 130, 20);
     bypassButton.setToggleState(processor.bypass,NotificationType::dontSendNotification);
     
-    algorithmDASidealButton.setBounds(20, 80, 130, 20);
+    algorithmDASidealButton.setBounds(20, 100, 130, 20);
     algorithmDASidealButton.setToggleState(processor.algorithm == JucebeamAudioProcessor::DAS_IDEAL,NotificationType::dontSendNotification);
     
-    algorithmDASmeasuredButton.setBounds(150, 80, 130, 20);
+    algorithmDASmeasuredButton.setBounds(150, 100, 130, 20);
     algorithmDASmeasuredButton.setToggleState(processor.algorithm == JucebeamAudioProcessor::DAS_MEASURED,NotificationType::dontSendNotification);
     
-    steeringDirectionSlider.setBounds(20, 120, 360, 20);
-    steeringDirectionSlider.setValue(processor.steeringDirection);
+    steeringDirectionLeftSlider.setBounds(50, 150, 320, 20);
+    steeringDirectionLeftSlider.setValue(processor.steeringDirections[0]);
+    
+    steeringDirectionRightSlider.setBounds(50, 200, 320, 20);
+    steeringDirectionRightSlider.setValue(processor.steeringDirections[1]);
 }
 
 void JucebeamAudioProcessorEditor::buttonClicked(Button *button)
@@ -100,9 +120,13 @@ void JucebeamAudioProcessorEditor::buttonClicked(Button *button)
 
 void JucebeamAudioProcessorEditor::sliderValueChanged(Slider *slider)
 {
-    if (slider == &steeringDirectionSlider)
+    if (slider == &steeringDirectionLeftSlider)
     {
-        processor.steeringDirection = slider->getValue();
+        processor.steeringDirections[0] = slider->getValue();
+    }
+    else if (slider == &steeringDirectionRightSlider)
+    {
+        processor.steeringDirections[1] = slider->getValue();
     }
 }
 

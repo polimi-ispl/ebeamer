@@ -24,7 +24,7 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
                        .withOutput ("Output", AudioChannelSet::stereo(), true)
                      #endif
                        ),
-                        fft(FFT_ORDER)
+                        fft(roundToInt (std::log2 (FFT_SIZE)))
 #endif
 {
 
@@ -154,6 +154,8 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
         prevAlgorithm = algorithm;
     }
     
+    
+    
     for (int inChannel = 0; inChannel < totalNumInputChannels; ++inChannel)
     {
         
@@ -198,10 +200,12 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
                     }
                     else{ // no passThrough, real processing here!
                         
+                        int steeringIdx = roundToInt(((steeringDirections[outChannel] + 1)/2.)*(firFFT.size()-1));
+                        
                         // FIR processing
                         FloatVectorOperations::clear(fftOutput, 2*FFT_SIZE);
                         prepareForConvolution(fftInputCopy);
-                        convolutionProcessingAndAccumulate(fftInputCopy,firFFT[steeringDirection][inChannel].data(),fftOutput);
+                        convolutionProcessingAndAccumulate(fftInputCopy,firFFT[steeringIdx][inChannel].data(),fftOutput);
                         updateSymmetricFrequencyDomainData(fftOutput);
                         // Inverse FFT
                         fft.performRealOnlyInverseTransform(fftOutput);
