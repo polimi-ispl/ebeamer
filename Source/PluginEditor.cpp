@@ -20,9 +20,9 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     setSize (400, 300);
     
     // Hp Enable button
-    hpEnableButton.setButtonText("Low-cut");
-    hpEnableButton.addListener(this);
-    addAndMakeVisible(hpEnableButton);
+    passThroughButton.setButtonText("Pass-through");
+    passThroughButton.addListener(this);
+    addAndMakeVisible(passThroughButton);
     
     // Hp Enable button
     bypassButton.setButtonText("Bypass");
@@ -58,8 +58,8 @@ void JucebeamAudioProcessorEditor::resized()
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
     
-    hpEnableButton.setBounds(20, 40, 100, 20);
-    hpEnableButton.setToggleState(processor.hpEnable,NotificationType::dontSendNotification);
+    passThroughButton.setBounds(20, 40, 100, 20);
+    passThroughButton.setToggleState(processor.passThrough,NotificationType::dontSendNotification);
     
     bypassButton.setBounds(150, 40, 100, 20);
     bypassButton.setToggleState(processor.bypass,NotificationType::dontSendNotification);
@@ -70,9 +70,9 @@ void JucebeamAudioProcessorEditor::resized()
 
 void JucebeamAudioProcessorEditor::buttonClicked(Button *button)
 {
-    if (button == &hpEnableButton)
+    if (button == &passThroughButton)
     {
-        processor.hpEnable = hpEnableButton.getToggleState();
+        processor.passThrough = passThroughButton.getToggleState();
     }
     else if (button == &bypassButton)
     {

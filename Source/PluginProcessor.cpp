@@ -10,6 +10,7 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "firDAS.h"
 
 //==============================================================================
 JucebeamAudioProcessor::JucebeamAudioProcessor()
@@ -17,7 +18,7 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
      : AudioProcessor (BusesProperties()
                      #if ! JucePlugin_IsMidiEffect
                       #if ! JucePlugin_IsSynth
-                       .withInput  ("Input",  AudioChannelSet::stereo(), true)
+                       .withInput  ("Input",  AudioChannelSet::ambisonic(3), true)
                       #endif
                        .withOutput ("Output", AudioChannelSet::stereo(), true)
                      #endif
@@ -115,24 +116,12 @@ void JucebeamAudioProcessor::releaseResources()
 #ifndef JucePlugin_PreferredChannelConfigurations
 bool JucebeamAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 {
-  #if JucePlugin_IsMidiEffect
-    ignoreUnused (layouts);
-    return true;
-  #else
-    // This is the place where you check if the layout is supported.
-    // In this template code we only support mono or stereo.
-    if (layouts.getMainOutputChannelSet() != AudioChannelSet::mono()
-     && layouts.getMainOutputChannelSet() != AudioChannelSet::stereo())
-        return false;
-
-    // This checks if the input layout matches the output layout
-   #if ! JucePlugin_IsSynth
-    if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
-        return false;
-   #endif
-
-    return true;
-  #endif
+    if ( (layouts.getNumChannels(true, 0) > 0) & (layouts.getNumChannels(true, 0) <= 64) & // Input channels
+         (layouts.getNumChannels(false, 0) > 0) & (layouts.getNumChannels(false, 0) <= 2) ) // Output channels
+    {
+        return true;
+    }
+    return false;
 }
 #endif
 
@@ -162,30 +151,37 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
             // Output channel dependent processing
             for (int outChannel = 0; outChannel < totalNumOutputChannels; ++outChannel)
             {
-                FloatVectorOperations::copy(fftOutput,fftInput,2*FFT_SIZE);
-                if (inChannel == outChannel)
+                if (bypass)
                 {
-                    
-                    // (inChannel,outChannel) specific processing
-                    if (hpEnable)
+                    // OLA
+                    if (outChannel == inChannel)
                     {
-                        FloatVectorOperations::clear(fftOutput, FFT_SIZE>>3);
-                    }
-                    
-                    // Inverse FFT
-                    fft.performRealOnlyInverseTransform(fftOutput);
-                    
-                    if (bypass)
-                    {
-                        // OLA
                         olaBuffer.addFrom(outChannel, subBlockFirstIdx, buffer, inChannel, subBlockFirstIdx,  subBlockLen);
                     }
-                    else
+                }
+                else
+                { // No bypass
+                    FloatVectorOperations::copy(fftInputCopy,fftInput,2*FFT_SIZE);
+                    
+                    if (passThrough)
                     {
-                        // OLA
-                        olaBuffer.addFrom(outChannel, subBlockFirstIdx, fftOutput, FFT_SIZE);
+                        if (outChannel == inChannel)
+                        {
+                            FloatVectorOperations::copy(fftOutput, fftInputCopy, 2*FFT_SIZE);
+                            
+                            // Inverse FFT
+                            fft.performRealOnlyInverseTransform(fftOutput);
+                            
+                            // OLA
+                            olaBuffer.addFrom(outChannel, subBlockFirstIdx, fftOutput, FFT_SIZE);
+                            
+                        }
+                    }
+                    else{ // no passThrough, real processing here!
+                        
                     }
                 }
+                
             }
             
         }

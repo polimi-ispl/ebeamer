@@ -15,8 +15,8 @@
 #define FFT_ORDER 10 // 10: 1024 samples
 #define FFT_SIZE (1 << FFT_ORDER)
 #define MAX_FFT_BLOCK_LEN (1 << (FFT_ORDER - 1))
-#define MAX_INPUT_CHANNELS 2
-#define MAX_OUTPUT_CHANNELS 2
+#define NUM_FILTERS 1
+#define NUM_MICS 16
 
 //==============================================================================
 /**
@@ -62,7 +62,7 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     
     // Project specific
-    bool hpEnable = 0;
+    bool passThrough = 0;
     bool bypass = 1;
     float steeringDirection = 0;
 
@@ -71,9 +71,11 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JucebeamAudioProcessor)
     
     // Project specific
-    dsp::FFT fft;
-    float fftInput[2 * FFT_SIZE];
-    float fftOutput[2 * FFT_SIZE];
     AudioBuffer<float> olaBuffer;
+    dsp::FFT fft;
+    float fftInput[2*FFT_SIZE];
+    float fftInputCopy[2*FFT_SIZE];
+    float fftOutput[2*FFT_SIZE];
+    float* firFft;
     
 };

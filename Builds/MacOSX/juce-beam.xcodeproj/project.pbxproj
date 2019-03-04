@@ -368,6 +368,13 @@
 			path = "../../JuceLibraryCode/include_juce_audio_plugin_client_VST_utils.mm";
 			sourceTree = "SOURCE_ROOT";
 		};
+		90B249D4E6ED36E64794191B = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			name = firDAS.h;
+			path = ../../Source/firDAS.h;
+			sourceTree = "SOURCE_ROOT";
+		};
 		921DA15FBE7C3CED01F3CED7 = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.cpp.objcpp;
@@ -518,6 +525,7 @@
 		08F4676119053B02143CBEA8 = {
 			isa = PBXGroup;
 			children = (
+				90B249D4E6ED36E64794191B,
 				23B1D4E2BDC050AC6D1403D3,
 				7895694650321CB6BE2368F4,
 				6F51D67C19E0CA157BDE10E8,
