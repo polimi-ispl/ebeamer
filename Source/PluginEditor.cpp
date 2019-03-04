@@ -29,8 +29,19 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     bypassButton.addListener(this);
     addAndMakeVisible(bypassButton);
     
+    // algorithms buttons
+    algorithmDASidealButton.setButtonText("DAS ideal");
+    algorithmDASidealButton.onClick = [this] { updateToggleState (&algorithmDASidealButton); };
+    algorithmDASidealButton.setRadioGroupId(RadioButtonIds::AlgorithmType);
+    addAndMakeVisible(algorithmDASidealButton);
+    
+    algorithmDASmeasuredButton.setButtonText("DAS measured");
+    algorithmDASmeasuredButton.onClick = [this] { updateToggleState (&algorithmDASmeasuredButton); };
+    algorithmDASmeasuredButton.setRadioGroupId(RadioButtonIds::AlgorithmType);
+    addAndMakeVisible(algorithmDASmeasuredButton);
+    
     // Steering direction slider
-    steeringDirectionSlider.setRange(-1, 1, 0.1);
+    steeringDirectionSlider.setRange(0, 23, 1);
     steeringDirectionSlider.addListener(this);
     steeringDirectionSlider.setSliderStyle(Slider::LinearHorizontal);
     steeringDirectionSlider.setTextBoxStyle(Slider::NoTextBox,false,0,0);
@@ -58,13 +69,19 @@ void JucebeamAudioProcessorEditor::resized()
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
     
-    passThroughButton.setBounds(20, 40, 100, 20);
+    passThroughButton.setBounds(20, 40, 130, 20);
     passThroughButton.setToggleState(processor.passThrough,NotificationType::dontSendNotification);
     
-    bypassButton.setBounds(150, 40, 100, 20);
+    bypassButton.setBounds(150, 40, 130, 20);
     bypassButton.setToggleState(processor.bypass,NotificationType::dontSendNotification);
     
-    steeringDirectionSlider.setBounds(20, 80, 360, 20);
+    algorithmDASidealButton.setBounds(20, 80, 130, 20);
+    algorithmDASidealButton.setToggleState(processor.algorithm == JucebeamAudioProcessor::DAS_IDEAL,NotificationType::dontSendNotification);
+    
+    algorithmDASmeasuredButton.setBounds(150, 80, 130, 20);
+    algorithmDASmeasuredButton.setToggleState(processor.algorithm == JucebeamAudioProcessor::DAS_MEASURED,NotificationType::dontSendNotification);
+    
+    steeringDirectionSlider.setBounds(20, 120, 360, 20);
     steeringDirectionSlider.setValue(processor.steeringDirection);
 }
 
@@ -85,5 +102,23 @@ void JucebeamAudioProcessorEditor::sliderValueChanged(Slider *slider)
     if (slider == &steeringDirectionSlider)
     {
         processor.steeringDirection = slider->getValue();
+    }
+}
+
+void JucebeamAudioProcessorEditor::updateToggleState(ToggleButton* button)
+{
+    if (button == &algorithmDASmeasuredButton)
+    {
+        if (button->getToggleState() == true)
+        {
+            processor.algorithm = JucebeamAudioProcessor::DAS_MEASURED;
+        }
+    }
+    else if (button == &algorithmDASidealButton)
+    {
+        if (button->getToggleState() == true)
+        {
+            processor.algorithm = JucebeamAudioProcessor::DAS_MEASURED;
+        }
     }
 }

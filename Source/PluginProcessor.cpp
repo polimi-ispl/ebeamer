@@ -10,7 +10,8 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
-#include "firDAS.h"
+#include "firDASideal.h"
+#include "firDASmeasured.h"
 
 //==============================================================================
 JucebeamAudioProcessor::JucebeamAudioProcessor()
@@ -26,23 +27,37 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
                         fft(FFT_ORDER)
 #endif
 {
-    // Initialize firFFTs
-    firDASfft = new float[firDASnumAngle*(firDASnumMic*(2*FFT_SIZE))];
-    for (auto angleIdx = 0; angleIdx < firDASnumAngle; ++angleIdx)
-    {
-        float* firFftAngle = firDASfft + angleIdx *(firDASnumMic*(2*FFT_SIZE));
-        for (auto micIdx = 0; micIdx < firDASnumMic; ++micIdx)
-        {
-            float* firFftAngleMic =firFftAngle + micIdx*(2*FFT_SIZE);
-            FloatVectorOperations::copy(firFftAngleMic, firDAS[angleIdx][micIdx] , firDASlen);
-            fft.performRealOnlyForwardTransform(firFftAngleMic);
-        }
-    }
+
+    
+    // Initialize firFFTs (already prepared for convolution
+    firDASidealFft = prepareIR(&(firDASideal[0][0][0]), firDASidealNumAngle, firDASidealNumMic, firDASidealLen);
+    firDASmeasuredFft = prepareIR(&(firDASmeasured[0][0][0]), firDASmeasuredNumAngle, firDASmeasuredNumMic, firDASmeasuredLen);
+    
 }
 
 JucebeamAudioProcessor::~JucebeamAudioProcessor()
 {
 }
+
+float * JucebeamAudioProcessor::prepareIR(const float *fir, const int numAngle, const int numMic, const int firLen)
+{
+    float *firFFT = new float[numAngle*(numMic*(2*FFT_SIZE))];
+    for (auto angleIdx = 0; angleIdx < numAngle; ++angleIdx)
+    {
+        float* firFftAngle = firFFT + angleIdx *(numMic*(2*FFT_SIZE));
+        for (auto micIdx = 0; micIdx < numMic; ++micIdx)
+        {
+            float* firFftAngleMic = firFftAngle + micIdx*(2*FFT_SIZE);
+            FloatVectorOperations::clear(firFftAngleMic, 2*FFT_SIZE);
+            FloatVectorOperations::copy(firFftAngleMic, fir+angleIdx*(numMic*(2*FFT_SIZE))+micIdx*(2*FFT_SIZE) , firLen);
+            fft.performRealOnlyForwardTransform(firFftAngleMic);
+            prepareForConvolution(firFftAngleMic);
+        }
+    }
+    
+    return firFFT;
+}
+
 
 //==============================================================================
 const String JucebeamAudioProcessor::getName() const
@@ -157,7 +172,7 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
             FloatVectorOperations::copy(fftInput, &(buffer.getReadPointer(inChannel)[subBlockFirstIdx]),subBlockLen);
             
             // Forward channel FFT
-            fft.performRealOnlyForwardTransform(fftInput,true);
+            fft.performRealOnlyForwardTransform(fftInput);
             
             // Output channel dependent processing
             for (int outChannel = 0; outChannel < totalNumOutputChannels; ++outChannel)
@@ -178,18 +193,38 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
                     {
                         if (outChannel == inChannel)
                         {
+                            // Pass-through processing
                             FloatVectorOperations::copy(fftOutput, fftInputCopy, 2*FFT_SIZE);
-                            
                             // Inverse FFT
                             fft.performRealOnlyInverseTransform(fftOutput);
-                            
                             // OLA
                             olaBuffer.addFrom(outChannel, subBlockFirstIdx, fftOutput, FFT_SIZE);
-                            
                         }
                     }
                     else{ // no passThrough, real processing here!
                         
+                        float* firFFT = NULL;
+                        int firNumMic = 0;
+                        if (algorithm == DAS_IDEAL)
+                        {
+                            firFFT = firDASidealFft;
+                            firNumMic = firDASidealNumMic;
+                        }
+                        else if (algorithm == DAS_MEASURED)
+                        {
+                            firFFT = firDASmeasuredFft;
+                            firNumMic = firDASmeasuredNumMic;
+                        }
+                        
+                        // FIR processing
+                        FloatVectorOperations::clear(fftOutput, 2*FFT_SIZE);
+                        prepareForConvolution(fftInputCopy);
+                        convolutionProcessingAndAccumulate(fftInputCopy,firFFT+(steeringDirection*(firNumMic*(FFT_SIZE*2))+inChannel*(FFT_SIZE*2)),fftOutput);
+                        updateSymmetricFrequencyDomainData(fftOutput);
+                        // Inverse FFT
+                        fft.performRealOnlyInverseTransform(fftOutput);
+                        // OLA
+                        olaBuffer.addFrom(outChannel, subBlockFirstIdx, fftOutput, FFT_SIZE);
                     }
                 }
                 
@@ -244,3 +279,55 @@ AudioProcessor* JUCE_CALLTYPE createPluginFilter()
     return new JucebeamAudioProcessor();
 }
 
+//========== copied from juce_Convolution.cpp ============
+
+/** After each FFT, this function is called to allow convolution to be performed with only 4 SIMD functions calls. */
+void JucebeamAudioProcessor::prepareForConvolution (float *samples) noexcept
+{
+    auto FFTSizeDiv2 = FFT_SIZE / 2;
+    
+    for (size_t i = 0; i < FFTSizeDiv2; i++)
+        samples[i] = samples[2 * i];
+    
+    samples[FFTSizeDiv2] = 0;
+    
+    for (size_t i = 1; i < FFTSizeDiv2; i++)
+        samples[i + FFTSizeDiv2] = -samples[2 * (FFT_SIZE - i) + 1];
+}
+
+/** Does the convolution operation itself only on half of the frequency domain samples. */
+void JucebeamAudioProcessor::convolutionProcessingAndAccumulate (const float *input, const float *impulse, float *output)
+{
+    auto FFTSizeDiv2 = FFT_SIZE / 2;
+    
+    FloatVectorOperations::addWithMultiply      (output, input, impulse, static_cast<int> (FFTSizeDiv2));
+    FloatVectorOperations::subtractWithMultiply (output, &(input[FFTSizeDiv2]), &(impulse[FFTSizeDiv2]), static_cast<int> (FFTSizeDiv2));
+    
+    FloatVectorOperations::addWithMultiply      (&(output[FFTSizeDiv2]), input, &(impulse[FFTSizeDiv2]), static_cast<int> (FFTSizeDiv2));
+    FloatVectorOperations::addWithMultiply      (&(output[FFTSizeDiv2]), &(input[FFTSizeDiv2]), impulse, static_cast<int> (FFTSizeDiv2));
+    
+    output[FFT_SIZE] += input[FFT_SIZE] * impulse[FFT_SIZE];
+}
+
+/** Undo the re-organization of samples from the function prepareForConvolution.
+ Then, takes the conjugate of the frequency domain first half of samples, to fill the
+ second half, so that the inverse transform will return real samples in the time domain.
+ */
+void JucebeamAudioProcessor::updateSymmetricFrequencyDomainData (float* samples) noexcept
+{
+    auto FFTSizeDiv2 = FFT_SIZE / 2;
+    
+    for (size_t i = 1; i < FFTSizeDiv2; i++)
+    {
+        samples[2 * (FFT_SIZE - i)] = samples[i];
+        samples[2 * (FFT_SIZE - i) + 1] = -samples[FFTSizeDiv2 + i];
+    }
+    
+    samples[1] = 0.f;
+    
+    for (size_t i = 1; i < FFTSizeDiv2; i++)
+    {
+        samples[2 * i] = samples[2 * (FFT_SIZE - i)];
+        samples[2 * i + 1] = -samples[2 * (FFT_SIZE - i) + 1];
+    }
+}

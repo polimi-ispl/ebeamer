@@ -62,20 +62,28 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     
     // Project specific
-    bool passThrough = 0;
-    bool bypass = 1;
-    float steeringDirection = 0;
+    bool passThrough = false;
+    bool bypass = false;
+    int steeringDirection = 12;
+    
+    enum{DAS_IDEAL,DAS_MEASURED} algorithm = DAS_IDEAL;
 
 private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JucebeamAudioProcessor)
     
     // Project specific
+    float * prepareIR(const float *fir, const int numAngle, const int numMic, const int firLen);
+    void prepareForConvolution (float *samples) noexcept;
+    void convolutionProcessingAndAccumulate (const float *input, const float *impulse, float *output);
+    void updateSymmetricFrequencyDomainData (float* samples) noexcept;
+    
     AudioBuffer<float> olaBuffer;
     dsp::FFT fft;
     float fftInput[2*FFT_SIZE];
     float fftInputCopy[2*FFT_SIZE];
     float fftOutput[2*FFT_SIZE];
-    float* firDASfft;
+    float* firDASidealFft;
+    float* firDASmeasuredFft;
     
 };

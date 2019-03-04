@@ -39,6 +39,13 @@ private:
     
     Slider steeringDirectionSlider;
     void sliderValueChanged(Slider *slider) override;
+    
+    ToggleButton algorithmDASidealButton, algorithmDASmeasuredButton;
+    enum RadioButtonIds
+    {
+        AlgorithmType = 1001
+    };
+    void updateToggleState(ToggleButton* button);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JucebeamAudioProcessorEditor);
 };

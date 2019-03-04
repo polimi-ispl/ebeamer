@@ -4,7 +4,9 @@
               companyName="ISPL Polimi" pluginFormats="buildVST3">
   <MAINGROUP id="X7PQw9" name="juce-beam">
     <GROUP id="{52771D1D-3211-6CF7-CE70-5C5684F5D0E1}" name="Source">
-      <FILE id="zR9V1I" name="firDAS.h" compile="0" resource="0" file="Source/firDAS.h"/>
+      <FILE id="l28vlK" name="firDASideal.h" compile="0" resource="0" file="Source/firDASideal.h"/>
+      <FILE id="yKlL5y" name="firDASmeasured.h" compile="0" resource="0"
+            file="Source/firDASmeasured.h"/>
       <FILE id="T0rnb7" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
       <FILE id="KwV1a4" name="PluginProcessor.h" compile="0" resource="0"

@@ -368,13 +368,6 @@
 			path = "../../JuceLibraryCode/include_juce_audio_plugin_client_VST_utils.mm";
 			sourceTree = "SOURCE_ROOT";
 		};
-		90B249D4E6ED36E64794191B = {
-			isa = PBXFileReference;
-			lastKnownFileType = sourcecode.c.h;
-			name = firDAS.h;
-			path = ../../Source/firDAS.h;
-			sourceTree = "SOURCE_ROOT";
-		};
 		921DA15FBE7C3CED01F3CED7 = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.cpp.objcpp;
@@ -409,6 +402,20 @@
 			name = DiscRecording.framework;
 			path = System/Library/Frameworks/DiscRecording.framework;
 			sourceTree = SDKROOT;
+		};
+		ADE11183E5129D47484123D2 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			name = firDASmeasured.h;
+			path = ../../Source/firDASmeasured.h;
+			sourceTree = "SOURCE_ROOT";
+		};
+		B2A984591B4176EEA90E5BB9 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			name = firDASideal.h;
+			path = ../../Source/firDASideal.h;
+			sourceTree = "SOURCE_ROOT";
 		};
 		B7530BA4B4B7F15A32C8F9B6 = {
 			isa = PBXFileReference;
@@ -525,7 +532,8 @@
 		08F4676119053B02143CBEA8 = {
 			isa = PBXGroup;
 			children = (
-				90B249D4E6ED36E64794191B,
+				B2A984591B4176EEA90E5BB9,
+				ADE11183E5129D47484123D2,
 				23B1D4E2BDC050AC6D1403D3,
 				7895694650321CB6BE2368F4,
 				6F51D67C19E0CA157BDE10E8,
