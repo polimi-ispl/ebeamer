@@ -26,7 +26,18 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
                         fft(FFT_ORDER)
 #endif
 {
-    
+    // Initialize firFFTs
+    firDASfft = new float[firDASnumAngle*(firDASnumMic*(2*FFT_SIZE))];
+    for (auto angleIdx = 0; angleIdx < firDASnumAngle; ++angleIdx)
+    {
+        float* firFftAngle = firDASfft + angleIdx *(firDASnumMic*(2*FFT_SIZE));
+        for (auto micIdx = 0; micIdx < firDASnumMic; ++micIdx)
+        {
+            float* firFftAngleMic =firFftAngle + micIdx*(2*FFT_SIZE);
+            FloatVectorOperations::copy(firFftAngleMic, firDAS[angleIdx][micIdx] , firDASlen);
+            fft.performRealOnlyForwardTransform(firFftAngleMic);
+        }
+    }
 }
 
 JucebeamAudioProcessor::~JucebeamAudioProcessor()

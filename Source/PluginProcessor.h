@@ -76,6 +76,6 @@ private:
     float fftInput[2*FFT_SIZE];
     float fftInputCopy[2*FFT_SIZE];
     float fftOutput[2*FFT_SIZE];
-    float* firFft;
+    float* firDASfft;
     
 };
