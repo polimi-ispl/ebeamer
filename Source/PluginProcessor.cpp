@@ -28,36 +28,15 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
 #endif
 {
 
-    
     // Initialize firFFTs (already prepared for convolution
-    firDASidealFft = prepareIR(&(firDASideal[0][0][0]), firDASidealNumAngle, firDASidealNumMic, firDASidealLen);
-    firDASmeasuredFft = prepareIR(&(firDASmeasured[0][0][0]), firDASmeasuredNumAngle, firDASmeasuredNumMic, firDASmeasuredLen);
-    
+    firDASidealFft = prepareIR(firDASideal);
+    firDASmeasuredFft = prepareIR(firDASmeasured);
+
 }
 
 JucebeamAudioProcessor::~JucebeamAudioProcessor()
 {
 }
-
-float * JucebeamAudioProcessor::prepareIR(const float *fir, const int numAngle, const int numMic, const int firLen)
-{
-    float *firFFT = new float[numAngle*(numMic*(2*FFT_SIZE))];
-    for (auto angleIdx = 0; angleIdx < numAngle; ++angleIdx)
-    {
-        float* firFftAngle = firFFT + angleIdx *(numMic*(2*FFT_SIZE));
-        for (auto micIdx = 0; micIdx < numMic; ++micIdx)
-        {
-            float* firFftAngleMic = firFftAngle + micIdx*(2*FFT_SIZE);
-            FloatVectorOperations::clear(firFftAngleMic, 2*FFT_SIZE);
-            FloatVectorOperations::copy(firFftAngleMic, fir+angleIdx*(numMic*(2*FFT_SIZE))+micIdx*(2*FFT_SIZE) , firLen);
-            fft.performRealOnlyForwardTransform(firFftAngleMic);
-            prepareForConvolution(firFftAngleMic);
-        }
-    }
-    
-    return firFFT;
-}
-
 
 //==============================================================================
 const String JucebeamAudioProcessor::getName() const
@@ -159,6 +138,22 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
     
     int blockNumSamples = buffer.getNumSamples();
     
+    // Some algorithm logic
+    if (prevAlgorithm != algorithm){
+        if (algorithm == DAS_IDEAL)
+        {
+            firFFT = firDASidealFft;
+        }
+        else if (algorithm == DAS_MEASURED)
+        {
+            firFFT = firDASmeasuredFft;
+        }
+        else{
+            firFFT.clear();
+        }
+        prevAlgorithm = algorithm;
+    }
+    
     for (int inChannel = 0; inChannel < totalNumInputChannels; ++inChannel)
     {
         
@@ -203,23 +198,10 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
                     }
                     else{ // no passThrough, real processing here!
                         
-                        float* firFFT = NULL;
-                        int firNumMic = 0;
-                        if (algorithm == DAS_IDEAL)
-                        {
-                            firFFT = firDASidealFft;
-                            firNumMic = firDASidealNumMic;
-                        }
-                        else if (algorithm == DAS_MEASURED)
-                        {
-                            firFFT = firDASmeasuredFft;
-                            firNumMic = firDASmeasuredNumMic;
-                        }
-                        
                         // FIR processing
                         FloatVectorOperations::clear(fftOutput, 2*FFT_SIZE);
                         prepareForConvolution(fftInputCopy);
-                        convolutionProcessingAndAccumulate(fftInputCopy,firFFT+(steeringDirection*(firNumMic*(FFT_SIZE*2))+inChannel*(FFT_SIZE*2)),fftOutput);
+                        convolutionProcessingAndAccumulate(fftInputCopy,firFFT[steeringDirection][inChannel].data(),fftOutput);
                         updateSymmetricFrequencyDomainData(fftOutput);
                         // Inverse FFT
                         fft.performRealOnlyInverseTransform(fftOutput);
@@ -279,6 +261,28 @@ AudioProcessor* JUCE_CALLTYPE createPluginFilter()
     return new JucebeamAudioProcessor();
 }
 
+//=======================================================
+std::vector<std::vector<std::vector<float>>> JucebeamAudioProcessor::prepareIR(const std::vector<const std::vector<const std::vector<const float>>> fir)
+{
+    std::vector<std::vector<std::vector<float>>> firFFT(fir.size());
+    for (size_t angleIdx = 0; angleIdx < fir.size(); ++angleIdx)
+    {
+        std::vector<std::vector<float>> firFFTAngle(fir[angleIdx].size());
+        for (size_t micIdx = 0; micIdx < fir[angleIdx].size(); ++micIdx)
+        {
+            std::vector<float> firFFTAngleMic(2*FFT_SIZE);
+            FloatVectorOperations::clear(firFFTAngleMic.data(), 2*FFT_SIZE);
+            FloatVectorOperations::copy(firFFTAngleMic.data(), fir[angleIdx][micIdx].data() , static_cast<int>(fir[angleIdx][micIdx].size()));
+            fft.performRealOnlyForwardTransform(firFFTAngleMic.data());
+            prepareForConvolution(firFFTAngleMic.data());
+            firFFTAngle [micIdx] = firFFTAngleMic;
+        }
+        firFFT[angleIdx] = firFFTAngle;
+    }
+    
+    return firFFT;
+}
+
 //========== copied from juce_Convolution.cpp ============
 
 /** After each FFT, this function is called to allow convolution to be performed with only 4 SIMD functions calls. */
@@ -331,3 +335,4 @@ void JucebeamAudioProcessor::updateSymmetricFrequencyDomainData (float* samples)
         samples[2 * i + 1] = -samples[2 * (FFT_SIZE - i) + 1];
     }
 }
+

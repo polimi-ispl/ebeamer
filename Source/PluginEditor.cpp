@@ -41,7 +41,8 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     addAndMakeVisible(algorithmDASmeasuredButton);
     
     // Steering direction slider
-    steeringDirectionSlider.setRange(0, 23, 1);
+    steeringDirectionSlider.setRange(0,24,1);
+    steeringDirectionSlider.setValue(processor.steeringDirection);
     steeringDirectionSlider.addListener(this);
     steeringDirectionSlider.setSliderStyle(Slider::LinearHorizontal);
     steeringDirectionSlider.setTextBoxStyle(Slider::NoTextBox,false,0,0);
@@ -107,14 +108,14 @@ void JucebeamAudioProcessorEditor::sliderValueChanged(Slider *slider)
 
 void JucebeamAudioProcessorEditor::updateToggleState(ToggleButton* button)
 {
-    if (button == &algorithmDASmeasuredButton)
+    if (button == &algorithmDASidealButton)
     {
         if (button->getToggleState() == true)
         {
-            processor.algorithm = JucebeamAudioProcessor::DAS_MEASURED;
+            processor.algorithm = JucebeamAudioProcessor::DAS_IDEAL;
         }
     }
-    else if (button == &algorithmDASidealButton)
+    else if (button == &algorithmDASmeasuredButton)
     {
         if (button->getToggleState() == true)
         {
