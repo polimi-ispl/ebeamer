@@ -104,6 +104,9 @@ void JucebeamAudioProcessorEditor::resized()
     
     steeringDirectionRightSlider.setBounds(50, 200, 320, 20);
     steeringDirectionRightSlider.setValue(processor.steeringDirections[1]);
+    
+    //volumeSlider.setBounds(50, 250, 150, 40);
+    //volumeSlider.setValue(processor.volume);
 }
 
 void JucebeamAudioProcessorEditor::buttonClicked(Button *button)

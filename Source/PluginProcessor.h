@@ -79,7 +79,7 @@ private:
     void updateSymmetricFrequencyDomainData (float* samples) noexcept;
     
     AudioBuffer<float> olaBuffer;
-    dsp::FFT fft;
+    dsp::FFT *fft;
     float fftInput[2*FFT_SIZE];
     float fftInputCopy[2*FFT_SIZE];
     float fftOutput[2*FFT_SIZE];
@@ -88,4 +88,5 @@ private:
     std::vector<std::vector<std::vector<float>>> firDASidealFft;
     std::vector<std::vector<std::vector<float>>> firDASmeasuredFft;
     std::vector<std::vector<std::vector<float>>> firFFT;
+    
 };

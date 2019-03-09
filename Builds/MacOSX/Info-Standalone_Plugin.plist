@@ -8,7 +8,7 @@
     <key>CFBundleIconFile</key>
     <string></string>
     <key>CFBundleIdentifier</key>
-    <string>com.yourcompany.jucebeam</string>
+    <string>com.ISPLPolimi.jucebeam</string>
     <key>CFBundleName</key>
     <string>juce-beam</string>
     <key>CFBundleDisplayName</key>

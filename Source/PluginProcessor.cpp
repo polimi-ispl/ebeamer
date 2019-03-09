@@ -23,10 +23,12 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
                       #endif
                        .withOutput ("Output", AudioChannelSet::stereo(), true)
                      #endif
-                       ),
-                        fft(roundToInt (std::log2 (FFT_SIZE)))
+                       )
 #endif
 {
+    
+    // Initialize FFT
+    fft = new dsp::FFT(roundToInt (std::log2 (FFT_SIZE)));
 
     // Initialize firFFTs (already prepared for convolution
     firDASidealFft = prepareIR(firDASideal);
@@ -100,6 +102,18 @@ void JucebeamAudioProcessor::changeProgramName (int index, const String& newName
 {
 }
 
+#ifndef JucePlugin_PreferredChannelConfigurations
+bool JucebeamAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const{
+    
+    int numInputChannels = layouts.getNumChannels(true,0);
+    int numOutputChannels = layouts.getNumChannels(false, 0);
+    if( (numInputChannels == 16) and (numOutputChannels == 16) ){
+        return true;
+    }
+    return false;
+}
+#endif
+
 //==============================================================================
 void JucebeamAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
@@ -117,18 +131,6 @@ void JucebeamAudioProcessor::releaseResources()
     // spare memory, etc.
     
 }
-
-#ifndef JucePlugin_PreferredChannelConfigurations
-bool JucebeamAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
-{
-    if ( (layouts.getNumChannels(true, 0) > 0) & (layouts.getNumChannels(true, 0) <= 64) & // Input channels
-         (layouts.getNumChannels(false, 0) > 0) & (layouts.getNumChannels(false, 0) <= 2) ) // Output channels
-    {
-        return true;
-    }
-    return false;
-}
-#endif
 
 void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& midiMessages)
 {
@@ -154,8 +156,6 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
         prevAlgorithm = algorithm;
     }
     
-    
-    
     for (int inChannel = 0; inChannel < totalNumInputChannels; ++inChannel)
     {
         
@@ -169,7 +169,7 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
             FloatVectorOperations::copy(fftInput, &(buffer.getReadPointer(inChannel)[subBlockFirstIdx]),subBlockLen);
             
             // Forward channel FFT
-            fft.performRealOnlyForwardTransform(fftInput);
+            fft -> performRealOnlyForwardTransform(fftInput);
             
             // Output channel dependent processing
             for (int outChannel = 0; outChannel < totalNumOutputChannels; ++outChannel)
@@ -193,7 +193,7 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
                             // Pass-through processing
                             FloatVectorOperations::copy(fftOutput, fftInputCopy, 2*FFT_SIZE);
                             // Inverse FFT
-                            fft.performRealOnlyInverseTransform(fftOutput);
+                            fft -> performRealOnlyInverseTransform(fftOutput);
                             // OLA
                             olaBuffer.addFrom(outChannel, subBlockFirstIdx, fftOutput, FFT_SIZE);
                         }
@@ -208,7 +208,7 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
                         convolutionProcessingAndAccumulate(fftInputCopy,firFFT[steeringIdx][inChannel].data(),fftOutput);
                         updateSymmetricFrequencyDomainData(fftOutput);
                         // Inverse FFT
-                        fft.performRealOnlyInverseTransform(fftOutput);
+                        fft -> performRealOnlyInverseTransform(fftOutput);
                         // OLA
                         olaBuffer.addFrom(outChannel, subBlockFirstIdx, fftOutput, FFT_SIZE);
                     }
@@ -277,7 +277,7 @@ std::vector<std::vector<std::vector<float>>> JucebeamAudioProcessor::prepareIR(c
             std::vector<float> firFFTAngleMic(2*FFT_SIZE);
             FloatVectorOperations::clear(firFFTAngleMic.data(), 2*FFT_SIZE);
             FloatVectorOperations::copy(firFFTAngleMic.data(), fir[angleIdx][micIdx].data() , static_cast<int>(fir[angleIdx][micIdx].size()));
-            fft.performRealOnlyForwardTransform(firFFTAngleMic.data());
+            fft -> performRealOnlyForwardTransform(firFFTAngleMic.data());
             prepareForConvolution(firFFTAngleMic.data());
             firFFTAngle [micIdx] = firFFTAngleMic;
         }

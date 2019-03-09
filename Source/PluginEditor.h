@@ -39,8 +39,10 @@ private:
     
     Label steeringDirectionLeftLabel;
     Label steeringDirectionRightLabel;
+    Label volumeLabel;
     Slider steeringDirectionLeftSlider;
     Slider steeringDirectionRightSlider;
+    Slider volumeSlider;
     void sliderValueChanged(Slider *slider) override;
     
     ToggleButton algorithmDASidealButton, algorithmDASmeasuredButton;
