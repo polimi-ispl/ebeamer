@@ -17,54 +17,79 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize (400, 300);
+    setSize (600, 800);
     
-    // Hp Enable button
-    passThroughButton.setButtonText("Pass-through");
-    passThroughButton.addListener(this);
-    addAndMakeVisible(passThroughButton);
-    
-    // Hp Enable button
-    bypassButton.setButtonText("Bypass");
-    bypassButton.addListener(this);
-    addAndMakeVisible(bypassButton);
-    
-    // algorithms buttons
-    algorithmDASidealButton.setButtonText("DAS ideal");
-    algorithmDASidealButton.onClick = [this] { updateToggleState (&algorithmDASidealButton); };
-    algorithmDASidealButton.setRadioGroupId(RadioButtonIds::AlgorithmType);
-    addAndMakeVisible(algorithmDASidealButton);
-    
-    algorithmDASmeasuredButton.setButtonText("DAS measured");
-    algorithmDASmeasuredButton.onClick = [this] { updateToggleState (&algorithmDASmeasuredButton); };
-    algorithmDASmeasuredButton.setRadioGroupId(RadioButtonIds::AlgorithmType);
-    addAndMakeVisible(algorithmDASmeasuredButton);
+    //TODO: Soundfield display
     
     // Steering direction slider
-    steeringDirectionLeftSlider.setRange(-1,1,0.01);
-    steeringDirectionLeftSlider.setValue(processor.steeringDirections[0]);
-    steeringDirectionLeftSlider.addListener(this);
-    steeringDirectionLeftSlider.setSliderStyle(Slider::LinearHorizontal);
-    steeringDirectionLeftSlider.setTextBoxStyle(Slider::NoTextBox,false,0,0);
-    addAndMakeVisible(steeringDirectionLeftSlider);
+    steeringDirectionBeam1Slider.setRange(-1,1,0.01);
+    steeringDirectionBeam1Slider.setValue(processor.steeringDirectionBeam1->get());
+    steeringDirectionBeam1Slider.addListener(this);
+    steeringDirectionBeam1Slider.setSliderStyle(Slider::LinearHorizontal);
+    steeringDirectionBeam1Slider.setTextBoxStyle(Slider::NoTextBox,false,0,0);
+    addAndMakeVisible(steeringDirectionBeam1Slider);
     
-    steeringDirectionLeftLabel.setText ("Left", dontSendNotification);
-    steeringDirectionLeftLabel.attachToComponent (&steeringDirectionLeftSlider, true);
-    addAndMakeVisible(steeringDirectionLeftLabel);
+    steeringDirectionBeam2Slider.setRange(-1,1,0.01);
+    steeringDirectionBeam2Slider.setValue(processor.steeringDirectionBeam2->get());
+    steeringDirectionBeam2Slider.addListener(this);
+    steeringDirectionBeam2Slider.setSliderStyle(Slider::LinearHorizontal);
+    steeringDirectionBeam2Slider.setTextBoxStyle(Slider::NoTextBox,false,0,0);
+    addAndMakeVisible(steeringDirectionBeam2Slider);
+    /*
+    steerLabel.setText("STEER", NotificationType::dontSendNotification);
+    addAndMakeVisible(steerLabel);
     
-    steeringDirectionRightSlider.setRange(-1,1,0.01);
-    steeringDirectionRightSlider.setValue(processor.steeringDirections[0]);
-    steeringDirectionRightSlider.addListener(this);
-    steeringDirectionRightSlider.setSliderStyle(Slider::LinearHorizontal);
-    steeringDirectionRightSlider.setTextBoxStyle(Slider::NoTextBox,false,0,0);
-    addAndMakeVisible(steeringDirectionRightSlider);
+    widthLabel.setText("WIDTH", NotificationType::dontSendNotification);
+    addAndMakeVisible(widthLabel);
     
-    steeringDirectionRightLabel.setText ("Right", dontSendNotification);
-    steeringDirectionRightLabel.attachToComponent (&steeringDirectionRightSlider, true);
-    addAndMakeVisible(steeringDirectionRightLabel);
+    widthBeam1Knob.setRange(0,1,0.01);
+    widthBeam1Knob.setValue(processor.widthBeam1->get());
+    widthBeam1Knob.addListener(this);
+    widthBeam1Knob.setSliderStyle(Slider::RotaryHorizontalDrag);
+    widthBeam1Knob.setTextBoxStyle(Slider::NoTextBox,false,0,0);
+    addAndMakeVisible(widthBeam1Knob);
     
+    widthBeam2Knob.setRange(0,1,0.01);
+    widthBeam2Knob.setValue(processor.widthBeam2->get());
+    widthBeam2Knob.addListener(this);
+    widthBeam2Knob.setSliderStyle(Slider::RotaryHorizontalDrag);
+    widthBeam2Knob.setTextBoxStyle(Slider::NoTextBox,false,0,0);
+    addAndMakeVisible(widthBeam2Knob);
     
+    panLabel.setText("PAN", NotificationType::dontSendNotification);
+    addAndMakeVisible(panLabel);
     
+    panBeam1Knob.setRange(-1,1,0.01);
+    panBeam1Knob.setValue(processor.panBeam1->get());
+    panBeam1Knob.addListener(this);
+    panBeam1Knob.setSliderStyle(Slider::RotaryHorizontalDrag);
+    panBeam1Knob.setTextBoxStyle(Slider::NoTextBox,false,0,0);
+    addAndMakeVisible(panBeam1Knob);
+    
+    panBeam2Knob.setRange(-1,1,0.01);
+    panBeam2Knob.setValue(processor.panBeam2->get());
+    panBeam2Knob.addListener(this);
+    panBeam2Knob.setSliderStyle(Slider::RotaryHorizontalDrag);
+    panBeam2Knob.setTextBoxStyle(Slider::NoTextBox,false,0,0);
+    addAndMakeVisible(panBeam2Knob);
+    
+    gainLabel.setText("GAIN", NotificationType::dontSendNotification);
+    addAndMakeVisible(gainLabel);
+    
+    gainBeam1Knob.setRange(0,1,0.01);
+    gainBeam1Knob.setValue(processor.gainBeam1->get());
+    gainBeam1Knob.addListener(this);
+    gainBeam1Knob.setSliderStyle(Slider::RotaryVerticalDrag);
+    gainBeam1Knob.setTextBoxStyle(Slider::NoTextBox,false,0,0);
+    addAndMakeVisible(gainBeam1Knob);
+    
+    gainBeam2Knob.setRange(0,1,0.01);
+    gainBeam2Knob.setValue(processor.gainBeam2->get());
+    gainBeam2Knob.addListener(this);
+    gainBeam2Knob.setSliderStyle(Slider::RotaryVerticalDrag);
+    gainBeam2Knob.setTextBoxStyle(Slider::NoTextBox,false,0,0);
+    addAndMakeVisible(gainBeam2Knob);
+*/
 }
 
 JucebeamAudioProcessorEditor::~JucebeamAudioProcessorEditor()
@@ -79,7 +104,7 @@ void JucebeamAudioProcessorEditor::paint (Graphics& g)
 
     g.setColour (Colours::white);
     g.setFont (15.0f);
-    g.drawFittedText ("eStick Beamer", 100, 0, 200, 40, Justification::centred, 1);
+
 }
 
 void JucebeamAudioProcessorEditor::resized()
@@ -87,66 +112,24 @@ void JucebeamAudioProcessorEditor::resized()
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
     
-    passThroughButton.setBounds(20, 50, 130, 20);
-    passThroughButton.setToggleState(processor.passThrough,NotificationType::dontSendNotification);
+    steeringDirectionBeam1Slider.setBounds(50, 150, 320, 20);
+    steeringDirectionBeam1Slider.setValue(processor.steeringDirectionBeam1->get());
     
-    bypassButton.setBounds(150, 50, 130, 20);
-    bypassButton.setToggleState(processor.bypass,NotificationType::dontSendNotification);
-    
-    algorithmDASidealButton.setBounds(20, 100, 130, 20);
-    algorithmDASidealButton.setToggleState(processor.algorithm == JucebeamAudioProcessor::DAS_IDEAL,NotificationType::dontSendNotification);
-    
-    algorithmDASmeasuredButton.setBounds(150, 100, 130, 20);
-    algorithmDASmeasuredButton.setToggleState(processor.algorithm == JucebeamAudioProcessor::DAS_MEASURED,NotificationType::dontSendNotification);
-    
-    steeringDirectionLeftSlider.setBounds(50, 150, 320, 20);
-    steeringDirectionLeftSlider.setValue(processor.steeringDirections[0]);
-    
-    steeringDirectionRightSlider.setBounds(50, 200, 320, 20);
-    steeringDirectionRightSlider.setValue(processor.steeringDirections[1]);
-    
-    //volumeSlider.setBounds(50, 250, 150, 40);
-    //volumeSlider.setValue(processor.volume);
 }
 
 void JucebeamAudioProcessorEditor::buttonClicked(Button *button)
 {
-    if (button == &passThroughButton)
-    {
-        processor.passThrough = passThroughButton.getToggleState();
-    }
-    else if (button == &bypassButton)
-    {
-        processor.bypass = bypassButton.getToggleState();
-    }
+    
 }
 
 void JucebeamAudioProcessorEditor::sliderValueChanged(Slider *slider)
 {
-    if (slider == &steeringDirectionLeftSlider)
+    if (slider == &steeringDirectionBeam1Slider)
     {
-        processor.steeringDirections[0] = slider->getValue();
+        *(processor.steeringDirectionBeam1) = slider->getValue();
     }
-    else if (slider == &steeringDirectionRightSlider)
+    else if (slider == &steeringDirectionBeam2Slider)
     {
-        processor.steeringDirections[1] = slider->getValue();
-    }
-}
-
-void JucebeamAudioProcessorEditor::updateToggleState(ToggleButton* button)
-{
-    if (button == &algorithmDASidealButton)
-    {
-        if (button->getToggleState() == true)
-        {
-            processor.algorithm = JucebeamAudioProcessor::DAS_IDEAL;
-        }
-    }
-    else if (button == &algorithmDASmeasuredButton)
-    {
-        if (button->getToggleState() == true)
-        {
-            processor.algorithm = JucebeamAudioProcessor::DAS_MEASURED;
-        }
+        *(processor.steeringDirectionBeam2) = slider->getValue();
     }
 }

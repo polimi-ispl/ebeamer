@@ -34,23 +34,36 @@ private:
     JucebeamAudioProcessor& processor;
     
     // Project specific
-    ToggleButton passThroughButton, bypassButton;
-    void buttonClicked(Button *button) override;
     
-    Label steeringDirectionLeftLabel;
-    Label steeringDirectionRightLabel;
-    Label volumeLabel;
-    Slider steeringDirectionLeftSlider;
-    Slider steeringDirectionRightSlider;
-    Slider volumeSlider;
+    //TODO: Soundfield display
+    
+    Slider steeringDirectionBeam1Slider;
+    Slider steeringDirectionBeam2Slider;
+    
+    Label steerLabel;
+    
+    Label widthLabel;
+    Slider widthBeam1Knob;
+    Slider widthBeam2Knob;
+    
+    Label panLabel;
+    Slider panBeam1Knob;
+    Slider panBeam2Knob;
+    
+    Label gainLabel;
+    Slider gainBeam1Knob;
+    Slider gainBeam2Knob;
+    
+    Label muteLabel;
+    ImageButton beam1MuteButton;
+    ImageButton beam2MuteButton;
+    
+    // TODO: Meters
+
+    
+    // Callbacks
+    void buttonClicked(Button *button) override;
     void sliderValueChanged(Slider *slider) override;
     
-    ToggleButton algorithmDASidealButton, algorithmDASmeasuredButton;
-    enum RadioButtonIds
-    {
-        AlgorithmType = 1001
-    };
-    void updateToggleState(ToggleButton* button);
-
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JucebeamAudioProcessorEditor);
 };

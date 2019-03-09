@@ -33,11 +33,25 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
     // Initialize firFFTs (already prepared for convolution
     firDASidealFft = prepareIR(firDASideal);
     firDASmeasuredFft = prepareIR(firDASmeasured);
+    
+    // Initialize parameters
+    addParameter(steeringDirectionBeam1 = new AudioParameterFloat("steerDir1",
+                                                                  "Steering direction 1",
+                                                                  -1.0f,
+                                                                  1.0f,
+                                                                  0.0f));
+    
+    addParameter(steeringDirectionBeam2 = new AudioParameterFloat("steerDir2",
+                                                                  "Steering direction 2",
+                                                                  -1.0f,
+                                                                  1.0f,
+                                                                  0.0f));
 
 }
 
 JucebeamAudioProcessor::~JucebeamAudioProcessor()
 {
+    delete fft;
 }
 
 //==============================================================================
@@ -200,7 +214,17 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
                     }
                     else{ // no passThrough, real processing here!
                         
-                        int steeringIdx = roundToInt(((steeringDirections[outChannel] + 1)/2.)*(firFFT.size()-1));
+                        float steeringDirection = 0;
+                        switch (outChannel){
+                            case 0:
+                                steeringDirection = steeringDirectionBeam1->get();
+                                break;
+                            case 1:
+                                steeringDirection = steeringDirectionBeam2->get();
+                                break;
+                        }
+                        
+                        int steeringIdx = roundToInt(((steeringDirection + 1)/2.)*(firFFT.size()-1));
                         
                         // FIR processing
                         FloatVectorOperations::clear(fftOutput, 2*FFT_SIZE);
