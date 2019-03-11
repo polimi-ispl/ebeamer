@@ -83,7 +83,7 @@ private:
     void convolutionProcessingAndAccumulate (const float *input, const float *impulse, float *output);
     void updateSymmetricFrequencyDomainData (float* samples) noexcept;
     
-    AudioBuffer<float> olaBuffer;
+    AudioBuffer<float> beamBuffer;
     dsp::FFT *fft;
     float fftInput[2*FFT_SIZE];
     float fftBuffer[2*FFT_SIZE];
