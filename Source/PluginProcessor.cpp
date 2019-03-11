@@ -94,6 +94,14 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
                                                            1.0f,
                                                            100.0f,
                                                            10.0f));
+        
+        stringStreamTag.str(std::string());
+        stringStreamTag << "muteBeam" << (beamIdx+1);
+        stringStreamName << "Mute beam " << (beamIdx+1);
+        addParameter(muteBeam[beamIdx] = new AudioParameterBool(stringStreamTag.str(),
+                                                                 stringStreamName.str(),
+                                                                 false));
+        
         stringStreamTag.str(std::string());
     }
 }
@@ -310,9 +318,11 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
         float panMultiplier = outChannel == 0 ? -1 : 1;
         // Sum the contributes from each beam
         for (int beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx){
-            float channelBeamGain = (panBeam[beamIdx]->get()*panMultiplier)+1/2.;
-            // Add to buffer
-            buffer.addFrom(outChannel, 0, beamBuffer, beamIdx, 0, blockNumSamples, channelBeamGain);
+            if (muteBeam[beamIdx]->get() == false){
+                float channelBeamGain = (panBeam[beamIdx]->get()*panMultiplier)+1/2.;
+                // Add to buffer
+                buffer.addFrom(outChannel, 0, beamBuffer, beamIdx, 0, blockNumSamples, channelBeamGain);
+            }
         }
     }
     
