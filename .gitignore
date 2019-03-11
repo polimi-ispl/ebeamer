@@ -2,3 +2,4 @@
 Builds/MacOSX/build/
 
 \.DS_Store
+Builds/MacOSX/juce-beam.xcodeproj/
