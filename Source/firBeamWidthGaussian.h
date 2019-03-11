@@ -9,7 +9,7 @@
 */
 
 #pragma once
-const std::vector<const std::vector<const std::vector<const float>>> firBeamWidthGaussian={
+const std::vector<std::vector<std::vector<float>>> firBeamWidthGaussian={
     {
         {1,},
         {1,},
