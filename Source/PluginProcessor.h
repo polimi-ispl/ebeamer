@@ -24,8 +24,7 @@
 class JucebeamAudioProcessor  : public AudioProcessor
 {
 public:
-    std::vector<std::vector<std::vector<Float32> > > extracted();
-    
+
 //==============================================================================
     JucebeamAudioProcessor();
     ~JucebeamAudioProcessor();

@@ -12,7 +12,7 @@
 #include "PluginEditor.h"
 #include "Binary/firIR.h"
 
-static std::vector<std::vector<std::vector<Float32> > > readFIR(const char* array,const int len) {
+static std::vector<std::vector<std::vector<float> > > readFIR(const char* array,const int len) {
     MemoryInputStream inputStream(array, len,false);
     uint32 numFilters;
     inputStream.read(&numFilters, 4);
@@ -23,7 +23,7 @@ static std::vector<std::vector<std::vector<Float32> > > readFIR(const char* arra
     uint32 fs;
     inputStream.read(&fs, 4);
     
-    std::vector<std::vector<std::vector<Float32>>> fir(numFilters);
+    std::vector<std::vector<std::vector<float>>> fir(numFilters);
     for (auto filterIdx = 0; filterIdx < numFilters; ++filterIdx){
         fir[filterIdx].resize(numChannels);
         for (auto channelIdx = 0; channelIdx < numChannels; ++channelIdx){
@@ -170,7 +170,7 @@ bool JucebeamAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts)
     
     int numInputChannels = layouts.getNumChannels(true,0);
     int numOutputChannels = layouts.getNumChannels(false, 0);
-    if( (numInputChannels == 16) and (numOutputChannels == 2) ){
+    if( (numInputChannels == 16) && (numOutputChannels == 2) ){
         return true;
     }
     return false;
