@@ -12,6 +12,7 @@
 #include "PluginEditor.h"
 #include "firDASideal.h"
 #include "firDASmeasured.h"
+#include "firBeamWidthGaussian.h"
 
 //==============================================================================
 JucebeamAudioProcessor::JucebeamAudioProcessor()
@@ -33,56 +34,46 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
     // Initialize firFFTs (already prepared for convolution
     firDASidealFft = prepareIR(firDASideal);
     firDASmeasuredFft = prepareIR(firDASmeasured);
+    firBeamWidthGaussianFft = prepareIR(firBeamWidthGaussian);
     
     // Initialize parameters
-    addParameter(steeringBeam1 = new AudioParameterFloat("steerBeam1",
-                                                                  "Steering beam 1",
-                                                                  -1.0f,
-                                                                  1.0f,
-                                                                  -0.2f));
-    
-    addParameter(steeringBeam2 = new AudioParameterFloat("steerBeam2",
-                                                                  "Steering beam 2",
-                                                                  -1.0f,
-                                                                  1.0f,
-                                                                  0.2f));
-
-    addParameter(widthBeam1 = new AudioParameterFloat("widthBeam1",
-                                                      "Width beam 1",
-                                                      0.0f,
-                                                      1.0f,
-                                                      0.0f));
-    
-    addParameter(widthBeam2 = new AudioParameterFloat("widthBeam2",
-                                                      "Width beam 2",
-                                                      0.0f,
-                                                      1.0f,
-                                                      0.0f));
-    
-    addParameter(panBeam1 = new AudioParameterFloat("panBeam1",
-                                                      "Pan beam 1",
-                                                    -1.0f,
-                                                    1.0f,
-                                                    -0.2f));
-    
-    addParameter(panBeam2 = new AudioParameterFloat("panBeam2",
-                                                    "Pan beam 2",
-                                                    -1.0f,
-                                                    1.0f,
-                                                    0.2f));
-    
-    
-    addParameter(gainBeam1 = new AudioParameterFloat("gainBeam1",
-                                                    "Gain beam 1",
-                                                    0,
-                                                    1,
-                                                    0.3));
-    
-    addParameter(gainBeam2 = new AudioParameterFloat("gainBeam2",
-                                                     "Gain beam 2",
-                                                     0,
-                                                     1,
-                                                     0.3));
+    std::ostringstream stringStreamTag;
+    std::ostringstream stringStreamName;
+    for (uint8 beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx){
+        stringStreamTag << "steerBeam" << (beamIdx+1);
+        stringStreamName << "Steering beam " << (beamIdx+1);
+        addParameter(steeringBeam[beamIdx] = new AudioParameterFloat(stringStreamTag.str(),
+                                                               stringStreamName.str(),
+                                                               -1.0f,
+                                                               1.0f,
+                                                               -0.2f));
+        stringStreamTag.str(std::string());
+        stringStreamTag << "widthBeam" << (beamIdx+1);
+        stringStreamName << "Width beam " << (beamIdx+1);
+        addParameter(widthBeam[beamIdx] = new AudioParameterFloat(stringStreamTag.str(),
+                                                                  stringStreamName.str(),
+                                                            0.0f,
+                                                            1.0f,
+                                                            0.0f));
+        stringStreamTag.str(std::string());
+        stringStreamTag << "panBeam" << (beamIdx+1);
+        stringStreamName << "Pan beam " << (beamIdx+1);
+        addParameter(panBeam[beamIdx] = new AudioParameterFloat(stringStreamTag.str(),
+                                                                stringStreamName.str(),
+                                                          -1.0f,
+                                                          1.0f,
+                                                          0.0f));
+        stringStreamTag.str(std::string());
+        stringStreamTag << "gainBeam" << (beamIdx+1);
+        stringStreamName << "Gain beam " << (beamIdx+1);
+        //TODO decibel
+        addParameter(gainBeam[beamIdx] = new AudioParameterFloat(stringStreamTag.str(),
+                                                                 stringStreamName.str(),
+                                                           1.0f,
+                                                           100.0f,
+                                                           10.0f));
+        stringStreamTag.str(std::string());
+    }
 }
 
 JucebeamAudioProcessor::~JucebeamAudioProcessor()
@@ -191,20 +182,23 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
     int blockNumSamples = buffer.getNumSamples();
     
     // Some algorithm logic
-    if (prevAlgorithm != algorithm){
-        if (algorithm == DAS_IDEAL)
-        {
-            firFFT = firDASidealFft;
-        }
-        else if (algorithm == DAS_MEASURED)
-        {
-            firFFT = firDASmeasuredFft;
-        }
-        else{
-            firFFT.clear();
-        }
-        prevAlgorithm = algorithm;
+    if (algorithm == DAS_IDEAL)
+    {
+        firFFT = &firDASidealFft;
     }
+    else if (algorithm == DAS_MEASURED)
+    {
+        firFFT = &firDASmeasuredFft;
+    }else{
+        firFFT = nullptr;
+    }
+    
+    // Linear value for the gain here
+    float commonGain = 1000;
+    for (auto beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx){
+        commonGain = std::min(commonGain,gainBeam[beamIdx]->get());
+    }
+    buffer.applyGain(commonGain);
     
     for (int inChannel = 0; inChannel < totalNumInputChannels; ++inChannel)
     {
@@ -234,14 +228,14 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
                 }
                 else
                 { // No bypass
-                    FloatVectorOperations::copy(fftInputCopy,fftInput,2*FFT_SIZE);
+                    FloatVectorOperations::copy(fftBuffer,fftInput,2*FFT_SIZE);
                     
                     if (passThrough)
                     {
                         if (outChannel == inChannel)
                         {
                             // Pass-through processing
-                            FloatVectorOperations::copy(fftOutput, fftInputCopy, 2*FFT_SIZE);
+                            FloatVectorOperations::copy(fftOutput, fftBuffer, 2*FFT_SIZE);
                             // Inverse FFT
                             fft -> performRealOnlyInverseTransform(fftOutput);
                             // OLA
@@ -250,25 +244,30 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
                     }
                     else{ // no passThrough, real processing here!
                         
-                        float steeringDirection = 0;
-                        switch (outChannel){
-                            case 0:
-                                steeringDirection = steeringBeam1->get();
-                                break;
-                            case 1:
-                                steeringDirection = steeringBeam2->get();
-                                break;
-                        }
+                        // Determine steering index
+                        int steeringIdx = roundToInt(((steeringBeam[outChannel]->get() + 1)/2.)*(firFFT->size()-1));
                         
-                        int steeringIdx = roundToInt(((steeringDirection + 1)/2.)*(firFFT.size()-1));
+                        // Determine beam width index
+                        int beamWidthIdx = roundToInt(widthBeam[outChannel]->get()*(firBeamWidthGaussianFft.size()-1));
                         
-                        // FIR processing
+                        // FIR pre processing
+                        prepareForConvolution(fftBuffer);
+                        
+                        // Beam width processing
                         FloatVectorOperations::clear(fftOutput, 2*FFT_SIZE);
-                        prepareForConvolution(fftInputCopy);
-                        convolutionProcessingAndAccumulate(fftInputCopy,firFFT[steeringIdx][inChannel].data(),fftOutput);
+                        convolutionProcessingAndAccumulate(fftBuffer,firBeamWidthGaussianFft[beamWidthIdx][inChannel].data(),fftOutput);
+                        
+                        // Beam steering processing
+                        FloatVectorOperations::copy(fftBuffer, fftOutput, 2*FFT_SIZE);
+                        FloatVectorOperations::clear(fftOutput, 2*FFT_SIZE);
+                        convolutionProcessingAndAccumulate(fftBuffer,(*firFFT)[steeringIdx][inChannel].data(),fftOutput);
+                        
+                        // FIR post processing
                         updateSymmetricFrequencyDomainData(fftOutput);
+                        
                         // Inverse FFT
                         fft -> performRealOnlyInverseTransform(fftOutput);
+                        
                         // OLA
                         olaBuffer.addFrom(outChannel, subBlockFirstIdx, fftOutput, FFT_SIZE);
                     }
@@ -285,6 +284,9 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
     {
         // Copy to buffer
         buffer.copyFrom(outChannel, 0, olaBuffer, outChannel, 0, blockNumSamples);
+        
+        // Apply remaining gain
+        buffer.applyGain(outChannel, 0, blockNumSamples, gainBeam[outChannel]->get()/commonGain);
         
         // Shift OLA buffer
         FloatVectorOperations::copy(olaBuffer.getWritePointer(outChannel), &(olaBuffer.getReadPointer(outChannel)[blockNumSamples]), olaBuffer.getNumSamples()-blockNumSamples);

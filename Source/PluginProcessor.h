@@ -15,6 +15,7 @@
 #define FFT_SIZE 1024
 #define FIR_LEN 512
 #define MAX_FFT_BLOCK_LEN (FFT_SIZE - FIR_LEN)
+#define NUM_BEAMS 2
 
 
 //==============================================================================
@@ -63,16 +64,11 @@ public:
     // Project specific
     bool passThrough = false;
     bool bypass = false;
-    AudioParameterFloat* steeringBeam1;
-    AudioParameterFloat* steeringBeam2;
-    AudioParameterFloat* widthBeam1;
-    AudioParameterFloat* widthBeam2;
-    AudioParameterFloat* panBeam1;
-    AudioParameterFloat* panBeam2;
-    AudioParameterFloat* gainBeam1;
-    AudioParameterFloat* gainBeam2;
-    AudioParameterBool*  muteBeam1;
-    AudioParameterBool*  muteBeam2;
+    AudioParameterFloat* steeringBeam[NUM_BEAMS];
+    AudioParameterFloat* widthBeam[NUM_BEAMS];
+    AudioParameterFloat* panBeam[NUM_BEAMS];
+    AudioParameterFloat* gainBeam[NUM_BEAMS];
+    AudioParameterBool*  muteBeam[NUM_BEAMS];
     
     typedef enum{UNSPECIFIED,DAS_IDEAL,DAS_MEASURED} algorithmType;
     algorithmType algorithm = DAS_MEASURED;
@@ -90,12 +86,12 @@ private:
     AudioBuffer<float> olaBuffer;
     dsp::FFT *fft;
     float fftInput[2*FFT_SIZE];
-    float fftInputCopy[2*FFT_SIZE];
+    float fftBuffer[2*FFT_SIZE];
     float fftOutput[2*FFT_SIZE];
-    algorithmType prevAlgorithm = UNSPECIFIED;
     
     std::vector<std::vector<std::vector<float>>> firDASidealFft;
     std::vector<std::vector<std::vector<float>>> firDASmeasuredFft;
-    std::vector<std::vector<std::vector<float>>> firFFT;
+    std::vector<std::vector<std::vector<float>>> firBeamWidthGaussianFft;
+    std::vector<std::vector<std::vector<float>>> *firFFT;
     
 };

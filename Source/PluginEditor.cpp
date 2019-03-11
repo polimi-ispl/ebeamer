@@ -23,19 +23,19 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     
     // Steering direction slider
     steeringBeam1Slider.setRange(-1,1,0.01);
-    steeringBeam1Slider.setValue(processor.steeringBeam1->get());
+    steeringBeam1Slider.setValue(processor.steeringBeam[0]->get());
     steeringBeam1Slider.addListener(this);
     steeringBeam1Slider.setSliderStyle(Slider::LinearHorizontal);
     steeringBeam1Slider.setTextBoxStyle(Slider::NoTextBox,false,0,0);
-    steeringBeam1Slider.setValue(processor.steeringBeam1->get());
+    steeringBeam1Slider.setValue(processor.steeringBeam[0]->get());
     addAndMakeVisible(steeringBeam1Slider);
     
     steeringBeam2Slider.setRange(-1,1,0.01);
-    steeringBeam2Slider.setValue(processor.steeringBeam2->get());
+    steeringBeam2Slider.setValue(processor.steeringBeam[1]->get());
     steeringBeam2Slider.addListener(this);
     steeringBeam2Slider.setSliderStyle(Slider::LinearHorizontal);
     steeringBeam2Slider.setTextBoxStyle(Slider::NoTextBox,false,0,0);
-    steeringBeam2Slider.setValue(processor.steeringBeam2->get());
+    steeringBeam2Slider.setValue(processor.steeringBeam[1]->get());
     addAndMakeVisible(steeringBeam2Slider);
     
     steerLabel.setText("STEER", NotificationType::dontSendNotification);
@@ -47,57 +47,58 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     addAndMakeVisible(widthLabel);
     
     widthBeam1Knob.setRange(0,1,0.01);
-    widthBeam1Knob.setValue(processor.widthBeam1->get());
+    widthBeam1Knob.setValue(processor.widthBeam[0]->get());
     widthBeam1Knob.addListener(this);
     widthBeam1Knob.setSliderStyle(Slider::RotaryHorizontalDrag);
     widthBeam1Knob.setTextBoxStyle(Slider::NoTextBox,false,0,0);
-    widthBeam1Knob.setValue(processor.widthBeam1->get());
+    widthBeam1Knob.setValue(processor.widthBeam[0]->get());
     addAndMakeVisible(widthBeam1Knob);
     
     widthBeam2Knob.setRange(0,1,0.01);
-    widthBeam2Knob.setValue(processor.widthBeam2->get());
+    widthBeam2Knob.setValue(processor.widthBeam[1]->get());
     widthBeam2Knob.addListener(this);
     widthBeam2Knob.setSliderStyle(Slider::RotaryHorizontalDrag);
     widthBeam2Knob.setTextBoxStyle(Slider::NoTextBox,false,0,0);
-    widthBeam2Knob.setValue(processor.widthBeam2->get());
+    widthBeam2Knob.setValue(processor.widthBeam[1]->get());
     addAndMakeVisible(widthBeam2Knob);
     
     panLabel.setText("PAN", NotificationType::dontSendNotification);
     addAndMakeVisible(panLabel);
     
     panBeam1Knob.setRange(-1,1,0.01);
-    panBeam1Knob.setValue(processor.panBeam1->get());
+    panBeam1Knob.setValue(processor.panBeam[0]->get());
     panBeam1Knob.addListener(this);
     panBeam1Knob.setSliderStyle(Slider::RotaryHorizontalDrag);
     panBeam1Knob.setTextBoxStyle(Slider::NoTextBox,false,0,0);
-    panBeam1Knob.setValue(processor.panBeam1->get());
+    panBeam1Knob.setValue(processor.panBeam[0]->get());
     addAndMakeVisible(panBeam1Knob);
     
     panBeam2Knob.setRange(-1,1,0.01);
-    panBeam2Knob.setValue(processor.panBeam2->get());
+    panBeam2Knob.setValue(processor.panBeam[1]->get());
     panBeam2Knob.addListener(this);
     panBeam2Knob.setSliderStyle(Slider::RotaryHorizontalDrag);
     panBeam2Knob.setTextBoxStyle(Slider::NoTextBox,false,0,0);
-    panBeam2Knob.setValue(processor.panBeam2->get());
+    panBeam2Knob.setValue(processor.panBeam[1]->get());
     addAndMakeVisible(panBeam2Knob);
     
     gainLabel.setText("GAIN", NotificationType::dontSendNotification);
     addAndMakeVisible(gainLabel);
     
-    gainBeam1Knob.setRange(0,1,0.01);
-    gainBeam1Knob.setValue(processor.gainBeam1->get());
+    //TODO decibel gain
+    gainBeam1Knob.setRange(1,100,1);
+    gainBeam1Knob.setValue(processor.gainBeam[0]->get());
     gainBeam1Knob.addListener(this);
     gainBeam1Knob.setSliderStyle(Slider::RotaryVerticalDrag);
     gainBeam1Knob.setTextBoxStyle(Slider::NoTextBox,false,0,0);
-    gainBeam1Knob.setValue(processor.gainBeam1->get());
+    gainBeam1Knob.setValue(processor.gainBeam[0]->get());
     addAndMakeVisible(gainBeam1Knob);
     
-    gainBeam2Knob.setRange(0,1,0.01);
-    gainBeam2Knob.setValue(processor.gainBeam2->get());
+    gainBeam2Knob.setRange(1,100,1);
+    gainBeam2Knob.setValue(processor.gainBeam[1]->get());
     gainBeam2Knob.addListener(this);
     gainBeam2Knob.setSliderStyle(Slider::RotaryVerticalDrag);
     gainBeam2Knob.setTextBoxStyle(Slider::NoTextBox,false,0,0);
-    gainBeam2Knob.setValue(processor.gainBeam2->get());
+    gainBeam2Knob.setValue(processor.gainBeam[1]->get());
     addAndMakeVisible(gainBeam2Knob);
     
     muteLabel.setText("MUTE", NotificationType::dontSendNotification);
@@ -160,34 +161,34 @@ void JucebeamAudioProcessorEditor::sliderValueChanged(Slider *slider)
 {
     if (slider == &steeringBeam1Slider)
     {
-        *(processor.steeringBeam1) = slider->getValue();
+        *(processor.steeringBeam[0]) = slider->getValue();
     }
     else if (slider == &steeringBeam2Slider)
     {
-        *(processor.steeringBeam2) = slider->getValue();
+        *(processor.steeringBeam[1]) = slider->getValue();
     }
     else if (slider == &widthBeam1Knob)
     {
-        *(processor.widthBeam1) = slider->getValue();
+        *(processor.widthBeam[0]) = slider->getValue();
     }
     else if (slider == &widthBeam2Knob)
     {
-        *(processor.widthBeam2) = slider->getValue();
+        *(processor.widthBeam[1]) = slider->getValue();
     }
     else if (slider == &panBeam1Knob)
     {
-        *(processor.panBeam1) = slider->getValue();
+        *(processor.panBeam[0]) = slider->getValue();
     }
     else if (slider == &panBeam2Knob)
     {
-        *(processor.panBeam2) = slider->getValue();
+        *(processor.panBeam[1]) = slider->getValue();
     }
     else if (slider == &gainBeam1Knob)
     {
-        *(processor.gainBeam1) = slider->getValue();
+        *(processor.gainBeam[0]) = slider->getValue();
     }
     else if (slider == &gainBeam2Knob)
     {
-        *(processor.gainBeam2) = slider->getValue();
+        *(processor.gainBeam[1]) = slider->getValue();
     }
 }

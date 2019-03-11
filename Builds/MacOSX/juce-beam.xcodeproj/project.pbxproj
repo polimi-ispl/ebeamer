@@ -376,6 +376,13 @@
 			path = "../../JuceLibraryCode/include_juce_audio_plugin_client_VST_utils.mm";
 			sourceTree = "SOURCE_ROOT";
 		};
+		90E9811188DE078EDB5ED8D4 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			name = firBeamWidthGaussian.h;
+			path = ../../Source/firBeamWidthGaussian.h;
+			sourceTree = "SOURCE_ROOT";
+		};
 		921DA15FBE7C3CED01F3CED7 = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.cpp.objcpp;
@@ -561,6 +568,7 @@
 		08F4676119053B02143CBEA8 = {
 			isa = PBXGroup;
 			children = (
+				90E9811188DE078EDB5ED8D4,
 				B2A984591B4176EEA90E5BB9,
 				ADE11183E5129D47484123D2,
 				23B1D4E2BDC050AC6D1403D3,
