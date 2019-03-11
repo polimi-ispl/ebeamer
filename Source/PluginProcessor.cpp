@@ -148,7 +148,7 @@ bool JucebeamAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts)
     
     int numInputChannels = layouts.getNumChannels(true,0);
     int numOutputChannels = layouts.getNumChannels(false, 0);
-    if( (numInputChannels == 16) and (numOutputChannels == 16) ){
+    if( (numInputChannels == 16) and (numOutputChannels == 2) ){
         return true;
     }
     return false;
