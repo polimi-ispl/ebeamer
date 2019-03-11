@@ -290,8 +290,8 @@ void SceneComponent::paint(Graphics& g)
 void SceneComponent::resized()
 {
     grid.setBounds(getLocalBounds());
-    beam1.setBounds(getLocalBounds());
-    beam2.setBounds(getLocalBounds());
+    for(int i = 0; i < NUM_BEAMS; i++)
+      beams[i].setBounds(getLocalBounds());
 }
 
 void SceneComponent::updateEnergy(float* energy)
@@ -307,7 +307,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
 {
     setSize (GUI_WIDTH, GUI_HEIGHT);
 
-    processor.addChangeListener (this);
+    // processor.addChangeListener (this);
     addAndMakeVisible (scene);
 
     // Steering direction slider
@@ -486,7 +486,7 @@ void JucebeamAudioProcessorEditor::sliderValueChanged(Slider *slider)
     }
 }
 
-void SphereInterfaceAudioProcessorEditor::changeListenerCallback (ChangeBroadcaster *source)
+void JucebeamAudioProcessorEditor::changeListenerCallback (ChangeBroadcaster *source)
 {
-    scene.updateEnergy(processor.getDirectionalEnergy());
+    // scene.updateEnergy(processor.getDirectionalEnergy());
 }

@@ -1,3 +1,13 @@
+/*
+  ==============================================================================
+
+    This file was auto-generated!
+
+    It contains the basic framework code for a JUCE plugin processor.
+
+  ==============================================================================
+*/
+
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
@@ -14,7 +24,8 @@
 class JucebeamAudioProcessor  : public AudioProcessor
 {
 public:
-    //==============================================================================
+
+//==============================================================================
     JucebeamAudioProcessor();
     ~JucebeamAudioProcessor();
 
@@ -50,7 +61,7 @@ public:
     //==============================================================================
     void getStateInformation (MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
-
+    
     // Project specific
     bool passThrough = false;
     bool bypass = false;
@@ -59,29 +70,29 @@ public:
     AudioParameterFloat* panBeam[NUM_BEAMS];
     AudioParameterFloat* gainBeam[NUM_BEAMS];
     AudioParameterBool*  muteBeam[NUM_BEAMS];
-
+    
     typedef enum{UNSPECIFIED,DAS_IDEAL,DAS_MEASURED} algorithmType;
     algorithmType algorithm = DAS_MEASURED;
-
+    
 private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JucebeamAudioProcessor)
-
+    
     // Project specific
     std::vector<std::vector<std::vector<float>>> prepareIR(const std::vector<std::vector<std::vector<float>>> fir);
     void prepareForConvolution (float *samples) noexcept;
     void convolutionProcessingAndAccumulate (const float *input, const float *impulse, float *output);
     void updateSymmetricFrequencyDomainData (float* samples) noexcept;
-
-    AudioBuffer<float> olaBuffer;
+    
+    AudioBuffer<float> beamBuffer;
     dsp::FFT *fft;
     float fftInput[2*FFT_SIZE];
     float fftBuffer[2*FFT_SIZE];
     float fftOutput[2*FFT_SIZE];
-
+    
     std::vector<std::vector<std::vector<float>>> firDASidealFft;
     std::vector<std::vector<std::vector<float>>> firDASmeasuredFft;
-    std::vector<std::vector<std::vector<float>>> firBeamWidthGaussianFft;
+    std::vector<std::vector<std::vector<float>>> firBeamwidthFft;
     std::vector<std::vector<std::vector<float>>> *firFFT;
-
+    
 };
