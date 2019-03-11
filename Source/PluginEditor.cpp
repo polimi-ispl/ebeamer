@@ -11,6 +11,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+
 //==============================================================================
 JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcessor& p)
     : AudioProcessorEditor (&p), processor (p)
@@ -103,6 +104,14 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     
     muteLabel.setText("MUTE", NotificationType::dontSendNotification);
     addAndMakeVisible(muteLabel);
+    
+    beam1MuteButton.addListener(this);
+    beam1MuteButton.setButtonText("1");
+    addAndMakeVisible(beam1MuteButton);
+    
+    beam2MuteButton.addListener(this);
+    beam2MuteButton.setButtonText("2");
+    addAndMakeVisible(beam2MuteButton);
 
 }
 
@@ -154,7 +163,14 @@ void JucebeamAudioProcessorEditor::resized()
 
 void JucebeamAudioProcessorEditor::buttonClicked(Button *button)
 {
-    
+    if(button == &beam1MuteButton)
+    {
+        *(processor.muteBeam[0]) = 1 - *(processor.muteBeam[0]);
+    }
+    else if(button == &beam2MuteButton)
+    {
+        *(processor.muteBeam[1]) = 1 - *(processor.muteBeam[1]);
+    }
 }
 
 void JucebeamAudioProcessorEditor::sliderValueChanged(Slider *slider)
@@ -192,3 +208,4 @@ void JucebeamAudioProcessorEditor::sliderValueChanged(Slider *slider)
         *(processor.gainBeam[1]) = slider->getValue();
     }
 }
+

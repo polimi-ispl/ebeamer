@@ -21,6 +21,8 @@ class JucebeamAudioProcessorEditor  : public AudioProcessorEditor,
                                       private Slider::Listener
 {
 public:
+    
+    
     JucebeamAudioProcessorEditor (JucebeamAudioProcessor&);
     ~JucebeamAudioProcessorEditor();
 
@@ -55,8 +57,8 @@ private:
     Slider gainBeam2Knob;
     
     Label muteLabel;
-    ImageButton beam1MuteButton;
-    ImageButton beam2MuteButton;
+    ToggleButton beam1MuteButton;
+    ToggleButton beam2MuteButton;
     
     // TODO: Meters
 
@@ -64,6 +66,7 @@ private:
     // Callbacks
     void buttonClicked(Button *button) override;
     void sliderValueChanged(Slider *slider) override;
+    
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JucebeamAudioProcessorEditor);
 };
