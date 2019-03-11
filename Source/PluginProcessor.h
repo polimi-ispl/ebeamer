@@ -91,7 +91,7 @@ private:
     
     std::vector<std::vector<std::vector<float>>> firDASidealFft;
     std::vector<std::vector<std::vector<float>>> firDASmeasuredFft;
-    std::vector<std::vector<std::vector<float>>> firBeamWidthGaussianFft;
+    std::vector<std::vector<std::vector<float>>> firBeamwidthFft;
     std::vector<std::vector<std::vector<float>>> *firFFT;
     
 };

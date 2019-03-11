@@ -12,7 +12,7 @@
 #include "PluginEditor.h"
 #include "firDASideal.h"
 #include "firDASmeasured.h"
-#include "firBeamWidthGaussian.h"
+#include "firBeamwidth.h"
 
 //==============================================================================
 JucebeamAudioProcessor::JucebeamAudioProcessor()
@@ -34,7 +34,7 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
     // Initialize firFFTs (already prepared for convolution
     firDASidealFft = prepareIR(firDASideal);
     firDASmeasuredFft = prepareIR(firDASmeasured);
-    firBeamWidthGaussianFft = prepareIR(firBeamWidthGaussian);
+    firBeamwidthFft = prepareIR(firBeamwidth);
     
     // Initialize parameters
     std::ostringstream stringStreamTag;
@@ -248,14 +248,14 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
                         int steeringIdx = roundToInt(((steeringBeam[beamIdx]->get() + 1)/2.)*(firFFT->size()-1));
                         
                         // Determine beam width index
-                        int beamWidthIdx = roundToInt(widthBeam[beamIdx]->get()*(firBeamWidthGaussianFft.size()-1));
+                        int beamWidthIdx = roundToInt(widthBeam[beamIdx]->get()*(firBeamwidthFft.size()-1));
                         
                         // FIR pre processing
                         prepareForConvolution(fftBuffer);
                         
                         // Beam width processing
                         FloatVectorOperations::clear(fftOutput, 2*FFT_SIZE);
-                        convolutionProcessingAndAccumulate(fftBuffer,firBeamWidthGaussianFft[beamWidthIdx][inChannel].data(),fftOutput);
+                        convolutionProcessingAndAccumulate(fftBuffer,firBeamwidthFft[beamWidthIdx][inChannel].data(),fftOutput);
                         
                         // Beam steering processing
                         FloatVectorOperations::copy(fftBuffer, fftOutput, 2*FFT_SIZE);
