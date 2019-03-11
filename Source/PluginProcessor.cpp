@@ -10,9 +10,31 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
-#include "firDASideal.h"
-#include "firDASmeasured.h"
-#include "firBeamwidth.h"
+#include "Binary/firIR.h"
+
+static std::vector<std::vector<std::vector<float> > > readFIR(const char* array,const int len) {
+    MemoryInputStream inputStream(array, len,false);
+    uint32 numFilters;
+    inputStream.read(&numFilters, 4);
+    uint32 numChannels;
+    inputStream.read(&numChannels, 4);
+    uint32 filtersLen;
+    inputStream.read(&filtersLen, 4);
+    uint32 fs;
+    inputStream.read(&fs, 4);
+    
+    std::vector<std::vector<std::vector<float>>> fir(numFilters);
+    for (auto filterIdx = 0; filterIdx < numFilters; ++filterIdx){
+        fir[filterIdx].resize(numChannels);
+        for (auto channelIdx = 0; channelIdx < numChannels; ++channelIdx){
+            fir[filterIdx][channelIdx].resize(filtersLen);
+            for (auto coeffIdx = 0; coeffIdx < filtersLen; ++coeffIdx){
+                inputStream.read(&(fir[filterIdx][channelIdx][coeffIdx]),4);
+            }
+        }
+    }
+    return fir;
+}
 
 //==============================================================================
 JucebeamAudioProcessor::JucebeamAudioProcessor()
@@ -30,11 +52,11 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
     
     // Initialize FFT
     fft = new dsp::FFT(roundToInt (std::log2 (FFT_SIZE)));
-
+    
     // Initialize firFFTs (already prepared for convolution
-    firDASidealFft = prepareIR(firDASideal);
-    firDASmeasuredFft = prepareIR(firDASmeasured);
-    firBeamwidthFft = prepareIR(firBeamwidth);
+    firDASidealFft = prepareIR(readFIR(firIR::firDASideal_dat,firIR::firDASideal_datSize));
+    firDASmeasuredFft = prepareIR(readFIR(firIR::firDASmeasured_dat,firIR::firDASmeasured_datSize));
+    firBeamwidthFft = prepareIR(readFIR(firIR::firBeamwidth_dat,firIR::firBeamwidth_datSize));
     
     // Initialize parameters
     std::ostringstream stringStreamTag;
@@ -148,7 +170,7 @@ bool JucebeamAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts)
     
     int numInputChannels = layouts.getNumChannels(true,0);
     int numOutputChannels = layouts.getNumChannels(false, 0);
-    if( (numInputChannels == 16) and (numOutputChannels == 2) ){
+    if( (numInputChannels == 16) && (numOutputChannels == 2) ){
         return true;
     }
     return false;
@@ -334,7 +356,7 @@ AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 }
 
 //=======================================================
-std::vector<std::vector<std::vector<float>>> JucebeamAudioProcessor::prepareIR(const std::vector<const std::vector<const std::vector<const float>>> fir)
+std::vector<std::vector<std::vector<float>>> JucebeamAudioProcessor::prepareIR(const std::vector<std::vector<std::vector<float>>> fir)
 {
     std::vector<std::vector<std::vector<float>>> firFFT(fir.size());
     for (size_t angleIdx = 0; angleIdx < fir.size(); ++angleIdx)

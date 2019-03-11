@@ -49,7 +49,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     widthBeam1Knob.setRange(0,1,0.01);
     widthBeam1Knob.setValue(processor.widthBeam[0]->get());
     widthBeam1Knob.addListener(this);
-    widthBeam1Knob.setSliderStyle(Slider::RotaryHorizontalDrag);
+    widthBeam1Knob.setSliderStyle(Slider::Rotary);
     widthBeam1Knob.setTextBoxStyle(Slider::NoTextBox,false,0,0);
     widthBeam1Knob.setValue(processor.widthBeam[0]->get());
     addAndMakeVisible(widthBeam1Knob);
@@ -57,7 +57,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     widthBeam2Knob.setRange(0,1,0.01);
     widthBeam2Knob.setValue(processor.widthBeam[1]->get());
     widthBeam2Knob.addListener(this);
-    widthBeam2Knob.setSliderStyle(Slider::RotaryHorizontalDrag);
+    widthBeam2Knob.setSliderStyle(Slider::Rotary);
     widthBeam2Knob.setTextBoxStyle(Slider::NoTextBox,false,0,0);
     widthBeam2Knob.setValue(processor.widthBeam[1]->get());
     addAndMakeVisible(widthBeam2Knob);
@@ -68,7 +68,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     panBeam1Knob.setRange(-1,1,0.01);
     panBeam1Knob.setValue(processor.panBeam[0]->get());
     panBeam1Knob.addListener(this);
-    panBeam1Knob.setSliderStyle(Slider::RotaryHorizontalDrag);
+    panBeam1Knob.setSliderStyle(Slider::Rotary);
     panBeam1Knob.setTextBoxStyle(Slider::NoTextBox,false,0,0);
     panBeam1Knob.setValue(processor.panBeam[0]->get());
     addAndMakeVisible(panBeam1Knob);
@@ -76,7 +76,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     panBeam2Knob.setRange(-1,1,0.01);
     panBeam2Knob.setValue(processor.panBeam[1]->get());
     panBeam2Knob.addListener(this);
-    panBeam2Knob.setSliderStyle(Slider::RotaryHorizontalDrag);
+    panBeam2Knob.setSliderStyle(Slider::Rotary);
     panBeam2Knob.setTextBoxStyle(Slider::NoTextBox,false,0,0);
     panBeam2Knob.setValue(processor.panBeam[1]->get());
     addAndMakeVisible(panBeam2Knob);
@@ -88,7 +88,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     gainBeam1Knob.setRange(1,100,1);
     gainBeam1Knob.setValue(processor.gainBeam[0]->get());
     gainBeam1Knob.addListener(this);
-    gainBeam1Knob.setSliderStyle(Slider::RotaryVerticalDrag);
+    gainBeam1Knob.setSliderStyle(Slider::Rotary);
     gainBeam1Knob.setTextBoxStyle(Slider::NoTextBox,false,0,0);
     gainBeam1Knob.setValue(processor.gainBeam[0]->get());
     addAndMakeVisible(gainBeam1Knob);
@@ -96,7 +96,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     gainBeam2Knob.setRange(1,100,1);
     gainBeam2Knob.setValue(processor.gainBeam[1]->get());
     gainBeam2Knob.addListener(this);
-    gainBeam2Knob.setSliderStyle(Slider::RotaryVerticalDrag);
+    gainBeam2Knob.setSliderStyle(Slider::Rotary);
     gainBeam2Knob.setTextBoxStyle(Slider::NoTextBox,false,0,0);
     gainBeam2Knob.setValue(processor.gainBeam[1]->get());
     addAndMakeVisible(gainBeam2Knob);
