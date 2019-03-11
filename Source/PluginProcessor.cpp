@@ -334,7 +334,7 @@ AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 }
 
 //=======================================================
-std::vector<std::vector<std::vector<float>>> JucebeamAudioProcessor::prepareIR(const std::vector<const std::vector<const std::vector<const float>>> fir)
+std::vector<std::vector<std::vector<float>>> JucebeamAudioProcessor::prepareIR(const std::vector<std::vector<std::vector<float>>> fir)
 {
     std::vector<std::vector<std::vector<float>>> firFFT(fir.size());
     for (size_t angleIdx = 0; angleIdx < fir.size(); ++angleIdx)
