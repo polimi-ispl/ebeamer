@@ -9,8 +9,7 @@
               pluginCode="ebea">
   <MAINGROUP id="X7PQw9" name="juce-beam">
     <GROUP id="{52771D1D-3211-6CF7-CE70-5C5684F5D0E1}" name="Source">
-      <FILE id="sfhIAK" name="firBeamWidthGaussian.h" compile="0" resource="0"
-            file="Source/firBeamWidthGaussian.h"/>
+      <FILE id="WpL8ir" name="firBeamwidth.h" compile="0" resource="0" file="Source/firBeamwidth.h"/>
       <FILE id="l28vlK" name="firDASideal.h" compile="0" resource="0" file="Source/firDASideal.h"/>
       <FILE id="yKlL5y" name="firDASmeasured.h" compile="0" resource="0"
             file="Source/firDASmeasured.h"/>
