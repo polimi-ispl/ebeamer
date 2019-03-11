@@ -24,7 +24,8 @@
 class JucebeamAudioProcessor  : public AudioProcessor
 {
 public:
-    //==============================================================================
+
+//==============================================================================
     JucebeamAudioProcessor();
     ~JucebeamAudioProcessor();
 
@@ -78,7 +79,7 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JucebeamAudioProcessor)
     
     // Project specific
-    std::vector<std::vector<std::vector<float>>> prepareIR(const std::vector<const std::vector<const std::vector<const float>>> fir);
+    std::vector<std::vector<std::vector<float>>> prepareIR(const std::vector<std::vector<std::vector<float>>> fir);
     void prepareForConvolution (float *samples) noexcept;
     void convolutionProcessingAndAccumulate (const float *input, const float *impulse, float *output);
     void updateSymmetricFrequencyDomainData (float* samples) noexcept;
