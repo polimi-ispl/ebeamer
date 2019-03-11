@@ -35,18 +35,54 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
     firDASmeasuredFft = prepareIR(firDASmeasured);
     
     // Initialize parameters
-    addParameter(steeringDirectionBeam1 = new AudioParameterFloat("steerDir1",
-                                                                  "Steering direction 1",
+    addParameter(steeringBeam1 = new AudioParameterFloat("steerBeam1",
+                                                                  "Steering beam 1",
                                                                   -1.0f,
                                                                   1.0f,
-                                                                  0.0f));
+                                                                  -0.2f));
     
-    addParameter(steeringDirectionBeam2 = new AudioParameterFloat("steerDir2",
-                                                                  "Steering direction 2",
+    addParameter(steeringBeam2 = new AudioParameterFloat("steerBeam2",
+                                                                  "Steering beam 2",
                                                                   -1.0f,
                                                                   1.0f,
-                                                                  0.0f));
+                                                                  0.2f));
 
+    addParameter(widthBeam1 = new AudioParameterFloat("widthBeam1",
+                                                      "Width beam 1",
+                                                      0.0f,
+                                                      1.0f,
+                                                      0.0f));
+    
+    addParameter(widthBeam2 = new AudioParameterFloat("widthBeam2",
+                                                      "Width beam 2",
+                                                      0.0f,
+                                                      1.0f,
+                                                      0.0f));
+    
+    addParameter(panBeam1 = new AudioParameterFloat("panBeam1",
+                                                      "Pan beam 1",
+                                                    -1.0f,
+                                                    1.0f,
+                                                    -0.2f));
+    
+    addParameter(panBeam2 = new AudioParameterFloat("panBeam2",
+                                                    "Pan beam 2",
+                                                    -1.0f,
+                                                    1.0f,
+                                                    0.2f));
+    
+    
+    addParameter(gainBeam1 = new AudioParameterFloat("gainBeam1",
+                                                    "Gain beam 1",
+                                                    0,
+                                                    1,
+                                                    0.3));
+    
+    addParameter(gainBeam2 = new AudioParameterFloat("gainBeam2",
+                                                     "Gain beam 2",
+                                                     0,
+                                                     1,
+                                                     0.3));
 }
 
 JucebeamAudioProcessor::~JucebeamAudioProcessor()
@@ -217,10 +253,10 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
                         float steeringDirection = 0;
                         switch (outChannel){
                             case 0:
-                                steeringDirection = steeringDirectionBeam1->get();
+                                steeringDirection = steeringBeam1->get();
                                 break;
                             case 1:
-                                steeringDirection = steeringDirectionBeam2->get();
+                                steeringDirection = steeringBeam2->get();
                                 break;
                         }
                         

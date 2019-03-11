@@ -37,8 +37,8 @@ private:
     
     //TODO: Soundfield display
     
-    Slider steeringDirectionBeam1Slider;
-    Slider steeringDirectionBeam2Slider;
+    Slider steeringBeam1Slider;
+    Slider steeringBeam2Slider;
     
     Label steerLabel;
     

@@ -63,8 +63,8 @@ public:
     // Project specific
     bool passThrough = false;
     bool bypass = false;
-    AudioParameterFloat* steeringDirectionBeam1;
-    AudioParameterFloat* steeringDirectionBeam2;
+    AudioParameterFloat* steeringBeam1;
+    AudioParameterFloat* steeringBeam2;
     AudioParameterFloat* widthBeam1;
     AudioParameterFloat* widthBeam2;
     AudioParameterFloat* panBeam1;
@@ -75,7 +75,7 @@ public:
     AudioParameterBool*  muteBeam2;
     
     typedef enum{UNSPECIFIED,DAS_IDEAL,DAS_MEASURED} algorithmType;
-    algorithmType algorithm = DAS_IDEAL;
+    algorithmType algorithm = DAS_MEASURED;
     
 private:
     //==============================================================================

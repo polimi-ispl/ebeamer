@@ -22,24 +22,28 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     //TODO: Soundfield display
     
     // Steering direction slider
-    steeringDirectionBeam1Slider.setRange(-1,1,0.01);
-    steeringDirectionBeam1Slider.setValue(processor.steeringDirectionBeam1->get());
-    steeringDirectionBeam1Slider.addListener(this);
-    steeringDirectionBeam1Slider.setSliderStyle(Slider::LinearHorizontal);
-    steeringDirectionBeam1Slider.setTextBoxStyle(Slider::NoTextBox,false,0,0);
-    addAndMakeVisible(steeringDirectionBeam1Slider);
+    steeringBeam1Slider.setRange(-1,1,0.01);
+    steeringBeam1Slider.setValue(processor.steeringBeam1->get());
+    steeringBeam1Slider.addListener(this);
+    steeringBeam1Slider.setSliderStyle(Slider::LinearHorizontal);
+    steeringBeam1Slider.setTextBoxStyle(Slider::NoTextBox,false,0,0);
+    steeringBeam1Slider.setValue(processor.steeringBeam1->get());
+    addAndMakeVisible(steeringBeam1Slider);
     
-    steeringDirectionBeam2Slider.setRange(-1,1,0.01);
-    steeringDirectionBeam2Slider.setValue(processor.steeringDirectionBeam2->get());
-    steeringDirectionBeam2Slider.addListener(this);
-    steeringDirectionBeam2Slider.setSliderStyle(Slider::LinearHorizontal);
-    steeringDirectionBeam2Slider.setTextBoxStyle(Slider::NoTextBox,false,0,0);
-    addAndMakeVisible(steeringDirectionBeam2Slider);
-    /*
+    steeringBeam2Slider.setRange(-1,1,0.01);
+    steeringBeam2Slider.setValue(processor.steeringBeam2->get());
+    steeringBeam2Slider.addListener(this);
+    steeringBeam2Slider.setSliderStyle(Slider::LinearHorizontal);
+    steeringBeam2Slider.setTextBoxStyle(Slider::NoTextBox,false,0,0);
+    steeringBeam2Slider.setValue(processor.steeringBeam2->get());
+    addAndMakeVisible(steeringBeam2Slider);
+    
     steerLabel.setText("STEER", NotificationType::dontSendNotification);
+    steerLabel.setJustificationType(Justification::centred);
     addAndMakeVisible(steerLabel);
     
     widthLabel.setText("WIDTH", NotificationType::dontSendNotification);
+    widthLabel.setJustificationType(Justification::centred);
     addAndMakeVisible(widthLabel);
     
     widthBeam1Knob.setRange(0,1,0.01);
@@ -47,6 +51,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     widthBeam1Knob.addListener(this);
     widthBeam1Knob.setSliderStyle(Slider::RotaryHorizontalDrag);
     widthBeam1Knob.setTextBoxStyle(Slider::NoTextBox,false,0,0);
+    widthBeam1Knob.setValue(processor.widthBeam1->get());
     addAndMakeVisible(widthBeam1Knob);
     
     widthBeam2Knob.setRange(0,1,0.01);
@@ -54,6 +59,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     widthBeam2Knob.addListener(this);
     widthBeam2Knob.setSliderStyle(Slider::RotaryHorizontalDrag);
     widthBeam2Knob.setTextBoxStyle(Slider::NoTextBox,false,0,0);
+    widthBeam2Knob.setValue(processor.widthBeam2->get());
     addAndMakeVisible(widthBeam2Knob);
     
     panLabel.setText("PAN", NotificationType::dontSendNotification);
@@ -64,6 +70,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     panBeam1Knob.addListener(this);
     panBeam1Knob.setSliderStyle(Slider::RotaryHorizontalDrag);
     panBeam1Knob.setTextBoxStyle(Slider::NoTextBox,false,0,0);
+    panBeam1Knob.setValue(processor.panBeam1->get());
     addAndMakeVisible(panBeam1Knob);
     
     panBeam2Knob.setRange(-1,1,0.01);
@@ -71,6 +78,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     panBeam2Knob.addListener(this);
     panBeam2Knob.setSliderStyle(Slider::RotaryHorizontalDrag);
     panBeam2Knob.setTextBoxStyle(Slider::NoTextBox,false,0,0);
+    panBeam2Knob.setValue(processor.panBeam2->get());
     addAndMakeVisible(panBeam2Knob);
     
     gainLabel.setText("GAIN", NotificationType::dontSendNotification);
@@ -81,6 +89,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     gainBeam1Knob.addListener(this);
     gainBeam1Knob.setSliderStyle(Slider::RotaryVerticalDrag);
     gainBeam1Knob.setTextBoxStyle(Slider::NoTextBox,false,0,0);
+    gainBeam1Knob.setValue(processor.gainBeam1->get());
     addAndMakeVisible(gainBeam1Knob);
     
     gainBeam2Knob.setRange(0,1,0.01);
@@ -88,8 +97,12 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     gainBeam2Knob.addListener(this);
     gainBeam2Knob.setSliderStyle(Slider::RotaryVerticalDrag);
     gainBeam2Knob.setTextBoxStyle(Slider::NoTextBox,false,0,0);
+    gainBeam2Knob.setValue(processor.gainBeam2->get());
     addAndMakeVisible(gainBeam2Knob);
-*/
+    
+    muteLabel.setText("MUTE", NotificationType::dontSendNotification);
+    addAndMakeVisible(muteLabel);
+
 }
 
 JucebeamAudioProcessorEditor::~JucebeamAudioProcessorEditor()
@@ -112,8 +125,29 @@ void JucebeamAudioProcessorEditor::resized()
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
     
-    steeringDirectionBeam1Slider.setBounds(50, 150, 320, 20);
-    steeringDirectionBeam1Slider.setValue(processor.steeringDirectionBeam1->get());
+    uint8 knobSize = 90;
+    uint8 muteSize = 40;
+    
+    steeringBeam1Slider.setBounds(75, 275, 450, 20);
+    steeringBeam2Slider.setBounds(75, 275+30, 450, 20);
+    
+    steerLabel.setBounds(300-25, 340-10, 50, 20);
+    
+    widthLabel.setBounds(300-25, 400-10, 50, 20);
+    widthBeam1Knob.setBounds(160-(knobSize>>1), 400-(knobSize>>1), knobSize, knobSize);
+    widthBeam2Knob.setBounds(440-(knobSize>>1), 400-(knobSize>>1), knobSize, knobSize);
+    
+    panLabel.setBounds(300-25, 500-10, 50, 20);
+    panBeam1Knob.setBounds(160-(knobSize>>1), 500-(knobSize>>1), knobSize, knobSize);
+    panBeam2Knob.setBounds(440-(knobSize>>1), 500-(knobSize>>1), knobSize, knobSize);
+    
+    gainLabel.setBounds(300-25, 600-10, 50, 20);
+    gainBeam1Knob.setBounds(160-(knobSize>>1), 600-(knobSize>>1), knobSize, knobSize);
+    gainBeam2Knob.setBounds(440-(knobSize>>1), 600-(knobSize>>1), knobSize, knobSize);
+    
+    muteLabel.setBounds(300-25, 670-10, 50, 20);
+    beam1MuteButton.setBounds(160-(muteSize>>1), 670-(muteSize>>1), muteSize, muteSize);
+    beam2MuteButton.setBounds(440-(muteSize>>1), 670-(muteSize>>1), muteSize, muteSize);
     
 }
 
@@ -124,12 +158,36 @@ void JucebeamAudioProcessorEditor::buttonClicked(Button *button)
 
 void JucebeamAudioProcessorEditor::sliderValueChanged(Slider *slider)
 {
-    if (slider == &steeringDirectionBeam1Slider)
+    if (slider == &steeringBeam1Slider)
     {
-        *(processor.steeringDirectionBeam1) = slider->getValue();
+        *(processor.steeringBeam1) = slider->getValue();
     }
-    else if (slider == &steeringDirectionBeam2Slider)
+    else if (slider == &steeringBeam2Slider)
     {
-        *(processor.steeringDirectionBeam2) = slider->getValue();
+        *(processor.steeringBeam2) = slider->getValue();
+    }
+    else if (slider == &widthBeam1Knob)
+    {
+        *(processor.widthBeam1) = slider->getValue();
+    }
+    else if (slider == &widthBeam2Knob)
+    {
+        *(processor.widthBeam2) = slider->getValue();
+    }
+    else if (slider == &panBeam1Knob)
+    {
+        *(processor.panBeam1) = slider->getValue();
+    }
+    else if (slider == &panBeam2Knob)
+    {
+        *(processor.panBeam2) = slider->getValue();
+    }
+    else if (slider == &gainBeam1Knob)
+    {
+        *(processor.gainBeam1) = slider->getValue();
+    }
+    else if (slider == &gainBeam2Knob)
+    {
+        *(processor.gainBeam2) = slider->getValue();
     }
 }
