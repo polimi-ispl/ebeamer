@@ -12,7 +12,7 @@
 #include "PluginEditor.h"
 #include "firDASideal.h"
 #include "firDASmeasured.h"
-#include "firBeamWidthGaussian.h"
+#include "firBeamwidth.h"
 
 //==============================================================================
 JucebeamAudioProcessor::JucebeamAudioProcessor()
@@ -34,7 +34,7 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
     // Initialize firFFTs (already prepared for convolution
     firDASidealFft = prepareIR(firDASideal);
     firDASmeasuredFft = prepareIR(firDASmeasured);
-    firBeamWidthGaussianFft = prepareIR(firBeamWidthGaussian);
+    firBeamwidthFft = prepareIR(firBeamwidth);
     
     // Initialize parameters
     std::ostringstream stringStreamTag;
@@ -161,8 +161,8 @@ void JucebeamAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
     auto bufLen = std::max(FFT_SIZE,samplesPerBlock+(FFT_SIZE - MAX_FFT_BLOCK_LEN));
-    olaBuffer = AudioBuffer<float>(getTotalNumOutputChannels(),bufLen);
-    olaBuffer.clear();
+    beamBuffer = AudioBuffer<float>(getTotalNumOutputChannels(),bufLen);
+    beamBuffer.clear();
     
 }
 
@@ -215,15 +215,15 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
             // Forward channel FFT
             fft -> performRealOnlyForwardTransform(fftInput);
             
-            // Output channel dependent processing
-            for (int outChannel = 0; outChannel < totalNumOutputChannels; ++outChannel)
+            // Beam dependent processing
+            for (int beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx)
             {
                 if (bypass)
                 {
                     // OLA
-                    if (outChannel == inChannel)
+                    if (beamIdx == inChannel)
                     {
-                        olaBuffer.addFrom(outChannel, subBlockFirstIdx, buffer, inChannel, subBlockFirstIdx,  subBlockLen);
+                        beamBuffer.addFrom(beamIdx, subBlockFirstIdx, buffer, inChannel, subBlockFirstIdx,  subBlockLen);
                     }
                 }
                 else
@@ -232,30 +232,30 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
                     
                     if (passThrough)
                     {
-                        if (outChannel == inChannel)
+                        if (beamIdx == inChannel)
                         {
                             // Pass-through processing
                             FloatVectorOperations::copy(fftOutput, fftBuffer, 2*FFT_SIZE);
                             // Inverse FFT
                             fft -> performRealOnlyInverseTransform(fftOutput);
                             // OLA
-                            olaBuffer.addFrom(outChannel, subBlockFirstIdx, fftOutput, FFT_SIZE);
+                            beamBuffer.addFrom(beamIdx, subBlockFirstIdx, fftOutput, FFT_SIZE);
                         }
                     }
                     else{ // no passThrough, real processing here!
                         
                         // Determine steering index
-                        int steeringIdx = roundToInt(((steeringBeam[outChannel]->get() + 1)/2.)*(firFFT->size()-1));
+                        int steeringIdx = roundToInt(((steeringBeam[beamIdx]->get() + 1)/2.)*(firFFT->size()-1));
                         
                         // Determine beam width index
-                        int beamWidthIdx = roundToInt(widthBeam[outChannel]->get()*(firBeamWidthGaussianFft.size()-1));
+                        int beamWidthIdx = roundToInt(widthBeam[beamIdx]->get()*(firBeamwidthFft.size()-1));
                         
                         // FIR pre processing
                         prepareForConvolution(fftBuffer);
                         
                         // Beam width processing
                         FloatVectorOperations::clear(fftOutput, 2*FFT_SIZE);
-                        convolutionProcessingAndAccumulate(fftBuffer,firBeamWidthGaussianFft[beamWidthIdx][inChannel].data(),fftOutput);
+                        convolutionProcessingAndAccumulate(fftBuffer,firBeamwidthFft[beamWidthIdx][inChannel].data(),fftOutput);
                         
                         // Beam steering processing
                         FloatVectorOperations::copy(fftBuffer, fftOutput, 2*FFT_SIZE);
@@ -269,7 +269,7 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
                         fft -> performRealOnlyInverseTransform(fftOutput);
                         
                         // OLA
-                        olaBuffer.addFrom(outChannel, subBlockFirstIdx, fftOutput, FFT_SIZE);
+                        beamBuffer.addFrom(beamIdx, subBlockFirstIdx, fftOutput, FFT_SIZE, gainBeam[beamIdx]->get()/commonGain);
                     }
                 }
                 
@@ -279,19 +279,25 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
         
     }
     
-    // Prepare OLA output
+    // Sum beams in output channels
     for (int outChannel = 0; outChannel < totalNumOutputChannels; ++outChannel)
     {
-        // Copy to buffer
-        buffer.copyFrom(outChannel, 0, olaBuffer, outChannel, 0, blockNumSamples);
-        
-        // Apply remaining gain
-        buffer.applyGain(outChannel, 0, blockNumSamples, gainBeam[outChannel]->get()/commonGain);
-        
-        // Shift OLA buffer
-        FloatVectorOperations::copy(olaBuffer.getWritePointer(outChannel), &(olaBuffer.getReadPointer(outChannel)[blockNumSamples]), olaBuffer.getNumSamples()-blockNumSamples);
-        olaBuffer.clear(outChannel, olaBuffer.getNumSamples()-blockNumSamples, blockNumSamples);
-        
+        // Clean output buffer
+        buffer.clear(outChannel,0,blockNumSamples);
+        // -1 for left, 1 for right channel
+        float panMultiplier = outChannel == 0 ? -1 : 1;
+        // Sum the contributes from each beam
+        for (int beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx){
+            float channelBeamGain = (panBeam[beamIdx]->get()*panMultiplier)+1/2.;
+            // Add to buffer
+            buffer.addFrom(outChannel, 0, beamBuffer, beamIdx, 0, blockNumSamples, channelBeamGain);
+        }
+    }
+    
+    // Shift beam OLA buffer
+    for (int beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx){
+        FloatVectorOperations::copy(beamBuffer.getWritePointer(beamIdx), &(beamBuffer.getReadPointer(beamIdx)[blockNumSamples]), beamBuffer.getNumSamples()-blockNumSamples);
+        beamBuffer.clear(beamIdx, beamBuffer.getNumSamples()-blockNumSamples, blockNumSamples);
     }
 }
 
