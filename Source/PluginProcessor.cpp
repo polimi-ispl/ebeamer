@@ -12,6 +12,19 @@
 #include "PluginEditor.h"
 #include "Binary/firIR.h"
 
+static float panToLinearGain(const AudioParameterFloat* gain, const bool isLeftChannel) {
+    const float db_at0 = -4.5; //How many dB at each channel when pan is centered (0)
+    float gainParam = gain->get();
+    jassert(gainParam >= -1);
+    jassert(gainParam <= 1);
+    float alpha = std::pow(10.,(db_at0/20.));
+    if (isLeftChannel){
+        gainParam = -gainParam;
+    }
+    float y = (0.5-alpha)*std::pow(gainParam,2.)+0.5*gainParam+alpha;
+    return y;
+}
+
 static std::vector<std::vector<std::vector<float> > > readFIR(const char* array,const int len) {
     MemoryInputStream inputStream(array, len,false);
     uint32 numFilters;
@@ -94,6 +107,14 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
                                                            1.0f,
                                                            100.0f,
                                                            10.0f));
+        
+        stringStreamTag.str(std::string());
+        stringStreamTag << "muteBeam" << (beamIdx+1);
+        stringStreamName << "Mute beam " << (beamIdx+1);
+        addParameter(muteBeam[beamIdx] = new AudioParameterBool(stringStreamTag.str(),
+                                                                 stringStreamName.str(),
+                                                                 false));
+        
         stringStreamTag.str(std::string());
     }
 }
@@ -306,13 +327,13 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
     {
         // Clean output buffer
         buffer.clear(outChannel,0,blockNumSamples);
-        // -1 for left, 1 for right channel
-        float panMultiplier = outChannel == 0 ? -1 : 1;
         // Sum the contributes from each beam
         for (int beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx){
-            float channelBeamGain = (panBeam[beamIdx]->get()*panMultiplier)+1/2.;
-            // Add to buffer
-            buffer.addFrom(outChannel, 0, beamBuffer, beamIdx, 0, blockNumSamples, channelBeamGain);
+            if (muteBeam[beamIdx]->get() == false){
+                float channelBeamGain = panToLinearGain(panBeam[beamIdx],outChannel==0);
+                // Add to buffer
+                buffer.addFrom(outChannel, 0, beamBuffer, beamIdx, 0, blockNumSamples, channelBeamGain);
+            }
         }
     }
     
