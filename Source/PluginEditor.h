@@ -11,7 +11,7 @@
 #define TILE_COL_COUNT 25
 #define PI 3.14159265
 
-#define GUI_WIDTH 500
+#define GUI_WIDTH 900
 
 #define KNOB_SIZE 75
 #define MUTE_SIZE 30
