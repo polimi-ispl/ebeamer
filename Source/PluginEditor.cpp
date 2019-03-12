@@ -414,34 +414,30 @@ void JucebeamAudioProcessorEditor::paint (Graphics& g)
 void JucebeamAudioProcessorEditor::resized()
 {
     #ifdef PLANAR_MODE
-      scene.setBounds( (GUI_WIDTH - SCENE_WIDTH)/2, (GUI_WIDTH - SCENE_WIDTH)/2, SCENE_WIDTH, SCENE_HEIGHT);
+      scene.setBounds( (GUI_WIDTH - SCENE_WIDTH)/2, (GUI_HEIGHT/3 - SCENE_HEIGHT)/2, SCENE_WIDTH, SCENE_HEIGHT);
+      steeringBeam1Slider.setBounds( GUI_WIDTH/8, GUI_HEIGHT/3 +  5, 6*GUI_WIDTH/8, 20);
+      steeringBeam2Slider.setBounds( GUI_WIDTH/8, GUI_HEIGHT/3 + 35, 6*GUI_WIDTH/8, 20);
+
+      steerLabel.setBounds( GUI_WIDTH/2 - 25, GUI_HEIGHT/3 + 65, 50, 20);
+
+      widthLabel.setBounds(GUI_WIDTH/2 - 25, GUI_HEIGHT/2 - 10, 50, 20);
+      widthBeam1Knob.setBounds(  GUI_WIDTH/4 - (KNOB_SIZE>>1), GUI_HEIGHT/2 - (KNOB_SIZE>>1), KNOB_SIZE, KNOB_SIZE);
+      widthBeam2Knob.setBounds(3*GUI_WIDTH/4 - (KNOB_SIZE>>1), GUI_HEIGHT/2 - (KNOB_SIZE>>1), KNOB_SIZE, KNOB_SIZE);
+
+      panLabel.setBounds(GUI_WIDTH/2 - 25, 5*GUI_HEIGHT/8 - 10, 50, 20);
+      panBeam1Knob.setBounds(  GUI_WIDTH/4 - (KNOB_SIZE>>1), 5*GUI_HEIGHT/8 - (KNOB_SIZE>>1), KNOB_SIZE, KNOB_SIZE);
+      panBeam2Knob.setBounds(3*GUI_WIDTH/4 - (KNOB_SIZE>>1), 5*GUI_HEIGHT/8 - (KNOB_SIZE>>1), KNOB_SIZE, KNOB_SIZE);
+
+      gainLabel.setBounds(GUI_WIDTH/2 - 25, 6*GUI_HEIGHT/8 - 10, 50, 20);
+      gainBeam1Knob.setBounds(  GUI_WIDTH/4 - (KNOB_SIZE>>1), 6*GUI_HEIGHT/8 - (KNOB_SIZE>>1), KNOB_SIZE, KNOB_SIZE);
+      gainBeam2Knob.setBounds(3*GUI_WIDTH/4 - (KNOB_SIZE>>1), 6*GUI_HEIGHT/8 - (KNOB_SIZE>>1), KNOB_SIZE, KNOB_SIZE);
+
+      muteLabel.setBounds(GUI_WIDTH/2 - 25, 7*GUI_HEIGHT/8 - 10, 50, 20);
+      beam1MuteButton.setBounds(  GUI_WIDTH/4 - (MUTE_SIZE>>1), 7*GUI_HEIGHT/8 - (MUTE_SIZE>>1), MUTE_SIZE, MUTE_SIZE);
+      beam2MuteButton.setBounds(3*GUI_WIDTH/4 - (MUTE_SIZE>>1), 7*GUI_HEIGHT/8 - (MUTE_SIZE>>1), MUTE_SIZE, MUTE_SIZE);
     #else
-      scene.setBounds( (GUI_WIDTH - SCENE_WIDTH)/2, (GUI_WIDTH - SCENE_WIDTH)/2, SCENE_WIDTH, SCENE_HEIGHT);
+      scene.setBounds( (GUI_WIDTH/2 - SCENE_WIDTH)/2, (GUI_HEIGHT - SCENE_HEIGHT)/2, SCENE_WIDTH, SCENE_HEIGHT);
     #endif
-
-    uint8 knobSize = 90;
-    uint8 muteSize = 40;
-
-    steeringBeam1Slider.setBounds(75, 275, 450, 20);
-    steeringBeam2Slider.setBounds(75, 275+30, 450, 20);
-
-    steerLabel.setBounds(300-25, 340-10, 50, 20);
-
-    widthLabel.setBounds(300-25, 400-10, 50, 20);
-    widthBeam1Knob.setBounds(160-(knobSize>>1), 400-(knobSize>>1), knobSize, knobSize);
-    widthBeam2Knob.setBounds(440-(knobSize>>1), 400-(knobSize>>1), knobSize, knobSize);
-
-    panLabel.setBounds(300-25, 500-10, 50, 20);
-    panBeam1Knob.setBounds(160-(knobSize>>1), 500-(knobSize>>1), knobSize, knobSize);
-    panBeam2Knob.setBounds(440-(knobSize>>1), 500-(knobSize>>1), knobSize, knobSize);
-
-    gainLabel.setBounds(300-25, 600-10, 50, 20);
-    gainBeam1Knob.setBounds(160-(knobSize>>1), 600-(knobSize>>1), knobSize, knobSize);
-    gainBeam2Knob.setBounds(440-(knobSize>>1), 600-(knobSize>>1), knobSize, knobSize);
-
-    muteLabel.setBounds(300-25, 670-10, 50, 20);
-    beam1MuteButton.setBounds(160-(muteSize>>1), 670-(muteSize>>1), muteSize, muteSize);
-    beam2MuteButton.setBounds(440-(muteSize>>1), 670-(muteSize>>1), muteSize, muteSize);
 
 }
 

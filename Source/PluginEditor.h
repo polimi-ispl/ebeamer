@@ -11,14 +11,18 @@
 #define TILE_COL_COUNT 25
 #define PI 3.14159265
 
-#define GUI_WIDTH 600
-#define SCENE_WIDTH 500
+#define GUI_WIDTH 500
+
+#define KNOB_SIZE 75
+#define MUTE_SIZE 30
+#define SCENE_WIDTH 460
+
 #ifdef PLANAR_MODE
-  #define GUI_HEIGHT 800
-  #define SCENE_HEIGHT 250
+  #define GUI_HEIGHT 1.5*GUI_WIDTH
+  #define SCENE_HEIGHT 0.5*SCENE_WIDTH
 #else
-  #define GUI_HEIGHT 800
-  #define SCENE_HEIGHT 500
+  #define GUI_HEIGHT 0.5*GUI_WIDTH
+  #define SCENE_HEIGHT SCENE_WIDTH
 #endif
 
 //==============================================================================
