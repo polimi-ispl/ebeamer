@@ -1,13 +1,3 @@
-/*
-  ==============================================================================
-
-    This file was auto-generated!
-
-    It contains the basic framework code for a JUCE plugin processor.
-
-  ==============================================================================
-*/
-
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "Binary/firIR.h"
@@ -101,11 +91,10 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
         stringStreamTag.str(std::string());
         stringStreamTag << "gainBeam" << (beamIdx+1);
         stringStreamName << "Gain beam " << (beamIdx+1);
-        //TODO decibel
         addParameter(gainBeam[beamIdx] = new AudioParameterFloat(stringStreamTag.str(),
                                                                  stringStreamName.str(),
-                                                           1.0f,
-                                                           100.0f,
+                                                           0.0f,
+                                                           30.0f,
                                                            10.0f));
         
         stringStreamTag.str(std::string());
@@ -237,11 +226,12 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
     }
     
     // Linear value for the gain here
-    float commonGain = 1000;
+    float commonGaindB = 100;
     for (auto beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx){
-        commonGain = std::min(commonGain,gainBeam[beamIdx]->get());
+        commonGaindB = std::min(commonGaindB,gainBeam[beamIdx]->get());
     }
-    buffer.applyGain(commonGain);
+    float commonGainLinear = Decibels::decibelsToGain(commonGaindB);
+    buffer.applyGain(commonGainLinear);
     
     for (int inChannel = 0; inChannel < totalNumInputChannels; ++inChannel)
     {
@@ -312,7 +302,8 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
                         fft -> performRealOnlyInverseTransform(fftOutput);
                         
                         // OLA
-                        beamBuffer.addFrom(beamIdx, subBlockFirstIdx, fftOutput, FFT_SIZE, gainBeam[beamIdx]->get()/commonGain);
+                        float residualGainLinear = Decibels::decibelsToGain(gainBeam[beamIdx]->get())/commonGainLinear;
+                        beamBuffer.addFrom(beamIdx, subBlockFirstIdx, fftOutput, FFT_SIZE, residualGainLinear);
                     }
                 }
                 
