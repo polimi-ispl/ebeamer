@@ -14,6 +14,31 @@
 #include "PluginProcessor.h"
 
 //==============================================================================
+class DecibelSlider : public Slider
+{
+public:
+    DecibelSlider() {}
+    
+    double getValueFromText (const String& text) override
+    {
+        auto minusInfinitydB = -100.0;
+        
+        auto decibelText = text.upToFirstOccurrenceOf ("dB", false, false).trim();    // [1]
+        
+        return decibelText.equalsIgnoreCase ("-INF") ? minusInfinitydB
+        : decibelText.getDoubleValue();  // [2]
+    }
+    
+    String getTextFromValue (double value) override
+    {
+        return Decibels::toString (value,0);
+    }
+    
+private:
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DecibelSlider)
+};
+
+//==============================================================================
 /**
 */
 class JucebeamAudioProcessorEditor  : public AudioProcessorEditor,
@@ -53,12 +78,16 @@ private:
     Slider panBeam2Knob;
     
     Label gainLabel;
-    Slider gainBeam1Knob;
-    Slider gainBeam2Knob;
+    DecibelSlider gainBeam1Knob;
+    DecibelSlider gainBeam2Knob;
     
     Label muteLabel;
     ToggleButton beam1MuteButton;
     ToggleButton beam2MuteButton;
+    
+    const uint8 knobSize = 90;
+    const uint8 muteSize = 40;
+    const uint8 labelWidth = 60;
     
     // TODO: Meters
 
