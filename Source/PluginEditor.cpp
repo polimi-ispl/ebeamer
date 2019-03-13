@@ -343,7 +343,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     widthBeam1Knob.setValue(processor.widthBeam[0]->get());
     widthBeam1Knob.addListener(this);
     widthBeam1Knob.setSliderStyle(Slider::Rotary);
-    widthBeam1Knob.setTextBoxStyle(Slider::TextBoxLeft,false,labelWidth,20);
+    widthBeam1Knob.setTextBoxStyle(Slider::TextBoxRight,false,LABEL_WIDTH,LABEL_HEIGHT);
     widthBeam1Knob.setValue(processor.widthBeam[0]->get());
     addAndMakeVisible(widthBeam1Knob);
     
@@ -352,7 +352,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     widthBeam2Knob.setValue(processor.widthBeam[1]->get());
     widthBeam2Knob.addListener(this);
     widthBeam2Knob.setSliderStyle(Slider::Rotary);
-    widthBeam2Knob.setTextBoxStyle(Slider::TextBoxRight,false,labelWidth,20);
+    widthBeam2Knob.setTextBoxStyle(Slider::TextBoxLeft,false,LABEL_WIDTH,LABEL_HEIGHT);
     widthBeam2Knob.setValue(processor.widthBeam[1]->get());
     addAndMakeVisible(widthBeam2Knob);
 
@@ -364,7 +364,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     panBeam1Knob.setValue(processor.panBeam[0]->get());
     panBeam1Knob.addListener(this);
     panBeam1Knob.setSliderStyle(Slider::Rotary);
-    panBeam1Knob.setTextBoxStyle(Slider::TextBoxLeft,false,labelWidth,20);
+    panBeam1Knob.setTextBoxStyle(Slider::TextBoxRight,false,LABEL_WIDTH,LABEL_HEIGHT);
     panBeam1Knob.setValue(processor.panBeam[0]->get());
     addAndMakeVisible(panBeam1Knob);
     
@@ -373,7 +373,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     panBeam2Knob.setValue(processor.panBeam[1]->get());
     panBeam2Knob.addListener(this);
     panBeam2Knob.setSliderStyle(Slider::Rotary);
-    panBeam2Knob.setTextBoxStyle(Slider::TextBoxRight,false,labelWidth,20);
+    panBeam2Knob.setTextBoxStyle(Slider::TextBoxLeft,false,LABEL_WIDTH,LABEL_HEIGHT);
     panBeam2Knob.setValue(processor.panBeam[1]->get());
     addAndMakeVisible(panBeam2Knob);
 
@@ -385,7 +385,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     gainBeam1Knob.setValue(processor.gainBeam[0]->get());
     gainBeam1Knob.addListener(this);
     gainBeam1Knob.setSliderStyle(Slider::Rotary);
-    gainBeam1Knob.setTextBoxStyle(Slider::TextBoxLeft,false,labelWidth,20);
+    gainBeam1Knob.setTextBoxStyle(Slider::TextBoxRight,false,LABEL_WIDTH,LABEL_HEIGHT);
     gainBeam1Knob.setValue(processor.gainBeam[0]->get());
     addAndMakeVisible(gainBeam1Knob);
     
@@ -394,7 +394,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     gainBeam2Knob.setValue(processor.gainBeam[1]->get());
     gainBeam2Knob.addListener(this);
     gainBeam2Knob.setSliderStyle(Slider::Rotary);
-    gainBeam2Knob.setTextBoxStyle(Slider::TextBoxRight,false,labelWidth,20);
+    gainBeam2Knob.setTextBoxStyle(Slider::TextBoxLeft,false,LABEL_WIDTH,LABEL_HEIGHT);
     gainBeam2Knob.setValue(processor.gainBeam[1]->get());
     addAndMakeVisible(gainBeam2Knob);
 
@@ -432,26 +432,27 @@ void JucebeamAudioProcessorEditor::resized()
     #ifdef PLANAR_MODE
     
       scene.setBounds( (GUI_WIDTH - SCENE_WIDTH)/2, (GUI_HEIGHT/3 - SCENE_HEIGHT)/2, SCENE_WIDTH, SCENE_HEIGHT);
-      
-      steeringBeam1Slider.setBounds( GUI_WIDTH/8, GUI_HEIGHT/3 +  5, 6*GUI_WIDTH/8, 20);
-      steeringBeam2Slider.setBounds( GUI_WIDTH/8, GUI_HEIGHT/3 + 35, 6*GUI_WIDTH/8, 20);
+    
+      steeringBeam1Slider.setBounds( GUI_WIDTH/8, SCENE_HEIGHT +  5, 6*GUI_WIDTH/8, 20);
+      steeringBeam2Slider.setBounds( GUI_WIDTH/8, SCENE_HEIGHT + 35, 6*GUI_WIDTH/8, 20);
       steerLabel.setBounds( GUI_WIDTH/2 - 25, GUI_HEIGHT/3 + 65, 50, 20);
 
       widthLabel.setBounds(GUI_WIDTH/2 - 25, GUI_HEIGHT/2 - 10, 50, 20);
-      widthBeam1Knob.setBounds(  GUI_WIDTH/4 - (KNOB_SIZE>>1), GUI_HEIGHT/2 - (KNOB_SIZE>>1), KNOB_SIZE, KNOB_SIZE);
-      widthBeam2Knob.setBounds(3*GUI_WIDTH/4 - (KNOB_SIZE>>1), GUI_HEIGHT/2 - (KNOB_SIZE>>1), KNOB_SIZE, KNOB_SIZE);
+      widthBeam1Knob.setBounds(  GUI_WIDTH/4 - (KNOB_SIZE>>1), GUI_HEIGHT/2 - (KNOB_SIZE>>1), KNOB_SIZE+LABEL_WIDTH, KNOB_SIZE);
+      widthBeam2Knob.setBounds(3*GUI_WIDTH/4 - (KNOB_SIZE>>1) - LABEL_WIDTH, GUI_HEIGHT/2 - (KNOB_SIZE>>1), KNOB_SIZE+LABEL_WIDTH, KNOB_SIZE);
 
       panLabel.setBounds(GUI_WIDTH/2 - 25, 5*GUI_HEIGHT/8 - 10, 50, 20);
-      panBeam1Knob.setBounds(  GUI_WIDTH/4 - (KNOB_SIZE>>1), 5*GUI_HEIGHT/8 - (KNOB_SIZE>>1), KNOB_SIZE, KNOB_SIZE);
-      panBeam2Knob.setBounds(3*GUI_WIDTH/4 - (KNOB_SIZE>>1), 5*GUI_HEIGHT/8 - (KNOB_SIZE>>1), KNOB_SIZE, KNOB_SIZE);
+      panBeam1Knob.setBounds(  GUI_WIDTH/4 - (KNOB_SIZE>>1), 5*GUI_HEIGHT/8 - (KNOB_SIZE>>1), KNOB_SIZE+LABEL_WIDTH, KNOB_SIZE);
+      panBeam2Knob.setBounds(3*GUI_WIDTH/4 - (KNOB_SIZE>>1) - LABEL_WIDTH, 5*GUI_HEIGHT/8 - (KNOB_SIZE>>1), KNOB_SIZE+LABEL_WIDTH, KNOB_SIZE);
 
       gainLabel.setBounds(GUI_WIDTH/2 - 25, 6*GUI_HEIGHT/8 - 10, 50, 20);
-      gainBeam1Knob.setBounds(  GUI_WIDTH/4 - (KNOB_SIZE>>1), 6*GUI_HEIGHT/8 - (KNOB_SIZE>>1), KNOB_SIZE, KNOB_SIZE);
-      gainBeam2Knob.setBounds(3*GUI_WIDTH/4 - (KNOB_SIZE>>1), 6*GUI_HEIGHT/8 - (KNOB_SIZE>>1), KNOB_SIZE, KNOB_SIZE);
+      gainBeam1Knob.setBounds(  GUI_WIDTH/4 - (KNOB_SIZE>>1), 6*GUI_HEIGHT/8 - (KNOB_SIZE>>1), KNOB_SIZE+LABEL_WIDTH, KNOB_SIZE);
+      gainBeam2Knob.setBounds(3*GUI_WIDTH/4 - (KNOB_SIZE>>1) - LABEL_WIDTH, 6*GUI_HEIGHT/8 - (KNOB_SIZE>>1), KNOB_SIZE+LABEL_WIDTH, KNOB_SIZE);
 
       muteLabel.setBounds(GUI_WIDTH/2 - 25, 7*GUI_HEIGHT/8 - 10, 50, 20);
       beam1MuteButton.setBounds(  GUI_WIDTH/4 - (MUTE_SIZE>>1), 7*GUI_HEIGHT/8 - (MUTE_SIZE>>1), MUTE_SIZE, MUTE_SIZE);
       beam2MuteButton.setBounds(3*GUI_WIDTH/4 - (MUTE_SIZE>>1), 7*GUI_HEIGHT/8 - (MUTE_SIZE>>1), MUTE_SIZE, MUTE_SIZE);
+    
       
     #else
     

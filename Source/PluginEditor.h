@@ -11,14 +11,16 @@
 #define TILE_COL_COUNT 25
 #define PI 3.14159265
 
-#define GUI_WIDTH 900
+#define GUI_WIDTH 540
 
 #define KNOB_SIZE 75
 #define MUTE_SIZE 30
+#define LABEL_WIDTH 60
+#define LABEL_HEIGHT 20
 #define SCENE_WIDTH 460
 
 #ifdef PLANAR_MODE
-  #define GUI_HEIGHT 1.5*GUI_WIDTH
+  #define GUI_HEIGHT 1.33*GUI_WIDTH
   #define SCENE_HEIGHT 0.5*SCENE_WIDTH
 #else
   #define GUI_HEIGHT 0.5*GUI_WIDTH
@@ -181,10 +183,6 @@ private:
     Label muteLabel;
     ToggleButton beam1MuteButton;
     ToggleButton beam2MuteButton;
-    
-    const uint8 knobSize = 90;
-    const uint8 muteSize = 40;
-    const uint8 labelWidth = 60;
     
     // TODO: Meters
 
