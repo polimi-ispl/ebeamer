@@ -9,8 +9,8 @@ DOAthread::DOAthread(JucebeamAudioProcessor& p, JucebeamAudioProcessorEditor& e)
     
     const GenericScopedLock<SpinLock> scopedLock (energyLock);
     
-    for(float i = 0; i <= 1; i+=1/25){
-        energy.push_back(i);
+    for(int i = 0; i < 25; i++){
+        energy.push_back((float)i/25);
     }
 }
 

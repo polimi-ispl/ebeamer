@@ -162,10 +162,20 @@ void GridComponent::resized()
     }
 }
 
-void GridComponent::updateEnergy(float* energy)
+void GridComponent::updateEnergy(std::vector<float> energy)
 {
-    for(int j = 0; j < TILE_COL_COUNT; j++){
-        int level = TILE_ROW_COUNT - ceil(TILE_ROW_COUNT * energy[j]);
+    // TODO:
+    // keep track of column count and re-compute grid if it has changed
+    // (DOAthread might change it for performance)
+    
+    for(int j = 0; j < energy.size(); j++){
+        
+        if(energy.at(j) > 1)
+            energy.at(j) = 1;
+        if(energy.at(j) < 0)
+            energy.at(j) = 0;
+        
+        int level = TILE_ROW_COUNT - ceil(TILE_ROW_COUNT * energy.at(j));
         
         for(int i = 0; i < TILE_ROW_COUNT; i++){
             
@@ -294,7 +304,7 @@ void SceneComponent::resized()
         beams[i].setBounds(getLocalBounds());
 }
 
-void SceneComponent::updateEnergy(float* energy)
+void SceneComponent::updateEnergy(std::vector<float> energy)
 {
     grid.updateEnergy(energy);
 }
@@ -306,6 +316,8 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
 : AudioProcessorEditor (&p), processor (p)
 {
     DOAt = new DOAthread(p, *this);
+    
+    startTimer(500);
     
     setSize (GUI_WIDTH, GUI_HEIGHT);
     
@@ -543,4 +555,9 @@ void JucebeamAudioProcessorEditor::sliderValueChanged(Slider *slider)
     {
         *(processor.gainBeam[1]) = slider->getValue();
     }
+}
+
+void JucebeamAudioProcessorEditor::hiResTimerCallback()
+{
+    scene.updateEnergy(DOAt->getEnergy());
 }

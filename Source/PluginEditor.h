@@ -95,7 +95,7 @@ public:
     
     void resized() override;
     
-    void updateEnergy(float*);
+    void updateEnergy(std::vector<float>);
     
 private:
     
@@ -138,7 +138,7 @@ public:
     void paint(Graphics&) override;
     void resized() override;
     
-    void updateEnergy(float*);
+    void updateEnergy(std::vector<float>);
     
 private:
     
@@ -151,8 +151,9 @@ private:
 //==============================================================================
 
 class JucebeamAudioProcessorEditor  : public AudioProcessorEditor,
-private ToggleButton::Listener,
-private Slider::Listener
+                                      private ToggleButton::Listener,
+                                      private Slider::Listener,
+                                      private HighResolutionTimer
 {
 public:
     
@@ -200,6 +201,7 @@ private:
     // Callbacks
     void buttonClicked(Button *button) override;
     void sliderValueChanged(Slider *slider) override;
+    void hiResTimerCallback() override;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JucebeamAudioProcessorEditor);
 };
