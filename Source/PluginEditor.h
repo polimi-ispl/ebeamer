@@ -197,7 +197,9 @@ private:
     // TODO: Meters
     
     
-    // Callbacks
+    void setMuteButtonColor(uint8 beamIdx);
+    
+// Callbacks
     void buttonClicked(Button *button) override;
     void sliderValueChanged(Slider *slider) override;
     void changeListenerCallback (ChangeBroadcaster*) override;
