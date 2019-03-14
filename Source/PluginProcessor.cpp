@@ -65,6 +65,8 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
     std::ostringstream stringStreamTag;
     std::ostringstream stringStreamName;
     for (uint8 beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx){
+        stringStreamTag.str(std::string());
+        stringStreamName.str(std::string());
         stringStreamTag << "steerBeam" << (beamIdx+1);
         stringStreamName << "Steering beam " << (beamIdx+1);
         addParameter(steeringBeam[beamIdx] = new AudioParameterFloat(stringStreamTag.str(),
@@ -73,6 +75,7 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
                                                                1.0f,
                                                                -0.2f));
         stringStreamTag.str(std::string());
+        stringStreamName.str(std::string());
         stringStreamTag << "widthBeam" << (beamIdx+1);
         stringStreamName << "Width beam " << (beamIdx+1);
         addParameter(widthBeam[beamIdx] = new AudioParameterFloat(stringStreamTag.str(),
@@ -81,6 +84,7 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
                                                             1.0f,
                                                             0.0f));
         stringStreamTag.str(std::string());
+        stringStreamName.str(std::string());
         stringStreamTag << "panBeam" << (beamIdx+1);
         stringStreamName << "Pan beam " << (beamIdx+1);
         addParameter(panBeam[beamIdx] = new AudioParameterFloat(stringStreamTag.str(),
@@ -89,6 +93,7 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
                                                           1.0f,
                                                           0.0f));
         stringStreamTag.str(std::string());
+        stringStreamName.str(std::string());
         stringStreamTag << "gainBeam" << (beamIdx+1);
         stringStreamName << "Gain beam " << (beamIdx+1);
         addParameter(gainBeam[beamIdx] = new AudioParameterFloat(stringStreamTag.str(),
@@ -98,13 +103,13 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
                                                            10.0f));
         
         stringStreamTag.str(std::string());
+        stringStreamName.str(std::string());
         stringStreamTag << "muteBeam" << (beamIdx+1);
         stringStreamName << "Mute beam " << (beamIdx+1);
         addParameter(muteBeam[beamIdx] = new AudioParameterBool(stringStreamTag.str(),
                                                                  stringStreamName.str(),
                                                                  false));
         
-        stringStreamTag.str(std::string());
     }
 }
 
