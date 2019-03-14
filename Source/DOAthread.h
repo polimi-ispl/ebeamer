@@ -1,13 +1,10 @@
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
+#include "PluginProcessor.h"
 
-//==============================================================================
-
-// These need to be declared in order to have references to them in DOAthread;
-// they'll be defined later because they contain instances of DOAthread.
-class JucebeamAudioProcessor;
-class JucebeamAudioProcessorEditor;
+#define INITIAL_CONSIDERED_DIRECTIONS 25
+#define BUFFER_THRESHOLD 100
 
 //==============================================================================
 
@@ -15,7 +12,7 @@ class DOAthread     : public Thread
 {
 public:
 
-    DOAthread(JucebeamAudioProcessor&, JucebeamAudioProcessorEditor&);
+    DOAthread(JucebeamAudioProcessor&);
     ~DOAthread();
     
     void run() override;
@@ -26,9 +23,7 @@ public:
 private:
 
     JucebeamAudioProcessor& processor;
-    JucebeamAudioProcessorEditor& editor;
     
-    SpinLock fftLock;
     SpinLock energyLock;
     
     std::vector<float> energy;

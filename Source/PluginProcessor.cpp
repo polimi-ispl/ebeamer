@@ -442,3 +442,41 @@ void JucebeamAudioProcessor::updateSymmetricFrequencyDomainData (float* samples)
     }
 }
 
+bool JucebeamAudioProcessor::isBufferGrowing()
+{
+    return (fftData.size() < BUFFER_THRESHOLD);
+}
+
+std::vector<float> JucebeamAudioProcessor::popFrontFFTdata()
+{
+    std::vector<float> result;
+    
+    if(fftData.size() == 0)
+        return result; // The buffer is empty
+        
+    if(fftData.size() == 1 && fftData.back().size() < getTotalNumInputChannels())
+        return result; // The last element of the buffer is still being filled
+    
+    result = fftData.front();
+    
+    fftData.erase(fftData.begin());
+    
+    return result;
+}
+
+void JucebeamAudioProcessor::pushBackFFTdata(float* input)
+{
+    // TODO:
+    // Convert input array to vector
+    
+    if(fftData.back().size() < getTotalNumInputChannels()){
+        // The last element of the buffer is still being filled
+        fftData.back().push_back(input_vector);
+    }
+    else{
+        // The fft to be pushed is the first one of a new block
+        fftData.emplace_back();
+        fftData.back().push_back(input_vector);
+    }
+}
+
