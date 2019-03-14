@@ -2,6 +2,7 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "PluginProcessor.h"
+#include "DOAthread.h"
 
 #define PLANAR_MODE
 
@@ -151,11 +152,9 @@ private:
 
 class JucebeamAudioProcessorEditor  : public AudioProcessorEditor,
 private ToggleButton::Listener,
-private Slider::Listener,
-public ChangeListener
+private Slider::Listener
 {
 public:
-    
     
     JucebeamAudioProcessorEditor (JucebeamAudioProcessor&);
     ~JucebeamAudioProcessorEditor();
@@ -168,6 +167,7 @@ private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     JucebeamAudioProcessor& processor;
+    DOAthread *DOAt;
     
     // Project specific
     
@@ -200,7 +200,6 @@ private:
     // Callbacks
     void buttonClicked(Button *button) override;
     void sliderValueChanged(Slider *slider) override;
-    void changeListenerCallback (ChangeBroadcaster*) override;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JucebeamAudioProcessorEditor);
 };

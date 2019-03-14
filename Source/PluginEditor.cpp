@@ -305,6 +305,8 @@ void SceneComponent::updateEnergy(float* energy)
 JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcessor& p)
 : AudioProcessorEditor (&p), processor (p)
 {
+    DOAt = new DOAthread(p, *this);
+    
     setSize (GUI_WIDTH, GUI_HEIGHT);
     
     // processor.addChangeListener (this);
@@ -542,8 +544,3 @@ void JucebeamAudioProcessorEditor::sliderValueChanged(Slider *slider)
         *(processor.gainBeam[1]) = slider->getValue();
     }
 }
-
-void JucebeamAudioProcessorEditor::changeListenerCallback (ChangeBroadcaster *source)
-{
-    // scene.updateEnergy(processor.getDirectionalEnergy());
-} 
