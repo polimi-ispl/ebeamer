@@ -252,9 +252,11 @@ void BeamComponent::paint(Graphics& g)
     path.applyTransform(AffineTransform::translation(SCENE_WIDTH/2, SCENE_WIDTH/2));
 
     g.setColour(Colours::lightblue);
+    g.setOpacity(0.4);
     g.fillPath(path);
 
     g.setColour (Colours::blue);
+    g.setOpacity(0.8);
     PathStrokeType strokeType(2);
     g.strokePath(path, strokeType);
 
@@ -275,7 +277,7 @@ void BeamComponent::move(float new_position)
 
 void BeamComponent::scale(float new_width)
 {
-    width = new_width * SCENE_WIDTH/10;
+    width = (0.1 + 2.9*new_width) * SCENE_WIDTH/10;
     repaint();
 }
 
@@ -313,11 +315,6 @@ void SceneComponent::resized()
         beams[i].setBounds(getLocalBounds());
 }
 
-void SceneComponent::updateEnergy(std::vector<float> energy)
-{
-    grid.updateEnergy(energy);
-}
-
 //==============================================================================
 //==============================================================================
 
@@ -338,6 +335,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     parameterRange = processor.steeringBeam[0]->getNormalisableRange();
     steeringBeam1Slider.setRange(parameterRange.start,parameterRange.end,0.01);
     steeringBeam1Slider.setValue(processor.steeringBeam[0]->get());
+    scene.beams[0].move(processor.steeringBeam[0]->get());
     steeringBeam1Slider.addListener(this);
     steeringBeam1Slider.setSliderStyle(Slider::LinearHorizontal);
     steeringBeam1Slider.setTextBoxStyle(Slider::TextBoxRight,false,60,20);
@@ -347,6 +345,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     parameterRange = processor.steeringBeam[1]->getNormalisableRange();
     steeringBeam2Slider.setRange(parameterRange.start,parameterRange.end,0.01);
     steeringBeam2Slider.setValue(processor.steeringBeam[1]->get());
+    scene.beams[1].move(processor.steeringBeam[1]->get());
     steeringBeam2Slider.addListener(this);
     steeringBeam2Slider.setSliderStyle(Slider::LinearHorizontal);
     steeringBeam2Slider.setTextBoxStyle(Slider::TextBoxRight,false,60,20);
@@ -364,6 +363,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     parameterRange = processor.widthBeam[0]->getNormalisableRange();
     widthBeam1Knob.setRange(parameterRange.start,parameterRange.end,0.01);
     widthBeam1Knob.setValue(processor.widthBeam[0]->get());
+    scene.beams[0].scale(processor.widthBeam[0]->get());
     widthBeam1Knob.addListener(this);
     widthBeam1Knob.setSliderStyle(Slider::Rotary);
     widthBeam1Knob.setTextBoxStyle(Slider::TextBoxRight,false,LABEL_WIDTH,LABEL_HEIGHT);
@@ -373,6 +373,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     parameterRange = processor.widthBeam[1]->getNormalisableRange();
     widthBeam2Knob.setRange(parameterRange.start,parameterRange.end,0.01);
     widthBeam2Knob.setValue(processor.widthBeam[1]->get());
+    scene.beams[1].scale(processor.widthBeam[1]->get());
     widthBeam2Knob.addListener(this);
     widthBeam2Knob.setSliderStyle(Slider::Rotary);
     widthBeam2Knob.setTextBoxStyle(Slider::TextBoxLeft,false,LABEL_WIDTH,LABEL_HEIGHT);
@@ -535,18 +536,22 @@ void JucebeamAudioProcessorEditor::sliderValueChanged(Slider *slider)
     if (slider == &steeringBeam1Slider)
     {
         *(processor.steeringBeam[0]) = slider->getValue();
+        scene.beams[0].move(slider->getValue());
     }
     else if (slider == &steeringBeam2Slider)
     {
         *(processor.steeringBeam[1]) = slider->getValue();
+        scene.beams[1].move(slider->getValue());
     }
     else if (slider == &widthBeam1Knob)
     {
         *(processor.widthBeam[0]) = slider->getValue();
+        scene.beams[0].scale(slider->getValue());
     }
     else if (slider == &widthBeam2Knob)
     {
         *(processor.widthBeam[1]) = slider->getValue();
+        scene.beams[1].scale(slider->getValue());
     }
     else if (slider == &panBeam1Knob)
     {
@@ -568,5 +573,5 @@ void JucebeamAudioProcessorEditor::sliderValueChanged(Slider *slider)
 
 void JucebeamAudioProcessorEditor::hiResTimerCallback()
 {
-    scene.updateEnergy(DOAt->getEnergy());
+    scene.grid.updateEnergy(DOAt->getEnergy());
 }

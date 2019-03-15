@@ -137,12 +137,10 @@ public:
     void paint(Graphics&) override;
     void resized() override;
 
-    void updateEnergy(std::vector<float>);
-
-private:
-
     GridComponent grid;
     BeamComponent beams[NUM_BEAMS];
+
+private:
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SceneComponent)
 };
