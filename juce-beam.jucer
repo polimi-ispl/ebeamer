@@ -12,6 +12,10 @@
       <FILE id="hAi9Of" name="firIR.h" compile="0" resource="0" file="Source/Binary/firIR.h"/>
     </GROUP>
     <GROUP id="{52771D1D-3211-6CF7-CE70-5C5684F5D0E1}" name="Source">
+      <FILE id="wmvu4j" name="SceneComponent.cpp" compile="1" resource="0"
+            file="Source/SceneComponent.cpp"/>
+      <FILE id="xYiNGT" name="SceneComponent.h" compile="0" resource="0"
+            file="Source/SceneComponent.h"/>
       <FILE id="T0rnb7" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
       <FILE id="KwV1a4" name="PluginProcessor.h" compile="0" resource="0"
