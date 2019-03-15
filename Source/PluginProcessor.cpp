@@ -248,6 +248,13 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
             // Forward channel FFT
             fft -> performRealOnlyForwardTransform(fftInput);
             
+            // Push FFT data for DOAthread to retrieve
+            const GenericScopedLock<SpinLock> scopedLock(fftLock);
+            
+            pushBackFFTdata(fftInput);
+            
+            const GenericScopedUnlock<SpinLock> scopedUnlock(fftLock);
+            
             // Beam dependent processing
             for (int beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx)
             {
@@ -442,9 +449,15 @@ void JucebeamAudioProcessor::updateSymmetricFrequencyDomainData (float* samples)
     }
 }
 
-bool JucebeamAudioProcessor::isBufferGrowing()
+int JucebeamAudioProcessor::bufferStatus()
 {
-    return (fftData.size() < BUFFER_THRESHOLD);
+    if(fftData.size() > BUFFER_UPPER_THRESHOLD)
+        return (fftData.size() - BUFFER_UPPER_THRESHOLD);
+        
+    if(fftData.size() < BUFFER_LOWER_THRESHOLD)
+        return (fftData.size() - BUFFER_LOWER_THRESHOLD);
+        
+    return 0;
 }
 
 std::vector<float*> JucebeamAudioProcessor::popFrontFFTdata()
@@ -466,7 +479,7 @@ std::vector<float*> JucebeamAudioProcessor::popFrontFFTdata()
 
 void JucebeamAudioProcessor::pushBackFFTdata(float* input)
 {
-    if(fftData.back().size() < getTotalNumInputChannels()){
+    if(fftData.size() > 0 && fftData.back().size() < getTotalNumInputChannels()){
         // The last element of the buffer is still being filled
         fftData.back().push_back(input);
     }

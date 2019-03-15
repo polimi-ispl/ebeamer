@@ -4,7 +4,10 @@
 #include "PluginProcessor.h"
 
 #define INITIAL_CONSIDERED_DIRECTIONS 25
-#define BUFFER_THRESHOLD 100
+#define BUFFER_LOWER_THRESHOLD 5
+#define BUFFER_UPPER_THRESHOLD 50
+
+#define EDITOR_TIMER_DURATION 50
 
 //==============================================================================
 

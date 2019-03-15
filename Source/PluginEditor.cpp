@@ -326,7 +326,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
 {
     DOAt = new DOAthread(p);
 
-    startTimer(500);
+    startTimer(EDITOR_TIMER_DURATION);
 
     setSize (GUI_WIDTH, GUI_HEIGHT);
 
