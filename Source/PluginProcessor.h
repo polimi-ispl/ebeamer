@@ -66,7 +66,7 @@ public:
     AudioParameterBool*  muteBeam[NUM_BEAMS];
     
     typedef enum{UNSPECIFIED,DAS_IDEAL,DAS_MEASURED} algorithmType;
-    algorithmType algorithm = DAS_MEASURED;
+    algorithmType algorithm = DAS_IDEAL;
     
 private:
     //==============================================================================
