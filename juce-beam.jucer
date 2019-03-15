@@ -18,7 +18,9 @@
             file="Source/PluginProcessor.h"/>
       <FILE id="t4Kw4I" name="PluginEditor.cpp" compile="1" resource="0"
             file="Source/PluginEditor.cpp"/>
-      <FILE id="OORbCg" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
+      <FILE id="e38Gh9" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
+      <FILE id="wmu0lC" name="DOAthread.cpp" compile="1" resource="0" file="Source/DOAthread.cpp"/>
+      <FILE id="qrd71c" name="DOAthread.h" compile="0" resource="0" file="Source/DOAthread.h"/>
     </GROUP>
   </MAINGROUP>
   <EXPORTFORMATS>
