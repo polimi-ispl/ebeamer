@@ -65,6 +65,8 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
     std::ostringstream stringStreamTag;
     std::ostringstream stringStreamName;
     for (uint8 beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx){
+        stringStreamTag.str(std::string());
+        stringStreamName.str(std::string());
         stringStreamTag << "steerBeam" << (beamIdx+1);
         stringStreamName << "Steering beam " << (beamIdx+1);
         addParameter(steeringBeam[beamIdx] = new AudioParameterFloat(stringStreamTag.str(),
@@ -73,6 +75,7 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
                                                                1.0f,
                                                                -0.2f));
         stringStreamTag.str(std::string());
+        stringStreamName.str(std::string());
         stringStreamTag << "widthBeam" << (beamIdx+1);
         stringStreamName << "Width beam " << (beamIdx+1);
         addParameter(widthBeam[beamIdx] = new AudioParameterFloat(stringStreamTag.str(),
@@ -81,6 +84,7 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
                                                             1.0f,
                                                             0.0f));
         stringStreamTag.str(std::string());
+        stringStreamName.str(std::string());
         stringStreamTag << "panBeam" << (beamIdx+1);
         stringStreamName << "Pan beam " << (beamIdx+1);
         addParameter(panBeam[beamIdx] = new AudioParameterFloat(stringStreamTag.str(),
@@ -89,6 +93,7 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
                                                           1.0f,
                                                           0.0f));
         stringStreamTag.str(std::string());
+        stringStreamName.str(std::string());
         stringStreamTag << "gainBeam" << (beamIdx+1);
         stringStreamName << "Gain beam " << (beamIdx+1);
         addParameter(gainBeam[beamIdx] = new AudioParameterFloat(stringStreamTag.str(),
@@ -98,13 +103,13 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
                                                            10.0f));
         
         stringStreamTag.str(std::string());
+        stringStreamName.str(std::string());
         stringStreamTag << "muteBeam" << (beamIdx+1);
         stringStreamName << "Mute beam " << (beamIdx+1);
         addParameter(muteBeam[beamIdx] = new AudioParameterBool(stringStreamTag.str(),
                                                                  stringStreamName.str(),
                                                                  false));
         
-        stringStreamTag.str(std::string());
     }
 }
 
@@ -359,13 +364,65 @@ void JucebeamAudioProcessor::getStateInformation (MemoryBlock& destData)
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
+    std::ostringstream stringStreamTag;
+    std::unique_ptr<XmlElement> xml (new XmlElement ("eBeamer"));
+    for (uint8 beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx){
+        stringStreamTag.str(std::string());
+        stringStreamTag << "steerBeam" << (beamIdx+1);
+        xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(steeringBeam[beamIdx]));
+        
+        stringStreamTag.str(std::string());
+        stringStreamTag << "widthBeam" << (beamIdx+1);
+        xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(widthBeam[beamIdx]));
+        
+        stringStreamTag.str(std::string());
+        stringStreamTag << "panBeam" << (beamIdx+1);
+        xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(panBeam[beamIdx]));
+        
+        stringStreamTag.str(std::string());
+        stringStreamTag << "gainBeam" << (beamIdx+1);
+        xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(gainBeam[beamIdx]));
+
+        stringStreamTag.str(std::string());
+        stringStreamTag << "muteBeam" << (beamIdx+1);
+        xml->setAttribute(Identifier(stringStreamTag.str()), (bool) *(muteBeam[beamIdx]));
+    }
+    copyXmlToBinary (*xml, destData);
 }
 
 void JucebeamAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
+    std::ostringstream stringStreamTag;
+    std::unique_ptr<XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
+    if (xmlState.get() != nullptr){
+        if (xmlState->hasTagName ("eBeamer")){
+            for (uint8 beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx){
+                stringStreamTag.str(std::string());
+                stringStreamTag << "steerBeam" << (beamIdx+1);
+                *(steeringBeam[beamIdx]) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 0.0);
+                
+                stringStreamTag.str(std::string());
+                stringStreamTag << "widthBeam" << (beamIdx+1);
+                *(widthBeam[beamIdx]) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 0.0);
+                
+                stringStreamTag.str(std::string());
+                stringStreamTag << "panBeam" << (beamIdx+1);
+                *(panBeam[beamIdx]) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 0.0);
+                
+                stringStreamTag.str(std::string());
+                stringStreamTag << "gainBeam" << (beamIdx+1);
+                *(gainBeam[beamIdx]) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 10.0);
+                
+                stringStreamTag.str(std::string());
+                stringStreamTag << "muteBeam" << (beamIdx+1);
+                *(muteBeam[beamIdx]) = xmlState->getBoolAttribute(Identifier(stringStreamTag.str()), false);
+            }
+        }
+    }
 }
+
 
 //==============================================================================
 // This creates new instances of the plugin..
