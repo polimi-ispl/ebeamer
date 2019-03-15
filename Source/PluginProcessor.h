@@ -52,7 +52,7 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     
     // Project specific
-    std::vector<float> popFrontFFTdata();
+    std::vector<float*> popFrontFFTdata();
     bool isBufferGrowing();
     
     bool passThrough = false;
@@ -85,7 +85,7 @@ private:
     float fftOutput[2*FFT_SIZE];
     
     SpinLock fftLock;
-    std::vector<std::vector<float>> fftData;
+    std::vector<std::vector<float*>> fftData;
     
     std::vector<std::vector<std::vector<float>>> firDASidealFft;
     std::vector<std::vector<std::vector<float>>> firDASmeasuredFft;

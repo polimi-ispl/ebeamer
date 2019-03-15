@@ -447,9 +447,9 @@ bool JucebeamAudioProcessor::isBufferGrowing()
     return (fftData.size() < BUFFER_THRESHOLD);
 }
 
-std::vector<float> JucebeamAudioProcessor::popFrontFFTdata()
+std::vector<float*> JucebeamAudioProcessor::popFrontFFTdata()
 {
-    std::vector<float> result;
+    std::vector<float*> result;
     
     if(fftData.size() == 0)
         return result; // The buffer is empty
@@ -466,17 +466,14 @@ std::vector<float> JucebeamAudioProcessor::popFrontFFTdata()
 
 void JucebeamAudioProcessor::pushBackFFTdata(float* input)
 {
-    // TODO:
-    // Convert input array to vector
-    
     if(fftData.back().size() < getTotalNumInputChannels()){
         // The last element of the buffer is still being filled
-        fftData.back().push_back(input_vector);
+        fftData.back().push_back(input);
     }
     else{
         // The fft to be pushed is the first one of a new block
         fftData.emplace_back();
-        fftData.back().push_back(input_vector);
+        fftData.back().push_back(input);
     }
 }
 

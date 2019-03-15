@@ -23,7 +23,7 @@ DOAthread::~DOAthread()
 
 void DOAthread::run()
 {
-    std::vector<float> fftData;
+    std::vector<float*> fftData;
     std::vector<float> temp;
     
     while(!threadShouldExit())
