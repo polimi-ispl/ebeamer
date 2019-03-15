@@ -201,12 +201,36 @@ void JucebeamAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     beamBuffer = AudioBuffer<float>(getTotalNumOutputChannels(),bufLen);
     beamBuffer.clear();
     
+    // Initialize HPF
+    for (auto idx = 0; idx < iirHPFfilters.size(); ++idx)
+    {
+        delete iirHPFfilters.at(idx);
+    }
+    iirHPFfilters.clear();
+    
+    iirCoeffHPF = IIRCoefficients::makeHighPass(getSampleRate(), HPF_FREQ);
+    
+    auto numInputChannels = getTotalNumInputChannels();
+    iirHPFfilters.resize(numInputChannels);
+    
+    for (auto idx = 0; idx < getTotalNumInputChannels(); ++idx)
+    {
+        iirHPFfilters.at(idx) = new IIRFilter();
+        iirHPFfilters[idx]->setCoefficients(iirCoeffHPF);
+    }
+    
 }
 
 void JucebeamAudioProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
+    
+    for (auto idx = 0; idx < iirHPFfilters.size(); ++idx)
+    {
+        delete iirHPFfilters.at(idx);
+    }
+    iirHPFfilters.clear();
     
 }
 
@@ -240,6 +264,9 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
     
     for (int inChannel = 0; inChannel < totalNumInputChannels; ++inChannel)
     {
+        
+        // HPF filtering
+        iirHPFfilters[inChannel]->processSamples(buffer.getWritePointer(inChannel), blockNumSamples);
         
         for (auto subBlockIdx = 0;subBlockIdx < std::ceil(float(blockNumSamples)/MAX_FFT_BLOCK_LEN);++subBlockIdx)
         {

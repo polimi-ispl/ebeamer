@@ -6,6 +6,7 @@
 #define FIR_LEN 512
 #define MAX_FFT_BLOCK_LEN (FFT_SIZE - FIR_LEN)
 #define NUM_BEAMS 2
+#define HPF_FREQ 20.0 //Hz
 
 
 //==============================================================================
@@ -83,5 +84,9 @@ private:
     std::vector<std::vector<std::vector<float>>> firDASmeasuredFft;
     std::vector<std::vector<std::vector<float>>> firBeamwidthFft;
     std::vector<std::vector<std::vector<float>>> *firFFT;
+    
+    IIRCoefficients iirCoeffHPF;
+    
+    std::vector<IIRFilter*> iirHPFfilters;
     
 };
