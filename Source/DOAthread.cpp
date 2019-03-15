@@ -3,7 +3,7 @@
 //==============================================================================
 
 DOAthread::DOAthread(JucebeamAudioProcessor& p)
-        : processor(p), Thread("Direction of arrival thread")
+        : Thread("Direction of arrival thread"),  processor(p)
 {
     startThread(3);
     
