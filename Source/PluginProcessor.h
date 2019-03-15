@@ -52,6 +52,10 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     
     // Project specific
+    std::vector<float*> popFrontFFTdata();
+    int bufferStatus();
+    SpinLock fftLock;
+    
     bool passThrough = false;
     bool bypass = false;
     AudioParameterFloat* steeringBeam[NUM_BEAMS];
@@ -72,6 +76,10 @@ private:
     void prepareForConvolution (float *samples) noexcept;
     void convolutionProcessingAndAccumulate (const float *input, const float *impulse, float *output);
     void updateSymmetricFrequencyDomainData (float* samples) noexcept;
+    
+    void pushBackFFTdata(float*);
+    
+    std::vector<std::vector<float*>> fftData;
     
     AudioBuffer<float> beamBuffer;
     dsp::FFT *fft;
