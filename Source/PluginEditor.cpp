@@ -151,8 +151,12 @@ void GridComponent::updateEnergy(std::vector<float> energy)
 #endif
         }
     }
-
-    repaint();
+    
+    {
+        MessageManagerLock mmlock;
+        repaint();
+    }
+    
 }
 
 void GridComponent::computeVertices()
@@ -323,7 +327,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
 {
     DOAt = new DOAthread(p);
 
-    //startTimer(EDITOR_TIMER_DURATION);
+    startTimer(EDITOR_TIMER_DURATION);
 
     setSize (GUI_WIDTH, GUI_HEIGHT);
 
