@@ -313,11 +313,6 @@ void SceneComponent::resized()
         beams[i].setBounds(getLocalBounds());
 }
 
-void SceneComponent::updateEnergy(std::vector<float> energy)
-{
-    grid.updateEnergy(energy);
-}
-
 //==============================================================================
 //==============================================================================
 
@@ -535,18 +530,22 @@ void JucebeamAudioProcessorEditor::sliderValueChanged(Slider *slider)
     if (slider == &steeringBeam1Slider)
     {
         *(processor.steeringBeam[0]) = slider->getValue();
+        scene.beams[0].move(slider->getValue());
     }
     else if (slider == &steeringBeam2Slider)
     {
         *(processor.steeringBeam[1]) = slider->getValue();
+        scene.beams[1].move(slider->getValue());
     }
     else if (slider == &widthBeam1Knob)
     {
         *(processor.widthBeam[0]) = slider->getValue();
+        scene.beams[0].scale(slider->getValue());
     }
     else if (slider == &widthBeam2Knob)
     {
         *(processor.widthBeam[1]) = slider->getValue();
+        scene.beams[1].scale(slider->getValue());
     }
     else if (slider == &panBeam1Knob)
     {
@@ -568,5 +567,5 @@ void JucebeamAudioProcessorEditor::sliderValueChanged(Slider *slider)
 
 void JucebeamAudioProcessorEditor::hiResTimerCallback()
 {
-    scene.updateEnergy(DOAt->getEnergy());
+    scene.grid.updateEnergy(DOAt->getEnergy());
 }
