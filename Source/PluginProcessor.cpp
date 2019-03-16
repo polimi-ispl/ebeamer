@@ -264,7 +264,7 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
         iirHPFfilters[inChannel]->processSamples(buffer.getWritePointer(inChannel), blockNumSamples);
         
         // Meter
-        inputRMS[inChannel] = buffer.getRMSLevel(inChannel, 0, blockNumSamples);
+        inputRMS[inChannel] = inputRMS[inChannel]*(RMS_INERTIA) + buffer.getRMSLevel(inChannel, 0, blockNumSamples)*(1-RMS_INERTIA);
         
         for (auto subBlockIdx = 0;subBlockIdx < std::ceil(float(blockNumSamples)/MAX_FFT_BLOCK_LEN);++subBlockIdx)
         {
@@ -352,7 +352,7 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
     
     // Meter
     for (auto beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx)
-        beamRMS[beamIdx] = beamBuffer.getRMSLevel(beamIdx, 0, blockNumSamples);
+        beamRMS[beamIdx] = beamRMS[beamIdx]*(RMS_INERTIA) + beamBuffer.getRMSLevel(beamIdx, 0, blockNumSamples)*(1-RMS_INERTIA);
     
     // Sum beams in output channels
     for (int outChannel = 0; outChannel < totalNumOutputChannels; ++outChannel)

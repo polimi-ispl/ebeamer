@@ -121,6 +121,8 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     setMuteButtonColor(1);
     addAndMakeVisible(beam2MuteButton);
 
+    inputMeter.setSource(p.inputRMS);
+    inputMeter.startTimerHz(INPUT_RMS_UPDATE_FREQ);
     addAndMakeVisible(inputMeter);
 
 }

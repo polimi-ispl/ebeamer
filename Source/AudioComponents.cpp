@@ -1,12 +1,12 @@
 /*
-  ==============================================================================
-
-    AudioComponents.cpp
-    Created: 16 Mar 2019 11:44:28am
-    Author:  Luca Bondi
-
-  ==============================================================================
-*/
+ ==============================================================================
+ 
+ AudioComponents.cpp
+ Created: 16 Mar 2019 11:44:28am
+ Author:  Luca Bondi
+ 
+ ==============================================================================
+ */
 
 #include "AudioComponents.h"
 
@@ -42,7 +42,7 @@ LedBarComponent::LedBarComponent(int num, bool isHorizontal){
 }
 
 void LedBarComponent::paint(Graphics& g){
-
+    
 }
 
 void LedBarComponent::resized(){
@@ -55,4 +55,37 @@ void LedBarComponent::resized(){
         leds[ledIdx]->setBounds(ledArea.toNearestInt());
     }
     
+}
+
+void LedBarComponent::timerCallback()
+{
+    for (auto ledIdx = 0; ledIdx < leds.size(); ++ledIdx)
+    {
+        auto value = this->source->at(ledIdx);
+        Colour col;
+        if (value > Decibels::decibelsToGain(RED_LT))
+        {
+            col = Colours::red;
+        }else if(value > Decibels::decibelsToGain(YELLOW_LT))
+        {
+            col = Colours::yellow;
+        }
+        else if (value > Decibels::decibelsToGain(GREEN_LT))
+        {
+            col = Colours::green;
+        }
+        else
+        {
+            col = Colours::grey;
+        }
+        leds[ledIdx]->colour = col;
+    }
+    
+    repaint();
+}
+
+void LedBarComponent::setSource(std::vector<float> &source)
+{
+    jassert(source.size() == leds.size());
+    this->source = &source;
 }

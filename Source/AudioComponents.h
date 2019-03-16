@@ -11,6 +11,10 @@
 #pragma once
 #define DB_MINUS_INF -100.0
 
+#define RED_LT -0.5f //dB
+#define YELLOW_LT -6.0f //dB
+#define GREEN_LT -20.0f //dB
+
 #include "../JuceLibraryCode/JuceHeader.h"
 
 //==============================================================================
@@ -55,19 +59,25 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LedComponent)
 };
 
-class LedBarComponent : public Component
+class LedBarComponent : public Component, public Timer
 {
 public:
     
     LedBarComponent(int num, bool isHorizontal = true);
+    ~LedBarComponent(){};
     std::vector<std::unique_ptr<LedComponent>> leds;
     void paint(Graphics&) override;
     void resized() override;
+    
+    void setSource(std::vector<float> &source);
 
 private:
     
     bool isHorizontal;
     int num;
+    std::vector<float> *source;
+    
+    void timerCallback() override;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LedBarComponent)
 };

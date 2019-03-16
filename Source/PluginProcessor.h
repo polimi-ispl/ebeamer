@@ -7,6 +7,7 @@
 #define MAX_FFT_BLOCK_LEN (FFT_SIZE - FIR_LEN)
 #define NUM_BEAMS 2
 #define HPF_FREQ 20.0 //Hz
+#define RMS_INERTIA 0.9f
 
 
 //==============================================================================
@@ -68,19 +69,8 @@ public:
     typedef enum{DAS_IDEAL,DAS_MEASURED} algorithmType;
     algorithmType algorithm = DAS_IDEAL;
     
-    const float getInputRMS(size_t channel){
-        if (channel < inputRMS.size())
-            return inputRMS[channel];
-        else
-            return 0;
-    }
-    
-    const float getBeamRMS(size_t channel){
-        if (channel < beamRMS.size())
-            return beamRMS[channel];
-        else
-            return 0;
-    }
+    std::vector<float> inputRMS;
+    std::vector<float> beamRMS;
     
 private:
     //==============================================================================
@@ -111,7 +101,6 @@ private:
     
     std::vector<std::unique_ptr<IIRFilter>> iirHPFfilters;
     
-    std::vector<float> inputRMS;
-    std::vector<float> beamRMS;
+
     
 };
