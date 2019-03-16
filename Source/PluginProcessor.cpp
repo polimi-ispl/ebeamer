@@ -54,7 +54,7 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
 {
     
     // Initialize FFT
-    fft = new dsp::FFT(roundToInt (std::log2 (FFT_SIZE)));
+    fft = std::make_unique<dsp::FFT>(roundToInt (std::log2 (FFT_SIZE)));
     
     // Initialize firFFTs (already prepared for convolution
     firDASidealFft = prepareIR(readFIR(firIR::firDASideal_dat,firIR::firDASideal_datSize));
@@ -65,6 +65,8 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
     std::ostringstream stringStreamTag;
     std::ostringstream stringStreamName;
     for (uint8 beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx){
+        stringStreamTag.str(std::string());
+        stringStreamName.str(std::string());
         stringStreamTag << "steerBeam" << (beamIdx+1);
         stringStreamName << "Steering beam " << (beamIdx+1);
         addParameter(steeringBeam[beamIdx] = new AudioParameterFloat(stringStreamTag.str(),
@@ -73,6 +75,7 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
                                                                1.0f,
                                                                -0.2f));
         stringStreamTag.str(std::string());
+        stringStreamName.str(std::string());
         stringStreamTag << "widthBeam" << (beamIdx+1);
         stringStreamName << "Width beam " << (beamIdx+1);
         addParameter(widthBeam[beamIdx] = new AudioParameterFloat(stringStreamTag.str(),
@@ -81,6 +84,7 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
                                                             1.0f,
                                                             0.0f));
         stringStreamTag.str(std::string());
+        stringStreamName.str(std::string());
         stringStreamTag << "panBeam" << (beamIdx+1);
         stringStreamName << "Pan beam " << (beamIdx+1);
         addParameter(panBeam[beamIdx] = new AudioParameterFloat(stringStreamTag.str(),
@@ -89,28 +93,28 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
                                                           1.0f,
                                                           0.0f));
         stringStreamTag.str(std::string());
+        stringStreamName.str(std::string());
         stringStreamTag << "gainBeam" << (beamIdx+1);
         stringStreamName << "Gain beam " << (beamIdx+1);
         addParameter(gainBeam[beamIdx] = new AudioParameterFloat(stringStreamTag.str(),
                                                                  stringStreamName.str(),
                                                            0.0f,
-                                                           30.0f,
+                                                           60.0f,
                                                            10.0f));
         
         stringStreamTag.str(std::string());
+        stringStreamName.str(std::string());
         stringStreamTag << "muteBeam" << (beamIdx+1);
         stringStreamName << "Mute beam " << (beamIdx+1);
         addParameter(muteBeam[beamIdx] = new AudioParameterBool(stringStreamTag.str(),
                                                                  stringStreamName.str(),
                                                                  false));
         
-        stringStreamTag.str(std::string());
     }
 }
 
 JucebeamAudioProcessor::~JucebeamAudioProcessor()
 {
-    delete fft;
 }
 
 //==============================================================================
@@ -190,18 +194,38 @@ bool JucebeamAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts)
 //==============================================================================
 void JucebeamAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
+    auto numInputChannels = getTotalNumInputChannels();
+    
     auto bufLen = std::max(FFT_SIZE,samplesPerBlock+(FFT_SIZE - MAX_FFT_BLOCK_LEN));
     beamBuffer = AudioBuffer<float>(getTotalNumOutputChannels(),bufLen);
     beamBuffer.clear();
     
+    // Initialize HPF
+    iirHPFfilters.clear();
+    iirCoeffHPF = IIRCoefficients::makeHighPass(getSampleRate(), HPF_FREQ);
+    
+    iirHPFfilters.resize(numInputChannels);
+    for (auto idx = 0; idx < numInputChannels; ++idx)
+    {
+        iirHPFfilters[idx] = std::make_unique<IIRFilter>();
+        iirHPFfilters[idx]->setCoefficients(iirCoeffHPF);
+    }
+    
+    // Meters
+    inputRMS.clear();
+    for (auto idx = 0; idx < numInputChannels; ++idx)
+        inputRMS.push_back(0);
+    
+    beamRMS.clear();
+    for (auto idx = 0; idx < NUM_BEAMS; ++idx)
+        beamRMS.push_back(0);
 }
 
 void JucebeamAudioProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
+    iirHPFfilters.clear();
     
 }
 
@@ -236,6 +260,12 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
     for (int inChannel = 0; inChannel < totalNumInputChannels; ++inChannel)
     {
         
+        // HPF filtering
+        iirHPFfilters[inChannel]->processSamples(buffer.getWritePointer(inChannel), blockNumSamples);
+        
+        // Meter
+        inputRMS[inChannel] = inputRMS[inChannel]*(RMS_INERTIA) + buffer.getRMSLevel(inChannel, 0, blockNumSamples)*(1-RMS_INERTIA);
+        
         for (auto subBlockIdx = 0;subBlockIdx < std::ceil(float(blockNumSamples)/MAX_FFT_BLOCK_LEN);++subBlockIdx)
         {
             auto subBlockFirstIdx = subBlockIdx * MAX_FFT_BLOCK_LEN;
@@ -247,6 +277,13 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
             
             // Forward channel FFT
             fft -> performRealOnlyForwardTransform(fftInput);
+            
+            // Push FFT data for DOAthread to retrieve
+            const GenericScopedLock<SpinLock> scopedLock(fftLock);
+            
+            pushBackFFTdata(fftInput);
+            
+            const GenericScopedUnlock<SpinLock> scopedUnlock(fftLock);
             
             // Beam dependent processing
             for (int beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx)
@@ -313,6 +350,10 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
         
     }
     
+    // Meter
+    for (auto beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx)
+        beamRMS[beamIdx] = beamRMS[beamIdx]*(RMS_INERTIA) + beamBuffer.getRMSLevel(beamIdx, 0, blockNumSamples)*(1-RMS_INERTIA);
+    
     // Sum beams in output channels
     for (int outChannel = 0; outChannel < totalNumOutputChannels; ++outChannel)
     {
@@ -352,13 +393,65 @@ void JucebeamAudioProcessor::getStateInformation (MemoryBlock& destData)
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
+    std::ostringstream stringStreamTag;
+    std::unique_ptr<XmlElement> xml (new XmlElement ("eBeamer"));
+    for (uint8 beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx){
+        stringStreamTag.str(std::string());
+        stringStreamTag << "steerBeam" << (beamIdx+1);
+        xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(steeringBeam[beamIdx]));
+        
+        stringStreamTag.str(std::string());
+        stringStreamTag << "widthBeam" << (beamIdx+1);
+        xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(widthBeam[beamIdx]));
+        
+        stringStreamTag.str(std::string());
+        stringStreamTag << "panBeam" << (beamIdx+1);
+        xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(panBeam[beamIdx]));
+        
+        stringStreamTag.str(std::string());
+        stringStreamTag << "gainBeam" << (beamIdx+1);
+        xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(gainBeam[beamIdx]));
+
+        stringStreamTag.str(std::string());
+        stringStreamTag << "muteBeam" << (beamIdx+1);
+        xml->setAttribute(Identifier(stringStreamTag.str()), (bool) *(muteBeam[beamIdx]));
+    }
+    copyXmlToBinary (*xml, destData);
 }
 
 void JucebeamAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
+    std::ostringstream stringStreamTag;
+    std::unique_ptr<XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
+    if (xmlState.get() != nullptr){
+        if (xmlState->hasTagName ("eBeamer")){
+            for (uint8 beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx){
+                stringStreamTag.str(std::string());
+                stringStreamTag << "steerBeam" << (beamIdx+1);
+                *(steeringBeam[beamIdx]) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 0.0);
+                
+                stringStreamTag.str(std::string());
+                stringStreamTag << "widthBeam" << (beamIdx+1);
+                *(widthBeam[beamIdx]) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 0.0);
+                
+                stringStreamTag.str(std::string());
+                stringStreamTag << "panBeam" << (beamIdx+1);
+                *(panBeam[beamIdx]) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 0.0);
+                
+                stringStreamTag.str(std::string());
+                stringStreamTag << "gainBeam" << (beamIdx+1);
+                *(gainBeam[beamIdx]) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 10.0);
+                
+                stringStreamTag.str(std::string());
+                stringStreamTag << "muteBeam" << (beamIdx+1);
+                *(muteBeam[beamIdx]) = xmlState->getBoolAttribute(Identifier(stringStreamTag.str()), false);
+            }
+        }
+    }
 }
+
 
 //==============================================================================
 // This creates new instances of the plugin..
@@ -439,6 +532,47 @@ void JucebeamAudioProcessor::updateSymmetricFrequencyDomainData (float* samples)
     {
         samples[2 * i] = samples[2 * (FFT_SIZE - i)];
         samples[2 * i + 1] = -samples[2 * (FFT_SIZE - i) + 1];
+    }
+}
+
+int JucebeamAudioProcessor::bufferStatus()
+{
+    if(fftData.size() > BUFFER_UPPER_THRESHOLD)
+        return (fftData.size() - BUFFER_UPPER_THRESHOLD);
+        
+    if(fftData.size() < BUFFER_LOWER_THRESHOLD)
+        return (fftData.size() - BUFFER_LOWER_THRESHOLD);
+        
+    return 0;
+}
+
+std::vector<float*> JucebeamAudioProcessor::popFrontFFTdata()
+{
+    std::vector<float*> result;
+    
+    if(fftData.size() == 0)
+        return result; // The buffer is empty
+        
+    if(fftData.size() == 1 && fftData.back().size() < getTotalNumInputChannels())
+        return result; // The last element of the buffer is still being filled
+    
+    result = fftData.front();
+    
+    fftData.erase(fftData.begin());
+    
+    return result;
+}
+
+void JucebeamAudioProcessor::pushBackFFTdata(float* input)
+{
+    if(fftData.size() > 0 && fftData.back().size() < getTotalNumInputChannels()){
+        // The last element of the buffer is still being filled
+        fftData.back().push_back(input);
+    }
+    else{
+        // The fft to be pushed is the first one of a new block
+        fftData.emplace_back();
+        fftData.back().push_back(input);
     }
 }
 

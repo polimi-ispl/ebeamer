@@ -6,6 +6,8 @@
 #define FIR_LEN 512
 #define MAX_FFT_BLOCK_LEN (FFT_SIZE - FIR_LEN)
 #define NUM_BEAMS 2
+#define HPF_FREQ 20.0 //Hz
+#define RMS_INERTIA 0.9f
 
 
 //==============================================================================
@@ -52,6 +54,10 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     
     // Project specific
+    std::vector<float*> popFrontFFTdata();
+    int bufferStatus();
+    SpinLock fftLock;
+    
     bool passThrough = false;
     bool bypass = false;
     AudioParameterFloat* steeringBeam[NUM_BEAMS];
@@ -60,8 +66,11 @@ public:
     AudioParameterFloat* gainBeam[NUM_BEAMS];
     AudioParameterBool*  muteBeam[NUM_BEAMS];
     
-    typedef enum{UNSPECIFIED,DAS_IDEAL,DAS_MEASURED} algorithmType;
-    algorithmType algorithm = DAS_MEASURED;
+    typedef enum{DAS_IDEAL,DAS_MEASURED} algorithmType;
+    algorithmType algorithm = DAS_IDEAL;
+    
+    std::vector<float> inputRMS;
+    std::vector<float> beamRMS;
     
 private:
     //==============================================================================
@@ -73,8 +82,12 @@ private:
     void convolutionProcessingAndAccumulate (const float *input, const float *impulse, float *output);
     void updateSymmetricFrequencyDomainData (float* samples) noexcept;
     
+    void pushBackFFTdata(float*);
+    
+    std::vector<std::vector<float*>> fftData;
+    
     AudioBuffer<float> beamBuffer;
-    dsp::FFT *fft;
+    std::unique_ptr<dsp::FFT> fft;
     float fftInput[2*FFT_SIZE];
     float fftBuffer[2*FFT_SIZE];
     float fftOutput[2*FFT_SIZE];
@@ -83,5 +96,11 @@ private:
     std::vector<std::vector<std::vector<float>>> firDASmeasuredFft;
     std::vector<std::vector<std::vector<float>>> firBeamwidthFft;
     std::vector<std::vector<std::vector<float>>> *firFFT;
+    
+    IIRCoefficients iirCoeffHPF;
+    
+    std::vector<std::unique_ptr<IIRFilter>> iirHPFfilters;
+    
+
     
 };
