@@ -17,7 +17,8 @@
 class DecibelSlider : public Slider
 {
 public:
-    DecibelSlider() {}
+    
+    DecibelSlider(){};
     
     double getValueFromText (const String& text) override
     {
@@ -35,4 +36,38 @@ public:
     
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DecibelSlider)
+};
+
+
+class LedComponent : public Component
+{
+public:
+    
+    LedComponent(){};
+    
+    Colour colour;
+    
+    void paint(Graphics&) override;
+    void resized() override;
+    
+private:
+    
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LedComponent)
+};
+
+class LedBarComponent : public Component
+{
+public:
+    
+    LedBarComponent(int num, bool isHorizontal = true);
+    std::vector<std::unique_ptr<LedComponent>> leds;
+    void paint(Graphics&) override;
+    void resized() override;
+
+private:
+    
+    bool isHorizontal;
+    int num;
+    
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LedBarComponent)
 };

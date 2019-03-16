@@ -2,7 +2,7 @@
 #include "PluginEditor.h"
 
 JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcessor& p)
-: AudioProcessorEditor (&p), processor (p)
+:  AudioProcessorEditor (&p), inputMeter(p.getTotalNumInputChannels()), processor (p)
 {
     DOAt = std::make_unique<DOAthread>(p);
 
@@ -121,6 +121,8 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     setMuteButtonColor(1);
     addAndMakeVisible(beam2MuteButton);
 
+    addAndMakeVisible(inputMeter);
+
 }
 
 JucebeamAudioProcessorEditor::~JucebeamAudioProcessorEditor()
@@ -189,6 +191,11 @@ void JucebeamAudioProcessorEditor::resized()
     beam2MuteButton.setBounds(mutesArea.removeFromRight(MUTE_WIDTH));
     muteLabel.setBounds(mutesArea);
 
+    auto inputLedArea = area.removeFromTop(INPUT_LED_TOP_MARGIN+INPUT_LED_HEIGHT);
+    inputLedArea.removeFromTop(INPUT_LED_TOP_MARGIN);
+    inputLedArea.removeFromLeft(INPUT_LEFT_RIGHT_MARGIN);
+    inputLedArea.removeFromRight(INPUT_LEFT_RIGHT_MARGIN);
+    inputMeter.setBounds(inputLedArea);
 
 }
 

@@ -22,6 +22,9 @@
 #define LEFT_RIGHT_MARGIN 20
 #define TOP_BOTTOM_MARGIN 20
 #define KNOBS_LEFT_RIGHT_MARGIN 20
+#define INPUT_LED_TOP_MARGIN 20
+#define INPUT_LEFT_RIGHT_MARGIN 20
+#define INPUT_LED_HEIGHT 15
 
 
 
@@ -71,6 +74,8 @@ private:
     Label muteLabel;
     TextButton beam1MuteButton;
     TextButton beam2MuteButton;
+    
+    LedBarComponent inputMeter;
 
     void setMuteButtonColor(uint8 beamIdx);
     
