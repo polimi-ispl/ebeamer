@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="NEjZ3r" name="juce-beam" projectType="audioplug" jucerVersion="5.4.3"
-              companyName="ISPL Polimi" pluginFormats="buildVST3" pluginVST3Category="Spatial"
-              pluginAAXCategory="512" pluginRTASCategory="512" pluginVSTCategory="kPlugCategSpacializer"
-              pluginAUMainType="'aufx'" pluginName="eBeamer" pluginDesc="eStick double beam controller"
+              companyName="ISPL Polimi" pluginFormats="buildStandalone,buildVST3"
+              pluginVST3Category="Spatial" pluginAAXCategory="512" pluginRTASCategory="512"
+              pluginVSTCategory="kPlugCategSpacializer" pluginAUMainType="'aufx'"
+              pluginName="eBeamer" pluginDesc="eStick double beam controller"
               pluginManufacturer="ISPL Polimi" pluginManufacturerCode="Ispl"
               pluginCode="ebea">
   <MAINGROUP id="X7PQw9" name="juce-beam">

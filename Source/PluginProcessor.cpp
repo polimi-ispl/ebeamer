@@ -212,13 +212,13 @@ void JucebeamAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     }
     
     // Meters
-    inputRMS.clear();
+    inputMeters.clear();
     for (auto idx = 0; idx < numInputChannels; ++idx)
-        inputRMS.push_back(0);
+        inputMeters.push_back(0);
     
-    beamRMS.clear();
+    beamMeters.clear();
     for (auto idx = 0; idx < NUM_BEAMS; ++idx)
-        beamRMS.push_back(0);
+        beamMeters.push_back(0);
 }
 
 void JucebeamAudioProcessor::releaseResources()
@@ -249,11 +249,11 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
         firFFT = nullptr;
     }
     
-    // Linear value for the gain here
     float commonGaindB = 100;
     for (auto beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx){
         commonGaindB = std::min(commonGaindB,gainBeam[beamIdx]->get());
     }
+    commonGaindB -= 6;
     float commonGainLinear = Decibels::decibelsToGain(commonGaindB);
     buffer.applyGain(commonGainLinear);
     
@@ -264,7 +264,19 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
         iirHPFfilters[inChannel]->processSamples(buffer.getWritePointer(inChannel), blockNumSamples);
         
         // Meter
-        inputRMS[inChannel] = inputRMS[inChannel]*(RMS_INERTIA) + buffer.getRMSLevel(inChannel, 0, blockNumSamples)*(1-RMS_INERTIA);
+        {
+            float minVal,maxVal,maxAbsVal;
+            for (auto beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx)
+            {
+#ifdef METERS_MODE_RMS
+                inputMeters[inChannel] = inputMeters[inChannel]*(METERS_INERTIA) + buffer.getRMSLevel(inChannel, 0, blockNumSamples)*(1-METERS_INERTIA);
+#else
+                findMinAndMax(buffer.getReadPointer(inChannel), blockNumSamples, minVal, maxVal);
+                maxAbsVal = jmax(abs(minVal),abs(maxVal));
+                inputMeters[inChannel] = inputMeters[inChannel]*(METERS_INERTIA) + maxAbsVal*(1-METERS_INERTIA);
+#endif
+            }
+        }
         
         for (auto subBlockIdx = 0;subBlockIdx < std::ceil(float(blockNumSamples)/MAX_FFT_BLOCK_LEN);++subBlockIdx)
         {
@@ -351,8 +363,19 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
     }
     
     // Meter
-    for (auto beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx)
-        beamRMS[beamIdx] = beamRMS[beamIdx]*(RMS_INERTIA) + beamBuffer.getRMSLevel(beamIdx, 0, blockNumSamples)*(1-RMS_INERTIA);
+    {
+        float minVal,maxVal,maxAbsVal;
+        for (auto beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx)
+        {
+#ifdef METERS_MODE_RMS
+            beamMeters[beamIdx] = beamMeters[beamIdx]*(METERS_INERTIA) + beamBuffer.getRMSLevel(beamIdx, 0, blockNumSamples)*(1-METERS_INERTIA);
+#else
+            findMinAndMax(beamBuffer.getReadPointer(beamIdx), blockNumSamples, minVal, maxVal);
+            maxAbsVal = jmax(abs(minVal),abs(maxVal));
+            beamMeters[beamIdx] = beamMeters[beamIdx]*(METERS_INERTIA) + maxAbsVal*(1-METERS_INERTIA);
+#endif
+        }
+    }
     
     // Sum beams in output channels
     for (int outChannel = 0; outChannel < totalNumOutputChannels; ++outChannel)
