@@ -3,6 +3,7 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "DOAthread.h"
 #include "SceneComponent.h"
+#include "AudioComponents.h"
 
 #define GUI_WIDTH 540
 
@@ -23,30 +24,6 @@
 #define KNOBS_LEFT_RIGHT_MARGIN 20
 
 
-//==============================================================================
-class DecibelSlider : public Slider
-{
-public:
-    DecibelSlider() {}
-
-    double getValueFromText (const String& text) override
-    {
-        auto minusInfinitydB = -100.0;
-
-        auto decibelText = text.upToFirstOccurrenceOf ("dB", false, false).trim();    // [1]
-
-        return decibelText.equalsIgnoreCase ("-INF") ? minusInfinitydB
-        : decibelText.getDoubleValue();  // [2]
-    }
-
-    String getTextFromValue (double value) override
-    {
-        return Decibels::toString (value,1);
-    }
-
-private:
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DecibelSlider)
-};
 
 //==============================================================================
 
