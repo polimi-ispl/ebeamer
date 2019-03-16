@@ -68,7 +68,7 @@ private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     JucebeamAudioProcessor& processor;
-    DOAthread *DOAt;
+    std::unique_ptr<DOAthread> DOAt;
 
     // Project specific
 

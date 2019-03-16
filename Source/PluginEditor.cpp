@@ -4,7 +4,7 @@
 JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcessor& p)
 : AudioProcessorEditor (&p), processor (p)
 {
-    DOAt = new DOAthread(p);
+    DOAt = std::make_unique<DOAthread>(p);
 
     startTimer(EDITOR_TIMER_DURATION);
 
@@ -126,7 +126,6 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
 JucebeamAudioProcessorEditor::~JucebeamAudioProcessorEditor()
 {
     DOAt->signalThreadShouldExit();
-    delete DOAt;
 }
 
 //==============================================================================

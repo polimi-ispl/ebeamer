@@ -65,7 +65,7 @@ public:
     AudioParameterFloat* gainBeam[NUM_BEAMS];
     AudioParameterBool*  muteBeam[NUM_BEAMS];
     
-    typedef enum{UNSPECIFIED,DAS_IDEAL,DAS_MEASURED} algorithmType;
+    typedef enum{DAS_IDEAL,DAS_MEASURED} algorithmType;
     algorithmType algorithm = DAS_IDEAL;
     
 private:
@@ -83,7 +83,7 @@ private:
     std::vector<std::vector<float*>> fftData;
     
     AudioBuffer<float> beamBuffer;
-    dsp::FFT *fft;
+    std::unique_ptr<dsp::FFT> fft;
     float fftInput[2*FFT_SIZE];
     float fftBuffer[2*FFT_SIZE];
     float fftOutput[2*FFT_SIZE];
@@ -95,6 +95,6 @@ private:
     
     IIRCoefficients iirCoeffHPF;
     
-    std::vector<IIRFilter*> iirHPFfilters;
+    std::vector<std::unique_ptr<IIRFilter>> iirHPFfilters;
     
 };
