@@ -194,8 +194,8 @@ bool JucebeamAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts)
 //==============================================================================
 void JucebeamAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
+    auto numInputChannels = getTotalNumInputChannels();
+    
     auto bufLen = std::max(FFT_SIZE,samplesPerBlock+(FFT_SIZE - MAX_FFT_BLOCK_LEN));
     beamBuffer = AudioBuffer<float>(getTotalNumOutputChannels(),bufLen);
     beamBuffer.clear();
@@ -203,14 +203,22 @@ void JucebeamAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     // Initialize HPF
     iirHPFfilters.clear();
     iirCoeffHPF = IIRCoefficients::makeHighPass(getSampleRate(), HPF_FREQ);
-    auto numInputChannels = getTotalNumInputChannels();
+    
     iirHPFfilters.resize(numInputChannels);
-    for (auto idx = 0; idx < getTotalNumInputChannels(); ++idx)
+    for (auto idx = 0; idx < numInputChannels; ++idx)
     {
         iirHPFfilters[idx] = std::make_unique<IIRFilter>();
         iirHPFfilters[idx]->setCoefficients(iirCoeffHPF);
     }
     
+    // Meters
+    inputRMS.clear();
+    for (auto idx = 0; idx < numInputChannels; ++idx)
+        inputRMS.push_back(0);
+    
+    beamRMS.clear();
+    for (auto idx = 0; idx < NUM_BEAMS; ++idx)
+        beamRMS.push_back(0);
 }
 
 void JucebeamAudioProcessor::releaseResources()
@@ -254,6 +262,9 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
         
         // HPF filtering
         iirHPFfilters[inChannel]->processSamples(buffer.getWritePointer(inChannel), blockNumSamples);
+        
+        // Meter
+        inputRMS[inChannel] = buffer.getRMSLevel(inChannel, 0, blockNumSamples);
         
         for (auto subBlockIdx = 0;subBlockIdx < std::ceil(float(blockNumSamples)/MAX_FFT_BLOCK_LEN);++subBlockIdx)
         {
@@ -338,6 +349,10 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
         }
         
     }
+    
+    // Meter
+    for (auto beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx)
+        beamRMS[beamIdx] = beamBuffer.getRMSLevel(beamIdx, 0, blockNumSamples);
     
     // Sum beams in output channels
     for (int outChannel = 0; outChannel < totalNumOutputChannels; ++outChannel)

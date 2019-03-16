@@ -72,11 +72,7 @@ private:
     TextButton beam1MuteButton;
     TextButton beam2MuteButton;
 
-    // TODO: Meters
-
-
     void setMuteButtonColor(uint8 beamIdx);
-    
     
     // Callbacks
     void buttonClicked(Button *button) override;

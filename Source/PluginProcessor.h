@@ -68,6 +68,20 @@ public:
     typedef enum{DAS_IDEAL,DAS_MEASURED} algorithmType;
     algorithmType algorithm = DAS_IDEAL;
     
+    const float getInputRMS(size_t channel){
+        if (channel < inputRMS.size())
+            return inputRMS[channel];
+        else
+            return 0;
+    }
+    
+    const float getBeamRMS(size_t channel){
+        if (channel < beamRMS.size())
+            return beamRMS[channel];
+        else
+            return 0;
+    }
+    
 private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JucebeamAudioProcessor)
@@ -96,5 +110,8 @@ private:
     IIRCoefficients iirCoeffHPF;
     
     std::vector<std::unique_ptr<IIRFilter>> iirHPFfilters;
+    
+    std::vector<float> inputRMS;
+    std::vector<float> beamRMS;
     
 };
