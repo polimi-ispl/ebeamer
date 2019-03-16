@@ -26,7 +26,10 @@
 #define INPUT_LEFT_RIGHT_MARGIN 20
 #define INPUT_LED_HEIGHT 12
 #define INPUT_RMS_UPDATE_FREQ 15 //Hz
-
+#define BEAM_LED_WIDTH 5
+#define BEAM_TOP_BOTTOM_MARGIN 10
+#define BEAM_LEFT_RIGHT_MARGIN 10
+#define BEAM_RMS_UPDATE_FREQ 15 //Hz
 
 
 //==============================================================================
@@ -76,7 +79,9 @@ private:
     TextButton beam1MuteButton;
     TextButton beam2MuteButton;
     
-    LedBarComponent inputMeter;
+    MultiChannelLedBar inputMeter;
+    SingleChannelLedBar beam1Meter;
+    SingleChannelLedBar beam2Meter;
 
     void setMuteButtonColor(uint8 beamIdx);
     

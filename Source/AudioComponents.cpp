@@ -10,7 +10,7 @@
 
 #include "AudioComponents.h"
 
-void LedComponent::paint(Graphics& g){
+void RoundLed::paint(Graphics& g){
     
     Rectangle<float> area = getLocalBounds().toFloat();
     auto side = area.getHeight() > area.getWidth() ? area.getWidth() : area.getHeight();
@@ -22,12 +22,12 @@ void LedComponent::paint(Graphics& g){
     g.fillEllipse(area);
 }
 
-void LedComponent::resized(){
+void RoundLed::resized(){
     
 }
 
 
-LedBarComponent::LedBarComponent(int num, bool isHorizontal){
+MultiChannelLedBar::MultiChannelLedBar(int num, bool isHorizontal){
     jassert(num > 0);
     this->num = num;
     this->isHorizontal = isHorizontal;
@@ -35,17 +35,17 @@ LedBarComponent::LedBarComponent(int num, bool isHorizontal){
     leds.clear();
     for (auto ledIdx = 0; ledIdx < num; ++ledIdx)
     {
-        leds.push_back(std::make_unique<LedComponent>());
+        leds.push_back(std::make_unique<RoundLed>());
         leds[ledIdx]->colour = Colours::grey;
         addAndMakeVisible(leds[ledIdx].get());
     }
 }
 
-void LedBarComponent::paint(Graphics& g){
+void MultiChannelLedBar::paint(Graphics& g){
     
 }
 
-void LedBarComponent::resized(){
+void MultiChannelLedBar::resized(){
     
     Rectangle<float> area = getLocalBounds().toFloat();
     float step = isHorizontal ? area.getWidth()/num : area.getHeight()/num;
@@ -57,7 +57,7 @@ void LedBarComponent::resized(){
     
 }
 
-void LedBarComponent::timerCallback()
+void MultiChannelLedBar::timerCallback()
 {
     for (auto ledIdx = 0; ledIdx < leds.size(); ++ledIdx)
     {
@@ -72,7 +72,7 @@ void LedBarComponent::timerCallback()
         }
         else if (value > Decibels::decibelsToGain(GREEN_LT))
         {
-            col = Colours::green;
+            col = Colours::lightgreen;
         }
         else
         {
@@ -84,8 +84,86 @@ void LedBarComponent::timerCallback()
     repaint();
 }
 
-void LedBarComponent::setSource(std::vector<float> &source)
+void MultiChannelLedBar::setSource(std::vector<float> &source)
 {
     jassert(source.size() == leds.size());
     this->source = &source;
+}
+
+
+SingleChannelLedBar::SingleChannelLedBar(int numLeds, bool isHorizontal){
+    jassert(numLeds > 4);
+    
+    this->num = numLeds;
+    this->isHorizontal = isHorizontal;
+    
+    const float ledStep = 3; //dB
+    
+    leds.clear();
+    th.clear();
+    for (auto ledIdx = 0; ledIdx < num; ++ledIdx)
+    {
+        leds.push_back(std::make_unique<RoundLed>());
+        
+        auto ledThDb = ledIdx == (num-1) ? RED_LT : -((num - 1 - ledIdx) *ledStep);
+        th.push_back(ledThDb);
+        leds[ledIdx]->colour = thToColour(ledThDb,false);
+        
+        addAndMakeVisible(leds[ledIdx].get());
+    }
+}
+
+void SingleChannelLedBar::paint(Graphics& g){
+    
+}
+
+void SingleChannelLedBar::resized(){
+    
+    Rectangle<float> area = getLocalBounds().toFloat();
+    float step = isHorizontal ? area.getWidth()/num : area.getHeight()/num;
+    for (auto ledIdx = 0; ledIdx < num; ++ledIdx)
+    {
+        Rectangle<float> ledArea = isHorizontal ? area.removeFromLeft(step) : area.removeFromBottom(step);
+        leds[ledIdx]->setBounds(ledArea.toNearestInt());
+    }
+    
+}
+
+void SingleChannelLedBar::timerCallback()
+{
+    auto valueDb = Decibels::gainToDecibels(*source);
+    for (auto ledIdx = 0; ledIdx < leds.size(); ++ledIdx)
+            leds[ledIdx]->colour = thToColour(th[ledIdx], valueDb > th[ledIdx]);
+    
+    repaint();
+}
+
+void SingleChannelLedBar::setSource(float &source)
+{
+    this->source = &source;
+}
+
+Colour SingleChannelLedBar::thToColour(float th, bool active)
+{
+    if (th >= RED_LT)
+    {
+        if (active)
+            return Colours::red;
+        else
+            return Colours::darkred;
+    }
+    else if (th >= YELLOW_LT)
+    {
+        if (active)
+            return Colours::yellow;
+        else
+            return Colours::darkgoldenrod;
+    }
+    else
+    {
+        if (active)
+            return Colours::lightgreen;
+        else
+            return Colours::darkgreen;
+    }
 }
