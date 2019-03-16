@@ -3,6 +3,7 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "DOAthread.h"
 #include "SceneComponent.h"
+#include "AudioComponents.h"
 
 #define GUI_WIDTH 540
 
@@ -21,32 +22,15 @@
 #define LEFT_RIGHT_MARGIN 20
 #define TOP_BOTTOM_MARGIN 20
 #define KNOBS_LEFT_RIGHT_MARGIN 20
+#define INPUT_LED_TOP_MARGIN 20
+#define INPUT_LEFT_RIGHT_MARGIN 20
+#define INPUT_LED_HEIGHT 12
+#define INPUT_RMS_UPDATE_FREQ 15 //Hz
+#define BEAM_LED_WIDTH 5
+#define BEAM_TOP_BOTTOM_MARGIN 10
+#define BEAM_LEFT_RIGHT_MARGIN 10
+#define BEAM_RMS_UPDATE_FREQ 15 //Hz
 
-
-//==============================================================================
-class DecibelSlider : public Slider
-{
-public:
-    DecibelSlider() {}
-
-    double getValueFromText (const String& text) override
-    {
-        auto minusInfinitydB = -100.0;
-
-        auto decibelText = text.upToFirstOccurrenceOf ("dB", false, false).trim();    // [1]
-
-        return decibelText.equalsIgnoreCase ("-INF") ? minusInfinitydB
-        : decibelText.getDoubleValue();  // [2]
-    }
-
-    String getTextFromValue (double value) override
-    {
-        return Decibels::toString (value,1);
-    }
-
-private:
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DecibelSlider)
-};
 
 //==============================================================================
 
@@ -94,12 +78,12 @@ private:
     Label muteLabel;
     TextButton beam1MuteButton;
     TextButton beam2MuteButton;
-
-    // TODO: Meters
-
+    
+    MultiChannelLedBar inputMeter;
+    SingleChannelLedBar beam1Meter;
+    SingleChannelLedBar beam2Meter;
 
     void setMuteButtonColor(uint8 beamIdx);
-    
     
     // Callbacks
     void buttonClicked(Button *button) override;

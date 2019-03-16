@@ -2,7 +2,7 @@
 #include "PluginEditor.h"
 
 JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcessor& p)
-: AudioProcessorEditor (&p), processor (p)
+:  AudioProcessorEditor (&p), inputMeter(p.getTotalNumInputChannels()), processor (p)
 {
     DOAt = std::make_unique<DOAthread>(p);
 
@@ -121,6 +121,18 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     setMuteButtonColor(1);
     addAndMakeVisible(beam2MuteButton);
 
+    inputMeter.setSource(p.inputRMS);
+    inputMeter.startTimerHz(INPUT_RMS_UPDATE_FREQ);
+    addAndMakeVisible(inputMeter);
+    
+    beam1Meter.setSource(p.beamRMS[0]);
+    beam1Meter.startTimerHz(BEAM_RMS_UPDATE_FREQ);
+    addAndMakeVisible(beam1Meter);
+    
+    beam2Meter.setSource(p.beamRMS[1]);
+    beam2Meter.startTimerHz(BEAM_RMS_UPDATE_FREQ);
+    addAndMakeVisible(beam2Meter);
+
 }
 
 JucebeamAudioProcessorEditor::~JucebeamAudioProcessorEditor()
@@ -179,6 +191,16 @@ void JucebeamAudioProcessorEditor::resized()
     knobsArea.removeFromTop(KNOB_TOP_MARGIN);
     gainBeam1Knob.setBounds(knobsArea.removeFromLeft(KNOB_WIDTH));
     gainBeam2Knob.setBounds(knobsArea.removeFromRight(KNOB_WIDTH));
+    auto meterArea = knobsArea.removeFromLeft(BEAM_LED_WIDTH+BEAM_LEFT_RIGHT_MARGIN);
+    meterArea.removeFromTop(BEAM_TOP_BOTTOM_MARGIN);
+    meterArea.removeFromBottom(BEAM_TOP_BOTTOM_MARGIN);
+    meterArea.removeFromLeft(BEAM_LEFT_RIGHT_MARGIN);
+    beam1Meter.setBounds(meterArea.removeFromLeft(BEAM_LED_WIDTH));
+    meterArea = knobsArea.removeFromRight(BEAM_LED_WIDTH+BEAM_LEFT_RIGHT_MARGIN);
+    meterArea.removeFromTop(BEAM_TOP_BOTTOM_MARGIN);
+    meterArea.removeFromBottom(BEAM_TOP_BOTTOM_MARGIN);
+    meterArea.removeFromRight(BEAM_LEFT_RIGHT_MARGIN);
+    beam2Meter.setBounds(meterArea.removeFromRight(BEAM_LED_WIDTH));
     gainLabel.setBounds(knobsArea);
 
     auto mutesArea = area.removeFromTop(MUTE_HEIGHT+MUTE_TOP_MARGIN);
@@ -189,6 +211,11 @@ void JucebeamAudioProcessorEditor::resized()
     beam2MuteButton.setBounds(mutesArea.removeFromRight(MUTE_WIDTH));
     muteLabel.setBounds(mutesArea);
 
+    auto inputLedArea = area.removeFromTop(INPUT_LED_TOP_MARGIN+INPUT_LED_HEIGHT);
+    inputLedArea.removeFromTop(INPUT_LED_TOP_MARGIN);
+    inputLedArea.removeFromLeft(INPUT_LEFT_RIGHT_MARGIN);
+    inputLedArea.removeFromRight(INPUT_LEFT_RIGHT_MARGIN);
+    inputMeter.setBounds(inputLedArea);
 
 }
 

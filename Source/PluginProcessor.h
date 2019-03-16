@@ -7,6 +7,7 @@
 #define MAX_FFT_BLOCK_LEN (FFT_SIZE - FIR_LEN)
 #define NUM_BEAMS 2
 #define HPF_FREQ 20.0 //Hz
+#define RMS_INERTIA 0.9f
 
 
 //==============================================================================
@@ -68,6 +69,9 @@ public:
     typedef enum{DAS_IDEAL,DAS_MEASURED} algorithmType;
     algorithmType algorithm = DAS_IDEAL;
     
+    std::vector<float> inputRMS;
+    std::vector<float> beamRMS;
+    
 private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JucebeamAudioProcessor)
@@ -96,5 +100,7 @@ private:
     IIRCoefficients iirCoeffHPF;
     
     std::vector<std::unique_ptr<IIRFilter>> iirHPFfilters;
+    
+
     
 };
