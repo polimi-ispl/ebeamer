@@ -54,7 +54,7 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
 {
     
     // Initialize FFT
-    fft = new dsp::FFT(roundToInt (std::log2 (FFT_SIZE)));
+    fft = std::make_unique<dsp::FFT>(roundToInt (std::log2 (FFT_SIZE)));
     
     // Initialize firFFTs (already prepared for convolution
     firDASidealFft = prepareIR(readFIR(firIR::firDASideal_dat,firIR::firDASideal_datSize));
@@ -115,7 +115,6 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
 
 JucebeamAudioProcessor::~JucebeamAudioProcessor()
 {
-    delete fft;
 }
 
 //==============================================================================
@@ -202,20 +201,13 @@ void JucebeamAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     beamBuffer.clear();
     
     // Initialize HPF
-    for (auto idx = 0; idx < iirHPFfilters.size(); ++idx)
-    {
-        delete iirHPFfilters.at(idx);
-    }
     iirHPFfilters.clear();
-    
     iirCoeffHPF = IIRCoefficients::makeHighPass(getSampleRate(), HPF_FREQ);
-    
     auto numInputChannels = getTotalNumInputChannels();
     iirHPFfilters.resize(numInputChannels);
-    
     for (auto idx = 0; idx < getTotalNumInputChannels(); ++idx)
     {
-        iirHPFfilters.at(idx) = new IIRFilter();
+        iirHPFfilters[idx] = std::make_unique<IIRFilter>();
         iirHPFfilters[idx]->setCoefficients(iirCoeffHPF);
     }
     
@@ -225,11 +217,6 @@ void JucebeamAudioProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
-    
-    for (auto idx = 0; idx < iirHPFfilters.size(); ++idx)
-    {
-        delete iirHPFfilters.at(idx);
-    }
     iirHPFfilters.clear();
     
 }
