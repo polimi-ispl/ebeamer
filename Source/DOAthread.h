@@ -18,14 +18,13 @@ public:
     
     void run() override;
     std::vector<float> energy;
+    SpinLock energyLock;
 
 //==============================================================================
     
 private:
 
     JucebeamAudioProcessor& processor;
-    
-    SpinLock energyLock;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DOAthread);
 };

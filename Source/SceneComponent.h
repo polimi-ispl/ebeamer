@@ -62,7 +62,12 @@ public:
     
     void resized() override;
     
-    void setSource(std::vector<float> &energy){this->energy = &energy;};
+    void setSource(std::vector<float> &energy, SpinLock &lock)
+    {
+        this->energy = &energy;
+        this->lock = &lock;
+        
+    };
     
 private:
     
@@ -70,6 +75,7 @@ private:
     Point<float> vertices[TILE_ROW_COUNT+1][TILE_COL_COUNT+1];
     
     std::vector<float> *energy;
+    SpinLock *lock;
     
     void computeVertices();
     void timerCallback() override;

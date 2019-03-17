@@ -70,9 +70,10 @@ void DOAthread::run()
             temp.push_back(j);
         }
         
-        const GenericScopedLock<SpinLock> scopedEnergyLock(energyLock);
         
+        energyLock.enter();
         energy = temp;
+        energyLock.exit();
     }
 }
 

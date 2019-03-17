@@ -6,7 +6,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
 {
     DOAt = std::make_unique<DOAthread>(p);
     
-    scene.grid.setSource(DOAt->energy);
+    scene.grid.setSource(DOAt->energy,DOAt->energyLock);
     scene.grid.startTimerHz(ENERGY_UPDATE_FREQ);
 
     setSize (GUI_WIDTH, GUI_HEIGHT);
