@@ -30,14 +30,13 @@
 #define BEAM_TOP_BOTTOM_MARGIN 10
 #define BEAM_LEFT_RIGHT_MARGIN 10
 #define BEAM_RMS_UPDATE_FREQ 15 //Hz
-
+#define ENERGY_UPDATE_FREQ 15 //Hz
 
 //==============================================================================
 
 class JucebeamAudioProcessorEditor  : public AudioProcessorEditor,
                                       private ToggleButton::Listener,
-                                      private Slider::Listener,
-                                      private HighResolutionTimer
+                                      private Slider::Listener
 {
 public:
 
@@ -88,7 +87,6 @@ private:
     // Callbacks
     void buttonClicked(Button *button) override;
     void sliderValueChanged(Slider *slider) override;
-    void hiResTimerCallback() override;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JucebeamAudioProcessorEditor);
 };

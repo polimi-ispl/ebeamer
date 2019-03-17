@@ -104,7 +104,7 @@ void GridComponent::resized()
     }
 }
 
-void GridComponent::updateEnergy(std::vector<float> energy)
+void GridComponent::timerCallback()
 {
     // TODO: keep track of # of directions (DOAthread might change it for performance)
     // and re-compute the grid if necessary.
@@ -116,6 +116,11 @@ void GridComponent::updateEnergy(std::vector<float> energy)
      computeVertices();
      }
      */
+    
+    lock->enter();
+    std::vector<float> energy = *(this->energy);
+    lock->exit();
+    
     if(energy.size() != TILE_COL_COUNT){
         return;
     }
@@ -162,7 +167,7 @@ void GridComponent::updateEnergy(std::vector<float> energy)
     }
     
     {
-        MessageManagerLock mmlock;
+        //MessageManagerLock mmlock;
         repaint();
     }
     
