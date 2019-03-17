@@ -4,9 +4,8 @@
 JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcessor& p)
 :  AudioProcessorEditor (&p), inputMeter(p.getTotalNumInputChannels()), processor (p)
 {
-    DOAt = std::make_unique<DOAthread>(p);
-
-    startTimer(EDITOR_TIMER_DURATION);
+    //DOAt = std::make_unique<DOAthread>(p);
+    //startTimer(EDITOR_TIMER_DURATION);
 
     setSize (GUI_WIDTH, GUI_HEIGHT);
 
@@ -137,7 +136,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
 
 JucebeamAudioProcessorEditor::~JucebeamAudioProcessorEditor()
 {
-    DOAt->signalThreadShouldExit();
+    //DOAt->signalThreadShouldExit();
 }
 
 //==============================================================================
