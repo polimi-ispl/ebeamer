@@ -43,12 +43,8 @@ static std::vector<std::vector<std::vector<float> > > readFIR(const char* array,
 JucebeamAudioProcessor::JucebeamAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
      : AudioProcessor (BusesProperties()
-                     #if ! JucePlugin_IsMidiEffect
-                      #if ! JucePlugin_IsSynth
                        .withInput  ("Input",  AudioChannelSet::ambisonic(3), true)
-                      #endif
                        .withOutput ("Output", AudioChannelSet::stereo(), true)
-                     #endif
                        )
 #endif
 {
