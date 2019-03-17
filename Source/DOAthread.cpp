@@ -77,10 +77,3 @@ void DOAthread::run()
 }
 
 //==============================================================================
-
-std::vector<float> DOAthread::getEnergy()
-{
-    const GenericScopedLock<SpinLock> scopedLock(energyLock);
-    
-    return energy;
-}

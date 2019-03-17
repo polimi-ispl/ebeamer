@@ -4,8 +4,10 @@
 JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcessor& p)
 :  AudioProcessorEditor (&p), inputMeter(p.getTotalNumInputChannels()), processor (p)
 {
-    //DOAt = std::make_unique<DOAthread>(p);
-    //startTimer(EDITOR_TIMER_DURATION);
+    DOAt = std::make_unique<DOAthread>(p);
+    
+    scene.grid.setSource(DOAt->energy);
+    scene.grid.startTimerHz(ENERGY_UPDATE_FREQ);
 
     setSize (GUI_WIDTH, GUI_HEIGHT);
 
@@ -281,7 +283,3 @@ void JucebeamAudioProcessorEditor::sliderValueChanged(Slider *slider)
     }
 }
 
-void JucebeamAudioProcessorEditor::hiResTimerCallback()
-{
-    scene.grid.updateEnergy(DOAt->getEnergy());
-}

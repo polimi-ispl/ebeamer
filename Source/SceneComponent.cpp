@@ -104,7 +104,7 @@ void GridComponent::resized()
     }
 }
 
-void GridComponent::updateEnergy(std::vector<float> energy)
+void GridComponent::timerCallback()
 {
     // TODO: keep track of # of directions (DOAthread might change it for performance)
     // and re-compute the grid if necessary.
@@ -116,18 +116,18 @@ void GridComponent::updateEnergy(std::vector<float> energy)
      computeVertices();
      }
      */
-    if(energy.size() != TILE_COL_COUNT){
+    if(energy->size() != TILE_COL_COUNT){
         return;
     }
     
     for(int j = 0; j < TILE_COL_COUNT; j++){
         
-        if(energy.at(j) > 1)
-            energy.at(j) = 1;
-        if(energy.at(j) < 0)
-            energy.at(j) = 0;
+        if(energy->at(j) > 1)
+            energy->at(j) = 1;
+        if(energy->at(j) < 0)
+            energy->at(j) = 0;
         
-        int level = TILE_ROW_COUNT - ceil(TILE_ROW_COUNT * energy.at(j));
+        int level = TILE_ROW_COUNT - ceil(TILE_ROW_COUNT * energy->at(j));
         
         for(int i = 0; i < TILE_ROW_COUNT; i++){
             

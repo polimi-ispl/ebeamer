@@ -54,7 +54,7 @@ private:
 
 //==============================================================================
 
-class GridComponent    : public Component
+class GridComponent    : public Component, public Timer
 {
 public:
     GridComponent();
@@ -62,14 +62,17 @@ public:
     
     void resized() override;
     
-    void updateEnergy(std::vector<float>);
+    void setSource(std::vector<float> &energy){this->energy = &energy;};
     
 private:
     
     TileComponent tiles[TILE_ROW_COUNT][TILE_COL_COUNT];
     Point<float> vertices[TILE_ROW_COUNT+1][TILE_COL_COUNT+1];
     
+    std::vector<float> *energy;
+    
     void computeVertices();
+    void timerCallback() override;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GridComponent)
 };
