@@ -59,9 +59,14 @@ void MultiChannelLedBar::resized(){
 
 void MultiChannelLedBar::timerCallback()
 {
+    
+    lock->enter();
+    std::vector<float> values = *source;
+    lock->exit();
+    
     for (auto ledIdx = 0; ledIdx < leds.size(); ++ledIdx)
     {
-        auto value = this->source->at(ledIdx);
+        auto value = values.at(ledIdx);
         Colour col;
         if (value > Decibels::decibelsToGain(RED_LT))
         {
@@ -84,10 +89,11 @@ void MultiChannelLedBar::timerCallback()
     repaint();
 }
 
-void MultiChannelLedBar::setSource(std::vector<float> &source)
+void MultiChannelLedBar::setSource(std::vector<float> &source,SpinLock &lock)
 {
     jassert(source.size() == leds.size());
     this->source = &source;
+    this->lock = &lock;
 }
 
 
@@ -131,16 +137,19 @@ void SingleChannelLedBar::resized(){
 
 void SingleChannelLedBar::timerCallback()
 {
+    lock->enter();
     auto valueDb = Decibels::gainToDecibels(*source);
+    lock->exit();
     for (auto ledIdx = 0; ledIdx < leds.size(); ++ledIdx)
             leds[ledIdx]->colour = thToColour(th[ledIdx], valueDb > th[ledIdx]);
     
     repaint();
 }
 
-void SingleChannelLedBar::setSource(float &source)
+void SingleChannelLedBar::setSource(float &source,SpinLock &lock)
 {
     this->source = &source;
+    this->lock = &lock;
 }
 
 Colour SingleChannelLedBar::thToColour(float th, bool active)

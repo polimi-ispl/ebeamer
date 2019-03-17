@@ -72,6 +72,8 @@ public:
     
     std::vector<float> inputMeters;
     std::vector<float> beamMeters;
+    SpinLock inputMetersLock;
+    SpinLock beamMetersLock;
     
 private:
     //==============================================================================
@@ -101,7 +103,5 @@ private:
     IIRCoefficients iirCoeffHPF;
     
     std::vector<std::unique_ptr<IIRFilter>> iirHPFfilters;
-    
-
     
 };

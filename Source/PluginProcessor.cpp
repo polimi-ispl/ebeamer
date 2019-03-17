@@ -43,12 +43,8 @@ static std::vector<std::vector<std::vector<float> > > readFIR(const char* array,
 JucebeamAudioProcessor::JucebeamAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
      : AudioProcessor (BusesProperties()
-                     #if ! JucePlugin_IsMidiEffect
-                      #if ! JucePlugin_IsSynth
                        .withInput  ("Input",  AudioChannelSet::ambisonic(3), true)
-                      #endif
                        .withOutput ("Output", AudioChannelSet::stereo(), true)
-                     #endif
                        )
 #endif
 {
@@ -212,13 +208,17 @@ void JucebeamAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     }
     
     // Meters
+    inputMetersLock.enter();
     inputMeters.clear();
     for (auto idx = 0; idx < numInputChannels; ++idx)
         inputMeters.push_back(0);
+    inputMetersLock.exit();
     
+    beamMetersLock.enter();
     beamMeters.clear();
     for (auto idx = 0; idx < NUM_BEAMS; ++idx)
         beamMeters.push_back(0);
+    beamMetersLock.exit();
 }
 
 void JucebeamAudioProcessor::releaseResources()
@@ -265,6 +265,7 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
         
         // Meter
         {
+            inputMetersLock.enter();
             float minVal,maxVal,maxAbsVal;
             for (auto beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx)
             {
@@ -276,6 +277,7 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
                 inputMeters[inChannel] = inputMeters[inChannel]*(METERS_INERTIA) + maxAbsVal*(1-METERS_INERTIA);
 #endif
             }
+            inputMetersLock.exit();
         }
         
         for (auto subBlockIdx = 0;subBlockIdx < std::ceil(float(blockNumSamples)/MAX_FFT_BLOCK_LEN);++subBlockIdx)
@@ -365,6 +367,7 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
     // Meter
     {
         float minVal,maxVal,maxAbsVal;
+        beamMetersLock.enter();
         for (auto beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx)
         {
 #ifdef METERS_MODE_RMS
@@ -375,6 +378,7 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
             beamMeters[beamIdx] = beamMeters[beamIdx]*(METERS_INERTIA) + maxAbsVal*(1-METERS_INERTIA);
 #endif
         }
+        beamMetersLock.exit();
     }
     
     // Sum beams in output channels
