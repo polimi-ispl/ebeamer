@@ -68,13 +68,14 @@ public:
     void paint(Graphics&) override;
     void resized() override;
 
-    void setSource(std::vector<float> &source);
+    void setSource(std::vector<float> &source,SpinLock &lock);
 
 private:
     
     bool isHorizontal;
     int num;
     std::vector<float> *source;
+    SpinLock *lock;
     std::vector<std::unique_ptr<RoundLed>> leds;
     
     void timerCallback() override;
@@ -92,13 +93,14 @@ public:
     void paint(Graphics&) override;
     void resized() override;
     
-    void setSource(float &source);
+    void setSource(float &source,SpinLock &lock);
     
 private:
     
     bool isHorizontal;
     int num;
     float *source;
+    SpinLock *lock;
     std::vector<float> th;
     std::vector<std::unique_ptr<RoundLed>> leds;
     
