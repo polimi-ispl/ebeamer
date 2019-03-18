@@ -83,7 +83,7 @@ private:
     void convolutionProcessingAndAccumulate (const float *input, const float *impulse, float *output);
     void updateSymmetricFrequencyDomainData (float* samples) noexcept;
     
-    void pushBackFFTdata(float*);
+    void pushBackFFTdata(float* data, int channelIdx);
     
     std::vector<std::vector<float*>> fftData;
     

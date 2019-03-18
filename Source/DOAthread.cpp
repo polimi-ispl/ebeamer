@@ -58,6 +58,43 @@ void DOAthread::run()
         
         // Compute energy, stored in temp.
         
+        // noDenormals
+        // Choose algorithm
+    
+        // FOR EACH channel (#channels = fftData.size() , if 0 the buffer wasn't ready, no harm done)
+    
+        for (int inChannel = 0; inChannel < fftData.size(); ++inChannel)
+        {
+            // FOR EACH beam
+            
+            for (int beamIdx = 0; beamIdx < INITIAL_CONSIDERED_DIRECTIONS; ++beamIdx)
+            {
+                // fftBuffer = channel-specific fftInput
+                
+                int steeringIdx = round(beamIdx / (INITIAL_CONSIDERED_DIRECTIONS - 1));
+                int beamWidthIdx = 0;
+                        
+                // FIR pre processing fftBuffer
+                        
+                // Empty fftOutput
+                // Beam width processing fftBuffer -> fftOutput
+                        
+                // fftBuffer = fftOutput
+                
+                // Empty fftOutput
+                // Beam steering processing fftBuffer -> fftOutput
+                
+                // FIR post processing fftOutput
+                        
+                // Inverse FFT fftOutput
+                        
+                // Apply exp. decay to fftOutput,
+                // starting from previous ending level,
+                // only save ending level (in temp)
+            }
+        }
+        
+        /*
         // This displays the energy as a ramp,
         // higher on the right if the buffer is large,
         // higher on the left if the buffer is almost empty.
@@ -69,7 +106,7 @@ void DOAthread::run()
             j = 0.25 + (status / 10) * (j - 0.25);
             temp.push_back(j);
         }
-        
+        */
         
         energyLock.enter();
         energy = temp;

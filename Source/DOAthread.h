@@ -5,7 +5,7 @@
 
 #define INITIAL_CONSIDERED_DIRECTIONS 25
 #define BUFFER_LOWER_THRESHOLD 5
-#define BUFFER_UPPER_THRESHOLD 50
+#define BUFFER_UPPER_THRESHOLD 500
 
 //==============================================================================
 
@@ -13,7 +13,7 @@ class DOAthread     : public Thread
 {
 public:
 
-    DOAthread(JucebeamAudioProcessor&);
+    DOAthread(JucebeamAudioProcessor& p);
     ~DOAthread();
     
     void run() override;

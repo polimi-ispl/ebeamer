@@ -287,7 +287,7 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
             // Push FFT data for DOAthread to retrieve
             const GenericScopedLock<SpinLock> scopedLock(fftLock);
             
-            pushBackFFTdata(fftInput);
+            pushBackFFTdata(fftInput, inChannel);
             
             const GenericScopedUnlock<SpinLock> scopedUnlock(fftLock);
             
@@ -556,11 +556,19 @@ void JucebeamAudioProcessor::updateSymmetricFrequencyDomainData (float* samples)
 
 int JucebeamAudioProcessor::bufferStatus()
 {
-    if(fftData.size() > BUFFER_UPPER_THRESHOLD)
-        return (fftData.size() - BUFFER_UPPER_THRESHOLD);
+    if(fftData.size() != getTotalNumInputChannels())
+        return 100; // The buffer is completely empty (no pushes yet)
         
-    if(fftData.size() < BUFFER_LOWER_THRESHOLD)
-        return (fftData.size() - BUFFER_LOWER_THRESHOLD);
+    float cursor = BUFFER_UPPER_THRESHOLD;
+    for(int i = 0; i < getTotalNumInputChannels(); i++){
+        cursor = std::min(cursor, fftData.at(i).size());
+    }
+    
+    if(cursor = BUFFER_UPPER_THRESHOLD)
+        return (cursor - BUFFER_UPPER_THRESHOLD);
+        
+    if(cursor < BUFFER_LOWER_THRESHOLD)
+        return (cursor - BUFFER_LOWER_THRESHOLD);
         
     return 0;
 }
@@ -569,29 +577,36 @@ std::vector<float*> JucebeamAudioProcessor::popFrontFFTdata()
 {
     std::vector<float*> result;
     
-    if(fftData.size() == 0)
-        return result; // The buffer is empty
+    if(fftData.size() != getTotalNumInputChannels())
+        return result;
+    
+    for(int i = 0; i < getTotalNumInputChannels(); i++){
+        if(fftData.at(i).size() == 0){
+            // The first entry of the buffer hasn't been filled for all channels yet.
+            result.clear();
+            return result;
+        }
         
-    if(fftData.size() == 1 && fftData.back().size() < getTotalNumInputChannels())
-        return result; // The last element of the buffer is still being filled
+        result.push_back(fftData.at(i).front());
+    }
     
-    result = fftData.front();
-    
-    fftData.erase(fftData.begin());
+    // If we reached this point, the first entry was full and result is ready.
+    for(int i = 0; i < getTotalNumInputChannels(); i++)
+        fftData.at(i).erase(fftData.at(i).begin());
     
     return result;
 }
 
-void JucebeamAudioProcessor::pushBackFFTdata(float* input)
+void JucebeamAudioProcessor::pushBackFFTdata(float* input, int channelIdx)
 {
-    if(fftData.size() > 0 && fftData.back().size() < getTotalNumInputChannels()){
-        // The last element of the buffer is still being filled
-        fftData.back().push_back(input);
-    }
-    else{
-        // The fft to be pushed is the first one of a new block
-        fftData.emplace_back();
-        fftData.back().push_back(input);
-    }
+    // Assuming the number of input channels won't change at runtime.
+    
+    if(fftData.size() != getTotalNumInputChannels())
+        fftData.resize(getTotalNumInputChannels());
+    
+    if(channelIdx < 0 || channelIdx > getTotalNumInputChannels())
+        return;
+    
+    fftData.at(channelIdx).push_back(input);
 }
 
