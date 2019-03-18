@@ -5,8 +5,9 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
 :  AudioProcessorEditor (&p), inputMeter(p.getTotalNumInputChannels()), processor (p)
 {
     DOAt = std::make_unique<DOAthread>(p);
-
-    startTimer(EDITOR_TIMER_DURATION);
+    
+    scene.grid.setSource(DOAt->energy,DOAt->energyLock);
+    scene.grid.startTimerHz(ENERGY_UPDATE_FREQ);
 
     setSize (GUI_WIDTH, GUI_HEIGHT);
 
@@ -121,15 +122,15 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     setMuteButtonColor(1);
     addAndMakeVisible(beam2MuteButton);
 
-    inputMeter.setSource(p.inputRMS);
+    inputMeter.setSource(p.inputMeters,p.inputMetersLock);
     inputMeter.startTimerHz(INPUT_RMS_UPDATE_FREQ);
     addAndMakeVisible(inputMeter);
     
-    beam1Meter.setSource(p.beamRMS[0]);
+    beam1Meter.setSource(p.beamMeters[0],p.beamMetersLock);
     beam1Meter.startTimerHz(BEAM_RMS_UPDATE_FREQ);
     addAndMakeVisible(beam1Meter);
     
-    beam2Meter.setSource(p.beamRMS[1]);
+    beam2Meter.setSource(p.beamMeters[1],p.beamMetersLock);
     beam2Meter.startTimerHz(BEAM_RMS_UPDATE_FREQ);
     addAndMakeVisible(beam2Meter);
 
@@ -137,7 +138,6 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
 
 JucebeamAudioProcessorEditor::~JucebeamAudioProcessorEditor()
 {
-    DOAt->signalThreadShouldExit();
 }
 
 //==============================================================================
@@ -282,7 +282,3 @@ void JucebeamAudioProcessorEditor::sliderValueChanged(Slider *slider)
     }
 }
 
-void JucebeamAudioProcessorEditor::hiResTimerCallback()
-{
-    scene.grid.updateEnergy(DOAt->getEnergy());
-}

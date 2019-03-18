@@ -68,16 +68,19 @@ public:
     void paint(Graphics&) override;
     void resized() override;
 
-    void setSource(std::vector<float> &source);
+    void setSource(std::vector<float> &source,SpinLock &lock);
 
 private:
     
     bool isHorizontal;
-    int num;
+    size_t num;
     std::vector<float> *source;
+    SpinLock *lock;
     std::vector<std::unique_ptr<RoundLed>> leds;
     
     void timerCallback() override;
+    
+    void makeLayout(size_t num);
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MultiChannelLedBar)
 };
@@ -86,19 +89,20 @@ class SingleChannelLedBar : public Component, public Timer
 {
 public:
     
-    SingleChannelLedBar(int numLeds = 7, bool isHorizontal = false);
+    SingleChannelLedBar(size_t numLeds = 7, bool isHorizontal = false);
     ~SingleChannelLedBar(){};
 
     void paint(Graphics&) override;
     void resized() override;
     
-    void setSource(float &source);
+    void setSource(float &source,SpinLock &lock);
     
 private:
     
     bool isHorizontal;
-    int num;
+    size_t num;
     float *source;
+    SpinLock *lock;
     std::vector<float> th;
     std::vector<std::unique_ptr<RoundLed>> leds;
     

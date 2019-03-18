@@ -28,10 +28,14 @@ void RoundLed::resized(){
 
 
 MultiChannelLedBar::MultiChannelLedBar(int num, bool isHorizontal){
-    jassert(num > 0);
-    this->num = num;
     this->isHorizontal = isHorizontal;
-    
+    makeLayout(num);
+}
+
+void MultiChannelLedBar::makeLayout(size_t num)
+{
+    this->num = num;
+    removeAllChildren();
     leds.clear();
     for (auto ledIdx = 0; ledIdx < num; ++ledIdx)
     {
@@ -39,6 +43,7 @@ MultiChannelLedBar::MultiChannelLedBar(int num, bool isHorizontal){
         leds[ledIdx]->colour = Colours::grey;
         addAndMakeVisible(leds[ledIdx].get());
     }
+    resized();
 }
 
 void MultiChannelLedBar::paint(Graphics& g){
@@ -59,9 +64,21 @@ void MultiChannelLedBar::resized(){
 
 void MultiChannelLedBar::timerCallback()
 {
+    
+    if (source == nullptr)
+        return;
+    
+    lock->enter();
+    std::vector<float> values = *source;
+    lock->exit();
+    
+    if (values.size() != num){
+        makeLayout(values.size());
+    }
+    
     for (auto ledIdx = 0; ledIdx < leds.size(); ++ledIdx)
     {
-        auto value = this->source->at(ledIdx);
+        auto value = values.at(ledIdx);
         Colour col;
         if (value > Decibels::decibelsToGain(RED_LT))
         {
@@ -84,14 +101,15 @@ void MultiChannelLedBar::timerCallback()
     repaint();
 }
 
-void MultiChannelLedBar::setSource(std::vector<float> &source)
+void MultiChannelLedBar::setSource(std::vector<float> &source,SpinLock &lock)
 {
     jassert(source.size() == leds.size());
     this->source = &source;
+    this->lock = &lock;
 }
 
 
-SingleChannelLedBar::SingleChannelLedBar(int numLeds, bool isHorizontal){
+SingleChannelLedBar::SingleChannelLedBar(size_t numLeds, bool isHorizontal){
     jassert(numLeds > 4);
     
     this->num = numLeds;
@@ -131,16 +149,19 @@ void SingleChannelLedBar::resized(){
 
 void SingleChannelLedBar::timerCallback()
 {
+    lock->enter();
     auto valueDb = Decibels::gainToDecibels(*source);
+    lock->exit();
     for (auto ledIdx = 0; ledIdx < leds.size(); ++ledIdx)
             leds[ledIdx]->colour = thToColour(th[ledIdx], valueDb > th[ledIdx]);
     
     repaint();
 }
 
-void SingleChannelLedBar::setSource(float &source)
+void SingleChannelLedBar::setSource(float &source,SpinLock &lock)
 {
     this->source = &source;
+    this->lock = &lock;
 }
 
 Colour SingleChannelLedBar::thToColour(float th, bool active)
