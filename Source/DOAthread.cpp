@@ -27,7 +27,6 @@ void DOAthread::run()
     
     int interval = 50;
     
-    float fftBuffer[2*FFT_SIZE];
     float fftOutput[2*FFT_SIZE];
     
     while(!threadShouldExit())
@@ -70,21 +69,22 @@ void DOAthread::run()
         energyLock.exit();
         
         tempEnergy.clear();
-        tempEnergy.resize(fftData.size());
+        tempEnergy.resize(INITIAL_CONSIDERED_DIRECTIONS);
         
-        for (int inChannel = 0; inChannel < fftData.size(); ++inChannel)
-        {
-            for (int beamIdx = 0; beamIdx < INITIAL_CONSIDERED_DIRECTIONS; ++beamIdx)
-            {
+        for(int inChannel = 0; inChannel < fftData.size(); ++inChannel){
+            for(int beamIdx = 0; beamIdx < INITIAL_CONSIDERED_DIRECTIONS; ++beamIdx){
+                
                 int steeringIdx = round(beamIdx / (INITIAL_CONSIDERED_DIRECTIONS - 1));
                 int beamWidthIdx = 0;
                 
-                // FIR processing
+                // FIR processing (includes reverse FFT)
                 processor.firConvolve(fftData.at(inChannel), fftOutput, inChannel, beamWidthIdx, steeringIdx);
                 
-                // Apply exp. decay to fftOutput,
-                // starting from previous ending level (prevEnergy.at(inChannel)),
-                // only save ending level (in tempEnergy.at(inChannel))
+                tempEnergy.at(beamIdx) = prevEnergy.at(beamIdx);
+                
+                for(int t = 0; t < FFT_SIZE; t++)
+                    if(fftOutput[t] > tempEnergy.at(beamIdx) * EXP_DECAY_RATE)
+                        tempEnergy.at(beamIdx) = fftOutput[t];
             }
         }
         
