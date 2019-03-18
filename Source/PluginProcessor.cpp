@@ -501,6 +501,9 @@ void JucebeamAudioProcessor::firConvolve(float *input, float *output, int inChan
     
     // FIR post processing
     updateSymmetricFrequencyDomainData(output);
+    
+    // Inverse FFT
+    fft -> performRealOnlyInverseTransform(output);
 }
 
 //=======================================================
@@ -583,10 +586,10 @@ int JucebeamAudioProcessor::bufferStatus()
     if(fftData.size() != getTotalNumInputChannels())
         return 100; // The buffer is completely empty (no pushes yet)
         
-    float cursor = BUFFER_UPPER_THRESHOLD;
-    for(int i = 0; i < getTotalNumInputChannels(); i++){
-        cursor = std::min(cursor, fftData.at(i).size());
-    }
+    int cursor = BUFFER_UPPER_THRESHOLD;
+    for(int i = 0; i < getTotalNumInputChannels(); i++)
+        if(cursor > fftData.at(i).size())
+            cursor = fftData.at(i).size();
     
     if(cursor = BUFFER_UPPER_THRESHOLD)
         return (cursor - BUFFER_UPPER_THRESHOLD);

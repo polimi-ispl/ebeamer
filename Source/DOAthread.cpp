@@ -82,9 +82,6 @@ void DOAthread::run()
                 // FIR processing
                 processor.firConvolve(fftData.at(inChannel), fftOutput, inChannel, beamWidthIdx, steeringIdx);
                 
-                // Inverse FFT
-                fft -> performRealOnlyInverseTransform(fftOutput);
-                
                 // Apply exp. decay to fftOutput,
                 // starting from previous ending level (prevEnergy.at(inChannel)),
                 // only save ending level (in tempEnergy.at(inChannel))
