@@ -138,7 +138,6 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
 
 JucebeamAudioProcessorEditor::~JucebeamAudioProcessorEditor()
 {
-    //DOAt->signalThreadShouldExit();
 }
 
 //==============================================================================

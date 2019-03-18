@@ -28,10 +28,14 @@ void RoundLed::resized(){
 
 
 MultiChannelLedBar::MultiChannelLedBar(int num, bool isHorizontal){
-    jassert(num > 0);
-    this->num = num;
     this->isHorizontal = isHorizontal;
-    
+    makeLayout(num);
+}
+
+void MultiChannelLedBar::makeLayout(size_t num)
+{
+    this->num = num;
+    removeAllChildren();
     leds.clear();
     for (auto ledIdx = 0; ledIdx < num; ++ledIdx)
     {
@@ -39,6 +43,7 @@ MultiChannelLedBar::MultiChannelLedBar(int num, bool isHorizontal){
         leds[ledIdx]->colour = Colours::grey;
         addAndMakeVisible(leds[ledIdx].get());
     }
+    resized();
 }
 
 void MultiChannelLedBar::paint(Graphics& g){
@@ -60,9 +65,16 @@ void MultiChannelLedBar::resized(){
 void MultiChannelLedBar::timerCallback()
 {
     
+    if (source == nullptr)
+        return;
+    
     lock->enter();
     std::vector<float> values = *source;
     lock->exit();
+    
+    if (values.size() != num){
+        makeLayout(values.size());
+    }
     
     for (auto ledIdx = 0; ledIdx < leds.size(); ++ledIdx)
     {
@@ -97,7 +109,7 @@ void MultiChannelLedBar::setSource(std::vector<float> &source,SpinLock &lock)
 }
 
 
-SingleChannelLedBar::SingleChannelLedBar(int numLeds, bool isHorizontal){
+SingleChannelLedBar::SingleChannelLedBar(size_t numLeds, bool isHorizontal){
     jassert(numLeds > 4);
     
     this->num = numLeds;

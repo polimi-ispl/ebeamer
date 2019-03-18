@@ -9,6 +9,7 @@
 #define HPF_FREQ 20.0 //Hz
 #define METERS_INERTIA 0.9f
 //#define METERS_MODE_RMS
+#define BEAMSTEERING_ALG_IDEAL
 
 
 //==============================================================================
@@ -67,9 +68,6 @@ public:
     AudioParameterFloat* gainBeam[NUM_BEAMS];
     AudioParameterBool*  muteBeam[NUM_BEAMS];
     
-    typedef enum{DAS_IDEAL,DAS_MEASURED} algorithmType;
-    algorithmType algorithm = DAS_IDEAL;
-    
     std::vector<float> inputMeters;
     std::vector<float> beamMeters;
     SpinLock inputMetersLock;
@@ -95,10 +93,8 @@ private:
     float fftBuffer[2*FFT_SIZE];
     float fftOutput[2*FFT_SIZE];
     
-    std::vector<std::vector<std::vector<float>>> firDASidealFft;
-    std::vector<std::vector<std::vector<float>>> firDASmeasuredFft;
     std::vector<std::vector<std::vector<float>>> firBeamwidthFft;
-    std::vector<std::vector<std::vector<float>>> *firFFT;
+    std::vector<std::vector<std::vector<float>>> firFFT;
     
     IIRCoefficients iirCoeffHPF;
     
