@@ -79,38 +79,11 @@ void DOAthread::run()
                 int steeringIdx = round(beamIdx / (INITIAL_CONSIDERED_DIRECTIONS - 1));
                 int beamWidthIdx = 0;
                 
-                FloatVectorOperations::copy(fftBuffer, fftData.at(inChannel), 2*FFT_SIZE);
+                // FIR processing
+                processor.firConvolve(fftData.at(inChannel), fftOutput, inChannel, beamWidthIdx, steeringIdx);
                 
-                /*
-                // FIR pre processing
-                prepareForConvolution(fftBuffer);
-                
-                // Beam width processing
-                FloatVectorOperations::clear(fftOutput, 2*FFT_SIZE);
-                convolutionProcessingAndAccumulate(fftBuffer, firBeamwidthFft[beamWidthIdx][inChannel].data(), fftOutput);
-                        
-                // Beam steering processing
-                FloatVectorOperations::copy(fftBuffer, fftOutput, 2*FFT_SIZE);
-                FloatVectorOperations::clear(fftOutput, 2*FFT_SIZE);
-                convolutionProcessingAndAccumulate(fftBuffer, firFFT[steeringIdx][inChannel].data(), fftOutput);
-                        
-                // FIR post processing
-                updateSymmetricFrequencyDomainData(fftOutput);
-                        
                 // Inverse FFT
                 fft -> performRealOnlyInverseTransform(fftOutput);
-                */
-        
-        /*
-        Needed methods:
-        
-        prepareForConvolution
-        convolutionProcessingAndAccumulate
-        updateSymmetricFrequencyDomainData
-        
-        firBeamwidthFft
-        firFFT
-        */
                 
                 // Apply exp. decay to fftOutput,
                 // starting from previous ending level (prevEnergy.at(inChannel)),

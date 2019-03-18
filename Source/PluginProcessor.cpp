@@ -479,6 +479,30 @@ AudioProcessor* JUCE_CALLTYPE createPluginFilter()
     return new JucebeamAudioProcessor();
 }
 
+//==============================================================================
+
+void JucebeamAudioProcessor::firConvolve(float *input, float *output, int inChannel, int beamWidthIdx, int steeringIdx)
+{
+    float fftTemp[2*FFT_SIZE];
+    
+    FloatVectorOperations::copy(fftTemp, fftInput, 2*FFT_SIZE);
+    
+    // FIR pre processing
+    prepareForConvolution(fftTemp);
+    
+    // Beam width processing
+    FloatVectorOperations::clear(output, 2*FFT_SIZE);
+    convolutionProcessingAndAccumulate(fftTemp, firBeamwidthFft[beamWidthIdx][inChannel].data(), output);
+    
+    // Beam steering processing
+    FloatVectorOperations::copy(fftTemp, output, 2*FFT_SIZE);
+    FloatVectorOperations::clear(output, 2*FFT_SIZE);
+    convolutionProcessingAndAccumulate(fftTemp, firFFT[steeringIdx][inChannel].data(), output);
+    
+    // FIR post processing
+    updateSymmetricFrequencyDomainData(output);
+}
+
 //=======================================================
 std::vector<std::vector<std::vector<float>>> JucebeamAudioProcessor::prepareIR(const std::vector<std::vector<std::vector<float>>> fir)
 {
