@@ -19,9 +19,16 @@ DOAthread::~DOAthread()
 
 void DOAthread::run()
 {
+    ScopedNoDenormals noDenormals;
+    
     std::vector<float*> fftData;
-    std::vector<float> temp;
+    std::vector<float> tempEnergy;
+    std::vector<float> prevEnergy;
+    
     int interval = 50;
+    
+    float fftBuffer[2*FFT_SIZE];
+    float fftOutput[2*FFT_SIZE];
     
     while(!threadShouldExit())
     {
@@ -58,58 +65,61 @@ void DOAthread::run()
         
         // Compute energy, stored in temp.
         
-        // noDenormals
-        // Choose algorithm
-    
-        // FOR EACH channel (#channels = fftData.size() , if 0 the buffer wasn't ready, no harm done)
-    
+        energyLock.enter();
+        prevEnergy = energy;
+        energyLock.exit();
+        
+        tempEnergy.clear();
+        tempEnergy.resize(fftData.size());
+        
         for (int inChannel = 0; inChannel < fftData.size(); ++inChannel)
         {
-            // FOR EACH beam
-            
             for (int beamIdx = 0; beamIdx < INITIAL_CONSIDERED_DIRECTIONS; ++beamIdx)
             {
-                // fftBuffer = channel-specific fftInput
-                
                 int steeringIdx = round(beamIdx / (INITIAL_CONSIDERED_DIRECTIONS - 1));
                 int beamWidthIdx = 0;
-                        
-                // FIR pre processing fftBuffer
-                        
-                // Empty fftOutput
-                // Beam width processing fftBuffer -> fftOutput
-                        
-                // fftBuffer = fftOutput
                 
-                // Empty fftOutput
-                // Beam steering processing fftBuffer -> fftOutput
+                FloatVectorOperations::copy(fftBuffer, fftData.at(inChannel), 2*FFT_SIZE);
                 
-                // FIR post processing fftOutput
+                /*
+                // FIR pre processing
+                prepareForConvolution(fftBuffer);
+                
+                // Beam width processing
+                FloatVectorOperations::clear(fftOutput, 2*FFT_SIZE);
+                convolutionProcessingAndAccumulate(fftBuffer, firBeamwidthFft[beamWidthIdx][inChannel].data(), fftOutput);
                         
-                // Inverse FFT fftOutput
+                // Beam steering processing
+                FloatVectorOperations::copy(fftBuffer, fftOutput, 2*FFT_SIZE);
+                FloatVectorOperations::clear(fftOutput, 2*FFT_SIZE);
+                convolutionProcessingAndAccumulate(fftBuffer, firFFT[steeringIdx][inChannel].data(), fftOutput);
                         
+                // FIR post processing
+                updateSymmetricFrequencyDomainData(fftOutput);
+                        
+                // Inverse FFT
+                fft -> performRealOnlyInverseTransform(fftOutput);
+                */
+        
+        /*
+        Needed methods:
+        
+        prepareForConvolution
+        convolutionProcessingAndAccumulate
+        updateSymmetricFrequencyDomainData
+        
+        firBeamwidthFft
+        firFFT
+        */
+                
                 // Apply exp. decay to fftOutput,
-                // starting from previous ending level,
-                // only save ending level (in temp)
+                // starting from previous ending level (prevEnergy.at(inChannel)),
+                // only save ending level (in tempEnergy.at(inChannel))
             }
         }
         
-        /*
-        // This displays the energy as a ramp,
-        // higher on the right if the buffer is large,
-        // higher on the left if the buffer is almost empty.
-        // DOAthread starts later than the processor,
-        // so it has to catch up in the first few moments.
-        temp.clear();
-        for(int i = 0; i < INITIAL_CONSIDERED_DIRECTIONS; i++){
-            float j = (float)i / INITIAL_CONSIDERED_DIRECTIONS;
-            j = 0.25 + (status / 10) * (j - 0.25);
-            temp.push_back(j);
-        }
-        */
-        
         energyLock.enter();
-        energy = temp;
+        energy = tempEnergy;
         energyLock.exit();
     }
 }
