@@ -6,7 +6,7 @@
 #define INITIAL_CONSIDERED_DIRECTIONS 25
 #define BUFFER_LOWER_THRESHOLD 5
 #define BUFFER_UPPER_THRESHOLD 500
-#define EXP_DECAY_RATE 0.99
+#define EXP_DECAY_RATE 0.9999
 
 //==============================================================================
 

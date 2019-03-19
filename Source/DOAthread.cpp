@@ -7,7 +7,8 @@ DOAthread::DOAthread(JucebeamAudioProcessor& p)
 {
     startThread(3);
     
-    const GenericScopedLock<SpinLock> scopedLock(energyLock);
+    energy.clear();
+    energy.resize(INITIAL_CONSIDERED_DIRECTIONS);
 }
 
 DOAthread::~DOAthread()
@@ -25,8 +26,6 @@ void DOAthread::run()
     std::vector<float> tempEnergy;
     std::vector<float> prevEnergy;
     
-    int interval = 50;
-    
     float fftOutput[2*FFT_SIZE];
     
     while(!threadShouldExit())
@@ -39,15 +38,13 @@ void DOAthread::run()
         if(status < 0){
             // DOAthread is too fast.
             // Increase considered directions, or frequencies, or ...
-            interval += 5;
-            // continue;
+            wait(50);
+            continue;
         }
         
         if(status > 0){
             // DOAthread is too slow.
             // Decrease considered directions, or frequencies, or ...
-            if(interval > 5)
-                interval -= 5;
         }
         
         if(status == 0){
@@ -59,8 +56,6 @@ void DOAthread::run()
         fftData = processor.popFrontFFTdata();
         
         const GenericScopedUnlock<SpinLock> scopedFFTunlock(processor.fftLock);
-        
-        wait(interval);
         
         // Compute energy, stored in temp.
         
@@ -83,8 +78,10 @@ void DOAthread::run()
                 tempEnergy.at(beamIdx) = prevEnergy.at(beamIdx);
                 
                 for(int t = 0; t < FFT_SIZE; t++)
-                    if(fftOutput[t] > tempEnergy.at(beamIdx) * EXP_DECAY_RATE)
-                        tempEnergy.at(beamIdx) = fftOutput[t];
+                    if(100 * fftOutput[t] > tempEnergy.at(beamIdx) * EXP_DECAY_RATE)
+                        tempEnergy.at(beamIdx) = 100 * fftOutput[t];
+                    else
+                        tempEnergy.at(beamIdx) = tempEnergy.at(beamIdx) * EXP_DECAY_RATE;
             }
         }
         
