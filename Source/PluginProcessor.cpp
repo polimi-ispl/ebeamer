@@ -591,7 +591,7 @@ int JucebeamAudioProcessor::bufferStatus()
         if(cursor > fftData.at(i).size())
             cursor = fftData.at(i).size();
     
-    if(cursor = BUFFER_UPPER_THRESHOLD)
+    if(cursor == BUFFER_UPPER_THRESHOLD)
         return (cursor - BUFFER_UPPER_THRESHOLD);
         
     if(cursor < BUFFER_LOWER_THRESHOLD)
