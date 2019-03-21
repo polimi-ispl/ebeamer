@@ -200,6 +200,30 @@ void JucebeamAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     beamBuffer = AudioBuffer<float>(getTotalNumOutputChannels(),bufLen);
     beamBuffer.clear();
     
+    fftInput = AudioBuffer<float>(1,2*FFT_SIZE);
+    fftBuffer = AudioBuffer<float>(1,2*FFT_SIZE);
+    fftOutput = AudioBuffer<float>(1,2*FFT_SIZE);
+    fftInput.clear();
+    fftBuffer.clear();
+    fftOutput.clear();
+    
+    commonGain.reset();
+    dsp::ProcessSpec spec;
+    spec.maximumBlockSize = samplesPerBlock;
+    spec.sampleRate = sampleRate;
+    spec.numChannels = getTotalNumOutputChannels();
+    commonGain.prepare(spec);
+    commonGain.setGainDecibels(0);
+    commonGain.setRampDurationSeconds(0.1);
+    
+    spec.numChannels = 1;
+    for (auto beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx){
+        beamGain[beamIdx].reset();
+        beamGain[beamIdx].prepare(spec);
+        beamGain[beamIdx].setGainDecibels(0);
+        beamGain[beamIdx].setRampDurationSeconds(0.1);
+    }
+    
     // Initialize HPF
     iirHPFfilters.clear();
     iirCoeffHPF = IIRCoefficients::makeHighPass(getSampleRate(), HPF_FREQ);
@@ -246,8 +270,12 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
         commonGaindB = std::min(commonGaindB,gainBeam[beamIdx]->get());
     }
     commonGaindB -= 6;
-    float commonGainLinear = Decibels::decibelsToGain(commonGaindB);
-    buffer.applyGain(commonGainLinear);
+    commonGain.setGainDecibels(commonGaindB);
+    {
+        auto block = juce::dsp::AudioBlock<float> (buffer);
+        auto contextToUse = juce::dsp::ProcessContextReplacing<float> (block);
+        commonGain.process(contextToUse);
+    }
     
     for (int inChannel = 0; inChannel < totalNumInputChannels; ++inChannel)
     {
@@ -278,16 +306,16 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
             auto subBlockLen = std::min(blockNumSamples - subBlockFirstIdx,MAX_FFT_BLOCK_LEN);
             
             // Fill fft data buffer
-            FloatVectorOperations::clear(fftInput, 2*FFT_SIZE);
-            FloatVectorOperations::copy(fftInput, &(buffer.getReadPointer(inChannel)[subBlockFirstIdx]),subBlockLen);
+            fftInput.clear();
+            fftInput.copyFrom(0, 0, buffer, inChannel, subBlockFirstIdx, subBlockLen);
             
             // Forward channel FFT
-            fft -> performRealOnlyForwardTransform(fftInput);
+            fft -> performRealOnlyForwardTransform(fftInput.getWritePointer(0));
             
             // Push FFT data for DOAthread to retrieve
             const GenericScopedLock<SpinLock> scopedLock(fftLock);
             
-            pushBackFFTdata(fftInput);
+            pushBackFFTdata(fftInput.getWritePointer(0));
             
             const GenericScopedUnlock<SpinLock> scopedUnlock(fftLock);
             
@@ -304,18 +332,18 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
                 }
                 else
                 { // No bypass
-                    FloatVectorOperations::copy(fftBuffer,fftInput,2*FFT_SIZE);
+                    fftBuffer.copyFrom(0, 0, fftInput, 0, 0, fftInput.getNumSamples());
                     
                     if (passThrough)
                     {
                         if (beamIdx == inChannel)
                         {
                             // Pass-through processing
-                            FloatVectorOperations::copy(fftOutput, fftBuffer, 2*FFT_SIZE);
+                            fftOutput.copyFrom(0, 0, fftBuffer, 0, 0, fftBuffer.getNumSamples());
                             // Inverse FFT
-                            fft -> performRealOnlyInverseTransform(fftOutput);
+                            fft -> performRealOnlyInverseTransform(fftOutput.getWritePointer(0));
                             // OLA
-                            beamBuffer.addFrom(beamIdx, subBlockFirstIdx, fftOutput, FFT_SIZE);
+                            beamBuffer.addFrom(beamIdx, subBlockFirstIdx, fftOutput, 0, 0, FFT_SIZE);
                         }
                     }
                     else{ // no passThrough, real processing here!
@@ -327,26 +355,26 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
                         int beamWidthIdx = roundToInt(widthBeam[beamIdx]->get()*(firBeamwidthFft.size()-1));
                         
                         // FIR pre processing
-                        prepareForConvolution(fftBuffer);
+                        prepareForConvolution(fftBuffer.getWritePointer(0));
                         
                         // Beam width processing
-                        FloatVectorOperations::clear(fftOutput, 2*FFT_SIZE);
-                        convolutionProcessingAndAccumulate(fftBuffer,firBeamwidthFft[beamWidthIdx][inChannel].data(),fftOutput);
+                        fftOutput.clear();
+                        convolutionProcessingAndAccumulate(fftBuffer.getReadPointer(0),firBeamwidthFft[beamWidthIdx][inChannel].data(),fftOutput.getWritePointer(0));
                         
                         // Beam steering processing
-                        FloatVectorOperations::copy(fftBuffer, fftOutput, 2*FFT_SIZE);
-                        FloatVectorOperations::clear(fftOutput, 2*FFT_SIZE);
-                        convolutionProcessingAndAccumulate(fftBuffer,firFFT[steeringIdx][inChannel].data(),fftOutput);
+                        
+                        fftBuffer.copyFrom(0, 0, fftOutput, 0, 0, fftOutput.getNumSamples());
+                        fftOutput.clear();
+                        convolutionProcessingAndAccumulate(fftBuffer.getReadPointer(0),firFFT[steeringIdx][inChannel].data(),fftOutput.getWritePointer(0));
                         
                         // FIR post processing
-                        updateSymmetricFrequencyDomainData(fftOutput);
+                        updateSymmetricFrequencyDomainData(fftOutput.getWritePointer(0));
                         
                         // Inverse FFT
-                        fft -> performRealOnlyInverseTransform(fftOutput);
+                        fft -> performRealOnlyInverseTransform(fftOutput.getWritePointer(0));
                         
                         // OLA
-                        float residualGainLinear = Decibels::decibelsToGain(gainBeam[beamIdx]->get())/commonGainLinear;
-                        beamBuffer.addFrom(beamIdx, subBlockFirstIdx, fftOutput, FFT_SIZE, residualGainLinear);
+                        beamBuffer.addFrom(beamIdx, subBlockFirstIdx, fftOutput.getReadPointer(0), FFT_SIZE);
                     }
                 }
                 
@@ -356,8 +384,20 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
         
     }
     
-    // Meter
+    // Gain and meter
     {
+        
+        for (auto beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx)
+        {
+            auto block = juce::dsp::AudioBlock<float> (beamBuffer);
+            beamGain[beamIdx].setGainDecibels((gainBeam[beamIdx]->get())-(commonGain.getGainDecibels()));
+            {
+                auto beamBlock = block.getSubsetChannelBlock(beamIdx, 1).getSubBlock(0, blockNumSamples);
+                auto contextToUse = juce::dsp::ProcessContextReplacing<float> (beamBlock);
+                beamGain[beamIdx].process(contextToUse);
+            }
+        }
+        
         float minVal,maxVal,maxAbsVal;
         beamMetersLock.enter();
         for (auto beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx)

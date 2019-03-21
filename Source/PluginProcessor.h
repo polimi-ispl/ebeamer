@@ -89,9 +89,11 @@ private:
     
     AudioBuffer<float> beamBuffer;
     std::unique_ptr<dsp::FFT> fft;
-    float fftInput[2*FFT_SIZE];
-    float fftBuffer[2*FFT_SIZE];
-    float fftOutput[2*FFT_SIZE];
+    AudioBuffer<float> fftInput;
+    AudioBuffer<float> fftBuffer;
+    AudioBuffer<float> fftOutput;
+    
+    dsp::Gain<float> commonGain, beamGain[NUM_BEAMS];
     
     std::vector<std::vector<std::vector<float>>> firBeamwidthFft;
     std::vector<std::vector<std::vector<float>>> firFFT;
