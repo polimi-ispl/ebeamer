@@ -25,11 +25,11 @@
 #define INPUT_LED_TOP_MARGIN 20
 #define INPUT_LEFT_RIGHT_MARGIN 100
 #define INPUT_LED_HEIGHT 5
-#define INPUT_RMS_UPDATE_FREQ 15 //Hz
+#define INPUT_METER_UPDATE_FREQ 15 //Hz
 #define BEAM_LED_WIDTH 5
 #define BEAM_TOP_BOTTOM_MARGIN 10
 #define BEAM_LEFT_RIGHT_MARGIN 10
-#define BEAM_RMS_UPDATE_FREQ 15 //Hz
+#define BEAM_METER_UPDATE_FREQ 15 //Hz
 #define ENERGY_UPDATE_FREQ 15 //Hz
 
 //==============================================================================

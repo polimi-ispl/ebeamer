@@ -315,73 +315,45 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
             // Push FFT data for DOAthread to retrieve
             const GenericScopedLock<SpinLock> scopedLock(fftLock);
             
-            pushBackFFTdata(fftInput.getWritePointer(0));
+            //pushBackFFTdata(fftInput.getWritePointer(0));
             
             const GenericScopedUnlock<SpinLock> scopedUnlock(fftLock);
             
             // Beam dependent processing
             for (int beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx)
             {
-                if (bypass)
-                {
-                    // OLA
-                    if (beamIdx == inChannel)
-                    {
-                        beamBuffer.addFrom(beamIdx, subBlockFirstIdx, buffer, inChannel, subBlockFirstIdx,  subBlockLen);
-                    }
-                }
-                else
-                { // No bypass
-                    fftBuffer.copyFrom(0, 0, fftInput, 0, 0, fftInput.getNumSamples());
-                    
-                    if (passThrough)
-                    {
-                        if (beamIdx == inChannel)
-                        {
-                            // Pass-through processing
-                            fftOutput.copyFrom(0, 0, fftBuffer, 0, 0, fftBuffer.getNumSamples());
-                            // Inverse FFT
-                            fft -> performRealOnlyInverseTransform(fftOutput.getWritePointer(0));
-                            // OLA
-                            beamBuffer.addFrom(beamIdx, subBlockFirstIdx, fftOutput, 0, 0, FFT_SIZE);
-                        }
-                    }
-                    else{ // no passThrough, real processing here!
-                        
-                        // Determine steering index
-                        int steeringIdx = roundToInt(((steeringBeam[beamIdx]->get() + 1)/2.)*(firFFT.size()-1));
-                        
-                        // Determine beam width index
-                        int beamWidthIdx = roundToInt(widthBeam[beamIdx]->get()*(firBeamwidthFft.size()-1));
-                        
-                        // FIR pre processing
-                        prepareForConvolution(fftBuffer.getWritePointer(0));
-                        
-                        // Beam width processing
-                        fftOutput.clear();
-                        convolutionProcessingAndAccumulate(fftBuffer.getReadPointer(0),firBeamwidthFft[beamWidthIdx][inChannel].data(),fftOutput.getWritePointer(0));
-                        
-                        // Beam steering processing
-                        
-                        fftBuffer.copyFrom(0, 0, fftOutput, 0, 0, fftOutput.getNumSamples());
-                        fftOutput.clear();
-                        convolutionProcessingAndAccumulate(fftBuffer.getReadPointer(0),firFFT[steeringIdx][inChannel].data(),fftOutput.getWritePointer(0));
-                        
-                        // FIR post processing
-                        updateSymmetricFrequencyDomainData(fftOutput.getWritePointer(0));
-                        
-                        // Inverse FFT
-                        fft -> performRealOnlyInverseTransform(fftOutput.getWritePointer(0));
-                        
-                        // OLA
-                        beamBuffer.addFrom(beamIdx, subBlockFirstIdx, fftOutput.getReadPointer(0), FFT_SIZE);
-                    }
-                }
+                
+                fftBuffer.copyFrom(0, 0, fftInput, 0, 0, fftInput.getNumSamples());
+                
+                // Determine steering index
+                int steeringIdx = roundToInt(((steeringBeam[beamIdx]->get() + 1)/2.)*(firFFT.size()-1));
+                
+                // Determine beam width index
+                int beamWidthIdx = roundToInt(widthBeam[beamIdx]->get()*(firBeamwidthFft.size()-1));
+                
+                // FIR pre processing
+                prepareForConvolution(fftBuffer.getWritePointer(0));
+                
+                // Beam width processing
+                fftOutput.clear();
+                convolutionProcessingAndAccumulate(fftBuffer.getReadPointer(0),firBeamwidthFft[beamWidthIdx][inChannel].data(),fftOutput.getWritePointer(0));
+                
+                // Beam steering processing
+                fftBuffer.copyFrom(0, 0, fftOutput, 0, 0, fftOutput.getNumSamples());
+                fftOutput.clear();
+                convolutionProcessingAndAccumulate(fftBuffer.getReadPointer(0),firFFT[steeringIdx][inChannel].data(),fftOutput.getWritePointer(0));
+                
+                // FIR post processing
+                updateSymmetricFrequencyDomainData(fftOutput.getWritePointer(0));
+                
+                // Inverse FFT
+                fft -> performRealOnlyInverseTransform(fftOutput.getWritePointer(0));
+                
+                // OLA
+                beamBuffer.addFrom(beamIdx, subBlockFirstIdx, fftOutput.getReadPointer(0), FFT_SIZE);
                 
             }
-            
         }
-        
     }
     
     // Gain and meter
