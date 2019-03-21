@@ -315,7 +315,7 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
             // Push FFT data for DOAthread to retrieve
             const GenericScopedLock<SpinLock> scopedLock(fftLock);
             
-            //pushBackFFTdata(fftInput.getWritePointer(0));
+            pushBackFFTdata(fftInput.getWritePointer(0));
             
             const GenericScopedUnlock<SpinLock> scopedUnlock(fftLock);
             
