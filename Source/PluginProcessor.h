@@ -7,7 +7,7 @@
 #define MAX_FFT_BLOCK_LEN (FFT_SIZE - FIR_LEN)
 #define NUM_BEAMS 2
 #define HPF_FREQ 20.0 //Hz
-#define METERS_INERTIA 0.9f
+#define METERS_INERTIA 0.0f
 //#define METERS_MODE_RMS
 #define BEAMSTEERING_ALG_IDEAL
 
@@ -60,8 +60,6 @@ public:
     int bufferStatus();
     SpinLock fftLock;
     
-    bool passThrough = false;
-    bool bypass = false;
     AudioParameterFloat* steeringBeam[NUM_BEAMS];
     AudioParameterFloat* widthBeam[NUM_BEAMS];
     AudioParameterFloat* panBeam[NUM_BEAMS];
@@ -89,9 +87,11 @@ private:
     
     AudioBuffer<float> beamBuffer;
     std::unique_ptr<dsp::FFT> fft;
-    float fftInput[2*FFT_SIZE];
-    float fftBuffer[2*FFT_SIZE];
-    float fftOutput[2*FFT_SIZE];
+    AudioBuffer<float> fftInput;
+    AudioBuffer<float> fftBuffer;
+    AudioBuffer<float> fftOutput;
+    
+    dsp::Gain<float> commonGain, beamGain[NUM_BEAMS];
     
     std::vector<std::vector<std::vector<float>>> firBeamwidthFft;
     std::vector<std::vector<std::vector<float>>> firFFT;
