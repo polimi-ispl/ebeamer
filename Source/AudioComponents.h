@@ -112,3 +112,20 @@ private:
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SingleChannelLedBar)
 };
+
+class MeterDecay
+{
+    
+public:
+    
+    MeterDecay(float fs, float duration, float blockSize, int numChannels);
+    void push(const AudioBuffer<float> signal);
+    float get(int channelIdx);
+    
+private:
+    
+    std::vector<int> idxs;
+    std::vector<std::vector<float>> minMaxCircularBuffer;
+    
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MeterDecay)
+};
