@@ -92,10 +92,10 @@ private:
     SingleChannelLedBar beam2Meter;
     
     Label hpfLabel;
-    Slider hpfSlider;
+    FrequencySlider hpfSlider;
     
     Label gainLabel;
-    Slider gainSlider;
+    DecibelSlider gainSlider;
 
     void setMuteButtonColor(uint8 beamIdx);
     

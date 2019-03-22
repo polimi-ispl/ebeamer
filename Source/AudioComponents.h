@@ -27,7 +27,7 @@ public:
     double getValueFromText (const String& text) override
     {
        
-        auto decibelText = text.upToFirstOccurrenceOf ("dB", false, false).trim();    // [1]
+        auto decibelText = text.upToFirstOccurrenceOf ("dB", false, false).trim();
         
         return decibelText.equalsIgnoreCase ("-INF") ? DB_MINUS_INF
         : decibelText.getDoubleValue();  // [2]
@@ -40,6 +40,32 @@ public:
     
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DecibelSlider)
+};
+
+//==============================================================================
+class FrequencySlider : public Slider
+{
+public:
+    
+    FrequencySlider(){};
+    
+    double getValueFromText (const String& text) override
+    {
+        
+        auto hzText = text.upToFirstOccurrenceOf ("Hz", false, false).trim();
+        auto hzVal = roundToInt(hzText.getDoubleValue());
+        return hzVal;
+    }
+    
+    String getTextFromValue (double value) override
+    {
+        std::ostringstream valueString;
+        valueString << roundToInt(value) << " Hz";
+        return valueString.str();
+    }
+    
+private:
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FrequencySlider)
 };
 
 

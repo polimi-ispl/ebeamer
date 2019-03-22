@@ -33,7 +33,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     scene.beams[0].move(processor.steeringBeam[0]->get());
     steeringBeam1Slider.addListener(this);
     steeringBeam1Slider.setSliderStyle(Slider::LinearHorizontal);
-    steeringBeam1Slider.setTextBoxStyle(Slider::TextBoxRight,false,60,20);
+    steeringBeam1Slider.setTextBoxStyle(Slider::TextBoxRight,false,LABEL_WIDTH,LABEL_HEIGHT);
     steeringBeam1Slider.setValue(processor.steeringBeam[0]->get());
     steeringBeam1Slider.setColour(Slider::thumbColourId, beamColours[0]);
     addAndMakeVisible(steeringBeam1Slider);
@@ -44,7 +44,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     scene.beams[1].move(processor.steeringBeam[1]->get());
     steeringBeam2Slider.addListener(this);
     steeringBeam2Slider.setSliderStyle(Slider::LinearHorizontal);
-    steeringBeam2Slider.setTextBoxStyle(Slider::TextBoxRight,false,60,20);
+    steeringBeam2Slider.setTextBoxStyle(Slider::TextBoxRight,false,LABEL_WIDTH,LABEL_HEIGHT);
     steeringBeam2Slider.setValue(processor.steeringBeam[1]->get());
     steeringBeam2Slider.setColour(Slider::thumbColourId, beamColours[1]);
     addAndMakeVisible(steeringBeam2Slider);
@@ -156,7 +156,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     hpfSlider.setValue(processor.hpfFreq->get());
     hpfSlider.addListener(this);
     hpfSlider.setSliderStyle(Slider::LinearHorizontal);
-    hpfSlider.setTextBoxStyle(Slider::TextBoxRight,false,60,20);
+    hpfSlider.setTextBoxStyle(Slider::TextBoxRight,false,LABEL_WIDTH,LABEL_HEIGHT);
     hpfSlider.setValue(processor.hpfFreq->get());
     addAndMakeVisible(hpfSlider);
     
@@ -174,7 +174,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     gainSlider.setValue(processor.micGain->get());
     gainSlider.addListener(this);
     gainSlider.setSliderStyle(Slider::LinearHorizontal);
-    gainSlider.setTextBoxStyle(Slider::TextBoxRight,false,60,20);
+    gainSlider.setTextBoxStyle(Slider::TextBoxRight,false,LABEL_WIDTH,LABEL_HEIGHT);
     gainSlider.setValue(processor.micGain->get());
     addAndMakeVisible(gainSlider);
     

@@ -73,11 +73,12 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
         stringStreamName.str(std::string());
         stringStreamTag << "steerBeam" << (beamIdx+1);
         stringStreamName << "Steering beam " << (beamIdx+1);
+        auto defaultDirection = beamIdx == 0 ?  -0.5 : 0.5;
         addParameter(steeringBeam[beamIdx] = new AudioParameterFloat(stringStreamTag.str(),
                                                                stringStreamName.str(),
                                                                -1.0f,
                                                                1.0f,
-                                                               -0.2f));
+                                                               defaultDirection));
         stringStreamTag.str(std::string());
         stringStreamName.str(std::string());
         stringStreamTag << "widthBeam" << (beamIdx+1);
@@ -86,16 +87,17 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
                                                                   stringStreamName.str(),
                                                             0.0f,
                                                             1.0f,
-                                                            0.0f));
+                                                            0.3f));
         stringStreamTag.str(std::string());
         stringStreamName.str(std::string());
         stringStreamTag << "panBeam" << (beamIdx+1);
         stringStreamName << "Pan beam " << (beamIdx+1);
+        auto defaultPan = beamIdx == 0 ?  -0.5 : 0.5;
         addParameter(panBeam[beamIdx] = new AudioParameterFloat(stringStreamTag.str(),
                                                                 stringStreamName.str(),
                                                           -1.0f,
                                                           1.0f,
-                                                          0.0f));
+                                                          defaultPan));
         stringStreamTag.str(std::string());
         stringStreamName.str(std::string());
         stringStreamTag << "levelBeam" << (beamIdx+1);
@@ -134,7 +136,7 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
                                                    stringStreamName.str(),
                                                    20.0f,
                                                    500.0f,
-                                                   50.0f));
+                                                   250.0f));
 }
 
 JucebeamAudioProcessor::~JucebeamAudioProcessor()
