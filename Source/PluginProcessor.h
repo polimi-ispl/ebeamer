@@ -55,9 +55,9 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     
     // Project specific
-    void firConvolve(float *input, float *output, int inChannel, int beamWidthIdx, int steeringIdx);
+    void firConvolve(const float *input, float *output, int inChannel, int beamWidthIdx, int steeringIdx);
     
-    std::vector<float*> popFrontFFTdata();
+    std::vector<const float*> popFrontFFTdata();
     int bufferStatus();
     SpinLock fftLock;
     
@@ -84,9 +84,9 @@ private:
     void convolutionProcessingAndAccumulate (const float *input, const float *impulse, float *output);
     void updateSymmetricFrequencyDomainData (float* samples) noexcept;
     
-    void pushBackFFTdata(float* data, int channelIdx);
+    void pushBackFFTdata(const float* data, int channelIdx);
     
-    std::vector<std::vector<float*>> fftData;
+    std::vector<std::vector<const float*>> fftData;
     
     AudioBuffer<float> beamBuffer;
     std::unique_ptr<dsp::FFT> fft;

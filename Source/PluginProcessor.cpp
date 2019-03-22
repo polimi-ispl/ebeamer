@@ -330,7 +330,7 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
             // Push FFT data for DOAthread to retrieve
             const GenericScopedLock<SpinLock> scopedLock(fftLock);
             
-            pushBackFFTdata(fftInput, inChannel);
+            pushBackFFTdata(fftInput.getReadPointer(0), inChannel);
             
             const GenericScopedUnlock<SpinLock> scopedUnlock(fftLock);
             
@@ -499,11 +499,11 @@ AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 
 //==============================================================================
 
-void JucebeamAudioProcessor::firConvolve(float *input, float *output, int inChannel, int beamWidthIdx, int steeringIdx)
+void JucebeamAudioProcessor::firConvolve(const float *input, float *output, int inChannel, int beamWidthIdx, int steeringIdx)
 {
     float fftTemp[2*FFT_SIZE];
     
-    FloatVectorOperations::copy(fftTemp, fftInput, 2*FFT_SIZE);
+    FloatVectorOperations::copy(fftTemp, input, 2*FFT_SIZE);
     
     // FIR pre processing
     prepareForConvolution(fftTemp);
@@ -618,9 +618,9 @@ int JucebeamAudioProcessor::bufferStatus()
     return 0;
 }
 
-std::vector<float*> JucebeamAudioProcessor::popFrontFFTdata()
+std::vector<const float*> JucebeamAudioProcessor::popFrontFFTdata()
 {
-    std::vector<float*> result;
+    std::vector<const float*> result;
     
     if(fftData.size() != getTotalNumInputChannels())
         return result;
@@ -642,7 +642,7 @@ std::vector<float*> JucebeamAudioProcessor::popFrontFFTdata()
     return result;
 }
 
-void JucebeamAudioProcessor::pushBackFFTdata(float* input, int channelIdx)
+void JucebeamAudioProcessor::pushBackFFTdata(const float* input, int channelIdx)
 {
     // Assuming the number of input channels won't change at runtime.
     

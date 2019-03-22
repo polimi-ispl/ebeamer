@@ -22,7 +22,7 @@ void DOAthread::run()
 {
     ScopedNoDenormals noDenormals;
     
-    std::vector<float*> fftData;
+    std::vector<const float*> fftData;
     std::vector<float> tempEnergy;
     std::vector<float> prevEnergy;
     
