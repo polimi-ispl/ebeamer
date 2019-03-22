@@ -6,7 +6,7 @@
               pluginVSTCategory="kPlugCategSpacializer" pluginAUMainType="'aufx'"
               pluginName="eBeamer" pluginDesc="eStick double beam controller"
               pluginManufacturer="ISPL Polimi" pluginManufacturerCode="Ispl"
-              pluginCode="ebea">
+              pluginCode="ebea" version="0.3">
   <MAINGROUP id="X7PQw9" name="juce-beam">
     <GROUP id="{518A4CE0-60DE-E43A-9B5F-0BA3454FC937}" name="Binary">
       <FILE id="qBbjmE" name="firIR.cpp" compile="1" resource="0" file="Source/Binary/firIR.cpp"/>

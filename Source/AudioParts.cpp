@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    AudioPArts.cpp
+    AudioParts.cpp
     Created: 22 Mar 2019 8:48:06am
     Author:  Luca Bondi
 

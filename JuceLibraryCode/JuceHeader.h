@@ -42,7 +42,7 @@ namespace ProjectInfo
 {
     const char* const  projectName    = "juce-beam";
     const char* const  companyName    = "ISPL Polimi";
-    const char* const  versionString  = "1.0.0";
-    const int          versionNumber  = 0x10000;
+    const char* const  versionString  = "0.3";
+    const int          versionNumber  = 0x300;
 }
 #endif
