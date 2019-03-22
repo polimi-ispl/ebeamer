@@ -7,7 +7,7 @@
 
 #define GUI_WIDTH 540
 
-
+#define LABEL_BEAM_WIDTH 25
 #define STEER_SLIDER_HEIGHT 40
 #define STEER_SLIDER_TOP_MARGIN 10
 #define KNOB_WIDTH 150
@@ -56,6 +56,9 @@ private:
     // Project specific
 
     SceneComponent scene;
+    
+    Label labelBeam1;
+    Label labelBeam2;
 
     Slider steeringBeam1Slider;
     Slider steeringBeam2Slider;
@@ -83,6 +86,9 @@ private:
     SingleChannelLedBar beam2Meter;
 
     void setMuteButtonColor(uint8 beamIdx);
+    
+    // Appearance
+    const std::vector<Colour> beamColours = {Colours::orangered,Colours::royalblue};
     
     // Callbacks
     void buttonClicked(Button *button) override;

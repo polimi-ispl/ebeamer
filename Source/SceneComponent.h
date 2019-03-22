@@ -97,10 +97,13 @@ public:
     void move(float);
     void scale(float);
     
+    void setBaseColor(Colour colour){baseColour = colour;}
+    
 private:
     
     float position;
     float width;
+    Colour baseColour = Colours::lightblue;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BeamComponent)
 };
@@ -112,6 +115,8 @@ class SceneComponent    : public Component
 public:
     SceneComponent();
     ~SceneComponent();
+    
+    void setBeamColors(const std::vector<Colour> &colours);
     
     void paint(Graphics&) override;
     void resized() override;

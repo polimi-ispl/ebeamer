@@ -269,11 +269,11 @@ void BeamComponent::paint(Graphics& g)
     path.applyTransform(AffineTransform::rotation( (PI/2) * position));
     path.applyTransform(AffineTransform::translation(SCENE_WIDTH/2, SCENE_WIDTH/2));
     
-    g.setColour(Colours::lightblue);
+    g.setColour(baseColour.brighter());
     g.setOpacity(0.4);
     g.fillPath(path);
     
-    g.setColour (Colours::blue);
+    g.setColour (baseColour);
     g.setOpacity(0.8);
     PathStrokeType strokeType(2);
     g.strokePath(path, strokeType);
@@ -331,6 +331,14 @@ void SceneComponent::resized()
     grid.setBounds(getLocalBounds());
     for(int i = 0; i < NUM_BEAMS; i++)
         beams[i].setBounds(getLocalBounds());
+}
+
+void SceneComponent::setBeamColors(const std::vector<Colour> &colours){
+    jassert(colours.size() == NUM_BEAMS);
+    for (auto beamIdx = 0;beamIdx < NUM_BEAMS;++beamIdx)
+    {
+        beams[beamIdx].setBaseColor(colours[beamIdx]);
+    }
 }
 
 //==============================================================================
