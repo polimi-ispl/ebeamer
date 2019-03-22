@@ -7,7 +7,8 @@ DOAthread::DOAthread(JucebeamAudioProcessor& p)
 {
     startThread(3);
     
-    const GenericScopedLock<SpinLock> scopedLock(energyLock);
+    energy.clear();
+    energy.resize(INITIAL_CONSIDERED_DIRECTIONS);
 }
 
 DOAthread::~DOAthread()
@@ -19,9 +20,13 @@ DOAthread::~DOAthread()
 
 void DOAthread::run()
 {
+    ScopedNoDenormals noDenormals;
+    
     std::vector<float*> fftData;
-    std::vector<float> temp;
-    int interval = 50;
+    std::vector<float> tempEnergy;
+    std::vector<float> prevEnergy;
+    
+    float fftOutput[2*FFT_SIZE];
     
     while(!threadShouldExit())
     {
@@ -33,15 +38,13 @@ void DOAthread::run()
         if(status < 0){
             // DOAthread is too fast.
             // Increase considered directions, or frequencies, or ...
-            interval += 5;
-            // continue;
+            wait(50);
+            continue;
         }
         
         if(status > 0){
             // DOAthread is too slow.
             // Decrease considered directions, or frequencies, or ...
-            if(interval > 5)
-                interval -= 5;
         }
         
         if(status == 0){
@@ -54,25 +57,36 @@ void DOAthread::run()
         
         const GenericScopedUnlock<SpinLock> scopedFFTunlock(processor.fftLock);
         
-        wait(interval);
-        
         // Compute energy, stored in temp.
         
-        // This displays the energy as a ramp,
-        // higher on the right if the buffer is large,
-        // higher on the left if the buffer is almost empty.
-        // DOAthread starts later than the processor,
-        // so it has to catch up in the first few moments.
-        temp.clear();
-        for(int i = 0; i < INITIAL_CONSIDERED_DIRECTIONS; i++){
-            float j = (float)i / INITIAL_CONSIDERED_DIRECTIONS;
-            j = 0.25 + (status / 10) * (j - 0.25);
-            temp.push_back(j);
+        energyLock.enter();
+        prevEnergy = energy;
+        energyLock.exit();
+        
+        tempEnergy.clear();
+        tempEnergy.resize(INITIAL_CONSIDERED_DIRECTIONS);
+        
+        for(int inChannel = 0; inChannel < fftData.size(); ++inChannel){
+            for(int beamIdx = 0; beamIdx < INITIAL_CONSIDERED_DIRECTIONS; ++beamIdx){
+                
+                int steeringIdx = round(beamIdx / (INITIAL_CONSIDERED_DIRECTIONS - 1));
+                int beamWidthIdx = 0;
+                
+                // FIR processing (includes reverse FFT)
+                processor.firConvolve(fftData.at(inChannel), fftOutput, inChannel, beamWidthIdx, steeringIdx);
+                
+                tempEnergy.at(beamIdx) = prevEnergy.at(beamIdx);
+                
+                for(int t = 0; t < FFT_SIZE; t++)
+                    if(100 * fftOutput[t] > tempEnergy.at(beamIdx) * EXP_DECAY_RATE)
+                        tempEnergy.at(beamIdx) = 100 * fftOutput[t];
+                    else
+                        tempEnergy.at(beamIdx) = tempEnergy.at(beamIdx) * EXP_DECAY_RATE;
+            }
         }
         
-        
         energyLock.enter();
-        energy = temp;
+        energy = tempEnergy;
         energyLock.exit();
     }
 }
