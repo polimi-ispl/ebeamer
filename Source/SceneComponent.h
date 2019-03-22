@@ -28,6 +28,7 @@
 #define SCENE_HEIGHT 460
 #endif
 
+#define GRID_REFRESH_TIMER 50
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "PluginProcessor.h"
@@ -67,6 +68,7 @@ public:
         this->energy = &energy;
         this->lock = &lock;
         
+        startTimer(GRID_REFRESH_TIMER);
     };
     
 private:
