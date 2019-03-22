@@ -126,11 +126,11 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     inputMeter.startTimerHz(INPUT_METER_UPDATE_FREQ);
     addAndMakeVisible(inputMeter);
     
-    beam1Meter.setSource(p.beamMeters[0],p.beamMetersLock);
+    beam1Meter.setSource(p.beamMeters,0,p.beamMetersLock);
     beam1Meter.startTimerHz(BEAM_METER_UPDATE_FREQ);
     addAndMakeVisible(beam1Meter);
     
-    beam2Meter.setSource(p.beamMeters[1],p.beamMetersLock);
+    beam2Meter.setSource(p.beamMeters,1,p.beamMetersLock);
     beam2Meter.startTimerHz(BEAM_METER_UPDATE_FREQ);
     addAndMakeVisible(beam2Meter);
 

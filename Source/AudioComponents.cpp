@@ -150,7 +150,7 @@ void SingleChannelLedBar::resized(){
 void SingleChannelLedBar::timerCallback()
 {
     lock->enter();
-    auto valueDb = Decibels::gainToDecibels(*source);
+    auto valueDb = Decibels::gainToDecibels((*source).at(ch));
     lock->exit();
     for (auto ledIdx = 0; ledIdx < leds.size(); ++ledIdx)
             leds[ledIdx]->colour = thToColour(th[ledIdx], valueDb > th[ledIdx]);
@@ -158,8 +158,9 @@ void SingleChannelLedBar::timerCallback()
     repaint();
 }
 
-void SingleChannelLedBar::setSource(float &source,SpinLock &lock)
+void SingleChannelLedBar::setSource(std::vector<float> &source,size_t ch,SpinLock &lock)
 {
+    this->ch = ch;
     this->source = &source;
     this->lock = &lock;
 }

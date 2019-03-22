@@ -95,13 +95,14 @@ public:
     void paint(Graphics&) override;
     void resized() override;
     
-    void setSource(float &source,SpinLock &lock);
+    void setSource(std::vector<float> &source,size_t ch,SpinLock &lock);
     
 private:
     
     bool isHorizontal;
     size_t num;
-    float *source;
+    size_t ch;
+    std::vector<float> *source;
     SpinLock *lock;
     std::vector<float> th;
     std::vector<std::unique_ptr<RoundLed>> leds;
