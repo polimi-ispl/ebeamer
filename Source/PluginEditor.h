@@ -22,15 +22,21 @@
 #define LEFT_RIGHT_MARGIN 20
 #define TOP_BOTTOM_MARGIN 20
 #define KNOBS_LEFT_RIGHT_MARGIN 20
-#define INPUT_LED_TOP_MARGIN 20
-#define INPUT_LEFT_RIGHT_MARGIN 100
-#define INPUT_LED_HEIGHT 5
-#define INPUT_METER_UPDATE_FREQ 15 //Hz
 #define BEAM_LED_WIDTH 5
 #define BEAM_TOP_BOTTOM_MARGIN 10
 #define BEAM_LEFT_RIGHT_MARGIN 10
 #define BEAM_METER_UPDATE_FREQ 15 //Hz
 #define ENERGY_UPDATE_FREQ 15 //Hz
+
+#define INPUT_SECTION_TOP_MARGIN 20
+#define INPUT_HPF_SLIDER_HEIGHT 40
+#define INPUT_HPF_LABEL_WIDTH 50
+#define INPUT_LEFT_RIGHT_MARGIN 100
+#define INPUT_LED_HEIGHT 5
+#define INPUT_METER_UPDATE_FREQ 15 //Hz
+#define INPUT_GAIN_SLIDER_HEIGHT 40
+#define INPUT_GAIN_LABEL_WIDTH 50
+
 
 //==============================================================================
 
@@ -73,9 +79,9 @@ private:
     Slider panBeam1Knob;
     Slider panBeam2Knob;
 
-    Label gainLabel;
-    DecibelSlider gainBeam1Knob;
-    DecibelSlider gainBeam2Knob;
+    Label levelLabel;
+    DecibelSlider levelBeam1Knob;
+    DecibelSlider levelBeam2Knob;
 
     Label muteLabel;
     TextButton beam1MuteButton;
@@ -84,6 +90,12 @@ private:
     MultiChannelLedBar inputMeter;
     SingleChannelLedBar beam1Meter;
     SingleChannelLedBar beam2Meter;
+    
+    Label hpfLabel;
+    FrequencySlider hpfSlider;
+    
+    Label gainLabel;
+    DecibelSlider gainSlider;
 
     void setMuteButtonColor(uint8 beamIdx);
     

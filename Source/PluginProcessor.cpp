@@ -59,6 +59,10 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
 #else
     firFFT = prepareIR(readFIR(firIR::firDASmeasured_dat,firIR::firDASmeasured_datSize));
 #endif
+    /* With Joe we decided that the way we want the interface to behave is to have
+     the eStick facing the user, mic 1 on the left, thus we have to reverse the order of the filters.
+     */
+    std::reverse(firFFT.begin(), firFFT.end());
     firBeamwidthFft = prepareIR(readFIR(firIR::firBeamwidth_dat,firIR::firBeamwidth_datSize));
     
     // Initialize parameters
@@ -69,11 +73,12 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
         stringStreamName.str(std::string());
         stringStreamTag << "steerBeam" << (beamIdx+1);
         stringStreamName << "Steering beam " << (beamIdx+1);
+        auto defaultDirection = beamIdx == 0 ?  -0.5 : 0.5;
         addParameter(steeringBeam[beamIdx] = new AudioParameterFloat(stringStreamTag.str(),
                                                                stringStreamName.str(),
                                                                -1.0f,
                                                                1.0f,
-                                                               -0.2f));
+                                                               defaultDirection));
         stringStreamTag.str(std::string());
         stringStreamName.str(std::string());
         stringStreamTag << "widthBeam" << (beamIdx+1);
@@ -82,25 +87,26 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
                                                                   stringStreamName.str(),
                                                             0.0f,
                                                             1.0f,
-                                                            0.0f));
+                                                            0.3f));
         stringStreamTag.str(std::string());
         stringStreamName.str(std::string());
         stringStreamTag << "panBeam" << (beamIdx+1);
         stringStreamName << "Pan beam " << (beamIdx+1);
+        auto defaultPan = beamIdx == 0 ?  -0.5 : 0.5;
         addParameter(panBeam[beamIdx] = new AudioParameterFloat(stringStreamTag.str(),
                                                                 stringStreamName.str(),
                                                           -1.0f,
                                                           1.0f,
-                                                          0.0f));
+                                                          defaultPan));
         stringStreamTag.str(std::string());
         stringStreamName.str(std::string());
-        stringStreamTag << "gainBeam" << (beamIdx+1);
-        stringStreamName << "Gain beam " << (beamIdx+1);
-        addParameter(gainBeam[beamIdx] = new AudioParameterFloat(stringStreamTag.str(),
+        stringStreamTag << "levelBeam" << (beamIdx+1);
+        stringStreamName << "Level beam " << (beamIdx+1);
+        addParameter(levelBeam[beamIdx] = new AudioParameterFloat(stringStreamTag.str(),
                                                                  stringStreamName.str(),
-                                                           0.0f,
-                                                           60.0f,
-                                                           10.0f));
+                                                           -10.0f,
+                                                           10.0f,
+                                                           0.0f));
         
         stringStreamTag.str(std::string());
         stringStreamName.str(std::string());
@@ -111,6 +117,26 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
                                                                  false));
         
     }
+    
+    stringStreamTag.str(std::string());
+    stringStreamName.str(std::string());
+    stringStreamTag << "gainMic";
+    stringStreamName << "Gain mic";
+    addParameter(micGain = new AudioParameterFloat(stringStreamTag.str(),
+                                                              stringStreamName.str(),
+                                                              0.0f,
+                                                              40.0f,
+                                                              20.0f));
+    
+    stringStreamTag.str(std::string());
+    stringStreamName.str(std::string());
+    stringStreamTag << "hpf";
+    stringStreamName << "HPF mic";
+    addParameter(hpfFreq = new AudioParameterFloat(stringStreamTag.str(),
+                                                   stringStreamName.str(),
+                                                   20.0f,
+                                                   500.0f,
+                                                   250.0f));
 }
 
 JucebeamAudioProcessor::~JucebeamAudioProcessor()
@@ -226,7 +252,7 @@ void JucebeamAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     
     // Initialize HPF
     iirHPFfilters.clear();
-    iirCoeffHPF = IIRCoefficients::makeHighPass(getSampleRate(), HPF_FREQ);
+    iirCoeffHPF = IIRCoefficients::makeHighPass(getSampleRate(), hpfFreq->get());
     
     iirHPFfilters.resize(numInputChannels);
     for (auto idx = 0; idx < numInputChannels; ++idx)
@@ -258,16 +284,20 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
     
     int blockNumSamples = buffer.getNumSamples();
     
-    float commonGaindB = 100;
-    for (auto beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx){
-        commonGaindB = std::min(commonGaindB,gainBeam[beamIdx]->get());
-    }
-    commonGaindB -= 6;
-    commonGain.setGainDecibels(commonGaindB);
+    commonGain.setGainDecibels(micGain->get());
     {
         auto block = juce::dsp::AudioBlock<float> (buffer);
         auto contextToUse = juce::dsp::ProcessContextReplacing<float> (block);
         commonGain.process(contextToUse);
+    }
+    
+    if(prevHpfFreq != hpfFreq->get()){
+        iirCoeffHPF = IIRCoefficients::makeHighPass(getSampleRate(), hpfFreq->get());
+        prevHpfFreq = hpfFreq->get();
+        for (auto idx = 0; idx < totalNumInputChannels; ++idx)
+        {
+            iirHPFfilters[idx]->setCoefficients(iirCoeffHPF);
+        }
     }
     
     for (int inChannel = 0; inChannel < totalNumInputChannels; ++inChannel)
@@ -347,7 +377,7 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
         for (auto beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx)
         {
             auto block = juce::dsp::AudioBlock<float> (beamBuffer);
-            beamGain[beamIdx].setGainDecibels((gainBeam[beamIdx]->get())-(commonGain.getGainDecibels()));
+            beamGain[beamIdx].setGainDecibels(levelBeam[beamIdx]->get());
             {
                 auto beamBlock = block.getSubsetChannelBlock(beamIdx, 1).getSubBlock(0, blockNumSamples);
                 auto contextToUse = juce::dsp::ProcessContextReplacing<float> (beamBlock);
@@ -417,7 +447,7 @@ void JucebeamAudioProcessor::getStateInformation (MemoryBlock& destData)
         
         stringStreamTag.str(std::string());
         stringStreamTag << "gainBeam" << (beamIdx+1);
-        xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(gainBeam[beamIdx]));
+        xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(levelBeam[beamIdx]));
 
         stringStreamTag.str(std::string());
         stringStreamTag << "muteBeam" << (beamIdx+1);
@@ -449,7 +479,7 @@ void JucebeamAudioProcessor::setStateInformation (const void* data, int sizeInBy
                 
                 stringStreamTag.str(std::string());
                 stringStreamTag << "gainBeam" << (beamIdx+1);
-                *(gainBeam[beamIdx]) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 10.0);
+                *(levelBeam[beamIdx]) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 10.0);
                 
                 stringStreamTag.str(std::string());
                 stringStreamTag << "muteBeam" << (beamIdx+1);
