@@ -24,7 +24,7 @@
     <key>NSHumanReadableCopyright</key>
     <string></string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>This app needs to access your microphone</string>
+	<string>eBeamer needs to access your microphone in order to work</string>
     <key>NSHighResolutionCapable</key>
     <true/>
   </dict>
