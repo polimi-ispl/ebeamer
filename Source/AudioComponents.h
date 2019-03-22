@@ -95,13 +95,14 @@ public:
     void paint(Graphics&) override;
     void resized() override;
     
-    void setSource(float &source,SpinLock &lock);
+    void setSource(std::vector<float> &source,size_t ch,SpinLock &lock);
     
 private:
     
     bool isHorizontal;
     size_t num;
-    float *source;
+    size_t ch;
+    std::vector<float> *source;
     SpinLock *lock;
     std::vector<float> th;
     std::vector<std::unique_ptr<RoundLed>> leds;
@@ -111,21 +112,4 @@ private:
     void timerCallback() override;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SingleChannelLedBar)
-};
-
-class MeterDecay
-{
-    
-public:
-    
-    MeterDecay(float fs, float duration, float blockSize, int numChannels);
-    void push(const AudioBuffer<float> signal);
-    float get(int channelIdx);
-    
-private:
-    
-    std::vector<int> idxs;
-    std::vector<std::vector<float>> minMaxCircularBuffer;
-    
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MeterDecay)
 };

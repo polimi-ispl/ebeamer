@@ -150,7 +150,7 @@ void SingleChannelLedBar::resized(){
 void SingleChannelLedBar::timerCallback()
 {
     lock->enter();
-    auto valueDb = Decibels::gainToDecibels(*source);
+    auto valueDb = Decibels::gainToDecibels((*source).at(ch));
     lock->exit();
     for (auto ledIdx = 0; ledIdx < leds.size(); ++ledIdx)
             leds[ledIdx]->colour = thToColour(th[ledIdx], valueDb > th[ledIdx]);
@@ -158,8 +158,9 @@ void SingleChannelLedBar::timerCallback()
     repaint();
 }
 
-void SingleChannelLedBar::setSource(float &source,SpinLock &lock)
+void SingleChannelLedBar::setSource(std::vector<float> &source,size_t ch,SpinLock &lock)
 {
+    this->ch = ch;
     this->source = &source;
     this->lock = &lock;
 }
@@ -187,42 +188,4 @@ Colour SingleChannelLedBar::thToColour(float th, bool active)
         else
             return Colours::darkgreen;
     }
-}
-
-MeterDecay::MeterDecay(float fs, float duration, float blockSize, int numChannels)
-{
-    
-    int numBlocks = ceil(duration*fs/blockSize);
-    
-    minMaxCircularBuffer.resize(numChannels);
-    idxs.resize(numChannels);
-    for (auto channelIdx = 0; channelIdx < numChannels; ++channelIdx)
-    {
-        idxs[channelIdx] = 0;
-        minMaxCircularBuffer[channelIdx].resize(numBlocks);
-    }
-    
-}
-
-void MeterDecay::push(const AudioBuffer<float> signal)
-{
-    for (auto channelIdx = 0; channelIdx < signal.getNumChannels(); ++channelIdx)
-    {
-        Range<float> minMax = FloatVectorOperations::findMinAndMax(signal.getReadPointer(channelIdx),signal.getNumSamples());
-        float maxAbs = jmax(abs(minMax.getStart()),abs(minMax.getEnd()));
-        minMaxCircularBuffer[channelIdx][idxs[channelIdx]++] = maxAbs;
-        if (idxs[channelIdx] >= minMaxCircularBuffer[channelIdx].size()){
-            idxs[channelIdx] = 0;
-        }
-    }
-}
-
-float MeterDecay::get(int channelIdx)
-{
-    float maxVal = 0;
-    for (auto idx = 0; idx < minMaxCircularBuffer[channelIdx].size(); ++idx)
-    {
-        maxVal = jmax(maxVal,minMaxCircularBuffer[channelIdx][idx]);
-    }
-    return maxVal;
 }

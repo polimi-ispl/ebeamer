@@ -1,14 +1,14 @@
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
+#include "AudioParts.h"
 
 #define FFT_SIZE 1024
 #define FIR_LEN 512
 #define MAX_FFT_BLOCK_LEN (FFT_SIZE - FIR_LEN)
 #define NUM_BEAMS 2
-#define HPF_FREQ 20.0 //Hz
-#define METERS_INERTIA 0.0f
-//#define METERS_MODE_RMS
+#define HPF_FREQ 40.0 //Hz
+#define METERS_DECAY 0.15 //s
 #define BEAMSTEERING_ALG_IDEAL
 
 
@@ -97,6 +97,9 @@ private:
     std::vector<std::vector<std::vector<float>>> firFFT;
     
     IIRCoefficients iirCoeffHPF;
+    
+    std::unique_ptr<MeterDecay> inputMeterDecay;
+    std::unique_ptr<MeterDecay> beamMeterDecay;
     
     std::vector<std::unique_ptr<IIRFilter>> iirHPFfilters;
     
