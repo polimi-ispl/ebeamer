@@ -56,7 +56,7 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     
     // Project specific
-    void firConvolve(float *input, float *output, int inChannel, int beamWidthIdx, int steeringIdx);
+    void firConvolve(float *input, float *output, int inChannel, float steering, float beamWidth);
     
     std::vector<float*> popFrontFFTdata();
     int bufferStatus();

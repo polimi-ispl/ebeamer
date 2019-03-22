@@ -481,11 +481,17 @@ AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 
 //==============================================================================
 
-void JucebeamAudioProcessor::firConvolve(float *input, float *output, int inChannel, int beamWidthIdx, int steeringIdx)
+void JucebeamAudioProcessor::firConvolve(float *input, float *output, int inChannel, float steering, float beamWidth)
 {
     float fftTemp[2*FFT_SIZE];
     
     FloatVectorOperations::copy(fftTemp, fftInput, 2*FFT_SIZE);
+    
+    // Determine steering index
+    int steeringIdx = roundToInt(((steering + 1)/2.)*(firFFT.size()-1));
+    
+    // Determine beam width index
+    int beamWidthIdx = roundToInt(beamWidth*(firBeamwidthFft.size()-1));
     
     // FIR pre processing
     prepareForConvolution(fftTemp);

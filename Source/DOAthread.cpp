@@ -69,19 +69,38 @@ void DOAthread::run()
         for(int inChannel = 0; inChannel < fftData.size(); ++inChannel){
             for(int beamIdx = 0; beamIdx < INITIAL_CONSIDERED_DIRECTIONS; ++beamIdx){
                 
-                int steeringIdx = round(beamIdx / (INITIAL_CONSIDERED_DIRECTIONS - 1));
-                int beamWidthIdx = 0;
-                
                 // FIR processing (includes reverse FFT)
-                processor.firConvolve(fftData.at(inChannel), fftOutput, inChannel, beamWidthIdx, steeringIdx);
+                processor.firConvolve(
+                                        fftData.at(inChannel),
+                                        fftOutput,
+                                        inChannel,
+                                        (float) beamIdx / (INITIAL_CONSIDERED_DIRECTIONS - 1),
+                                        0
+                                     );
                 
                 tempEnergy.at(beamIdx) = prevEnergy.at(beamIdx);
                 
                 for(int t = 0; t < FFT_SIZE; t++)
-                    if(100 * fftOutput[t] > tempEnergy.at(beamIdx) * EXP_DECAY_RATE)
-                        tempEnergy.at(beamIdx) = 100 * fftOutput[t];
+                    if(25 * fftOutput[t] > tempEnergy.at(beamIdx) * EXP_DECAY_RATE)
+                        tempEnergy.at(beamIdx) = 25 * fftOutput[t];
                     else
                         tempEnergy.at(beamIdx) = tempEnergy.at(beamIdx) * EXP_DECAY_RATE;
+                
+                /*       
+                float minVal,
+                      maxVal,
+                      maxAbsVal;
+                
+                    findMinAndMax(fftOutput, FFT_SIZE, minVal, maxVal);
+                    maxAbsVal = jmax(abs(minVal), abs(maxVal));
+                    tempEnergy.at(beamIdx) = prevEnergy.at(beamIdx)
+                                            *
+                                            (EXP_DECAY_RATE)
+                                            +
+                                            maxAbsVal
+                                            *
+                                            (1 - EXP_DECAY_RATE);
+                                            */
             }
         }
         
