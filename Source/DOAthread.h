@@ -18,14 +18,28 @@ public:
     ~DOAthread();
     
     void run() override;
+    
     std::vector<float> energy;
+    bool newEnergyAvailable = false;
     SpinLock energyLock;
+    
+    
 
 //==============================================================================
     
 private:
-
+    
     JucebeamAudioProcessor& processor;
     
+    AudioBuffer<float> directionalSignal;
+    AudioBuffer<float> fftOutput;
+    
+    time_t processingStartTime, processingEndTime;
+    time_t inputWaitStartTime, inputWaitEndTime;
+    time_t outputWaitStartTime, outputWaitEndTime;
+    
+    std::vector<int> directionIdxs;
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DOAthread);
+    
 };

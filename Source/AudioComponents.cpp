@@ -10,6 +10,8 @@
 
 #include "AudioComponents.h"
 
+
+
 void RoundLed::paint(Graphics& g){
     
     Rectangle<float> area = getLocalBounds().toFloat();
@@ -27,14 +29,8 @@ void RoundLed::resized(){
 }
 
 
-MultiChannelLedBar::MultiChannelLedBar(int num, bool isHorizontal){
-    this->isHorizontal = isHorizontal;
-    makeLayout(num);
-}
-
-void MultiChannelLedBar::makeLayout(size_t num)
+void MultiChannelLedBar::makeLayout()
 {
-    this->num = num;
     removeAllChildren();
     leds.clear();
     for (auto ledIdx = 0; ledIdx < num; ++ledIdx)
@@ -72,10 +68,6 @@ void MultiChannelLedBar::timerCallback()
     std::vector<float> values = *source;
     lock->exit();
     
-    if (values.size() != num){
-        makeLayout(values.size());
-    }
-    
     for (auto ledIdx = 0; ledIdx < leds.size(); ++ledIdx)
     {
         auto value = values.at(ledIdx);
@@ -101,9 +93,10 @@ void MultiChannelLedBar::timerCallback()
     repaint();
 }
 
-void MultiChannelLedBar::setSource(std::vector<float> &source,SpinLock &lock)
+void MultiChannelLedBar::setSource(const std::vector<float> &source,SpinLock &lock)
 {
-    jassert(source.size() == leds.size());
+    num = source.size();
+    makeLayout();
     this->source = &source;
     this->lock = &lock;
 }
@@ -131,6 +124,12 @@ SingleChannelLedBar::SingleChannelLedBar(size_t numLeds, bool isHorizontal){
     }
 }
 
+void SingleChannelLedBar::setSource(const std::vector<float> &source,int ch, SpinLock &lock){
+    this->source = &source;
+    this->ch = ch;
+    this->lock = &lock;
+}
+
 void SingleChannelLedBar::paint(Graphics& g){
     
 }
@@ -150,19 +149,12 @@ void SingleChannelLedBar::resized(){
 void SingleChannelLedBar::timerCallback()
 {
     lock->enter();
-    auto valueDb = Decibels::gainToDecibels((*source).at(ch));
+    auto valueDb = Decibels::gainToDecibels(source->at(ch));
     lock->exit();
     for (auto ledIdx = 0; ledIdx < leds.size(); ++ledIdx)
             leds[ledIdx]->colour = thToColour(th[ledIdx], valueDb > th[ledIdx]);
     
     repaint();
-}
-
-void SingleChannelLedBar::setSource(std::vector<float> &source,size_t ch,SpinLock &lock)
-{
-    this->ch = ch;
-    this->source = &source;
-    this->lock = &lock;
 }
 
 Colour SingleChannelLedBar::thToColour(float th, bool active)

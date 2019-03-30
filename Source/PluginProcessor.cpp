@@ -50,20 +50,6 @@ JucebeamAudioProcessor::JucebeamAudioProcessor()
 #endif
 {
     
-    // Initialize FFT
-    fft = std::make_unique<dsp::FFT>(roundToInt (std::log2 (FFT_SIZE)));
-    
-    // Initialize firFFTs (already prepared for convolution
-#ifdef BEAMSTEERING_ALG_IDEAL
-    firFFT = prepareIR(readFIR(firIR::firDASideal_dat,firIR::firDASideal_datSize));
-#else
-    firFFT = prepareIR(readFIR(firIR::firDASmeasured_dat,firIR::firDASmeasured_datSize));
-#endif
-    /* With Joe we decided that the way we want the interface to behave is to have
-     the eStick facing the user, mic 1 on the left, thus we have to reverse the order of the filters.
-     */
-    std::reverse(firFFT.begin(), firFFT.end());
-    firBeamwidthFft = prepareIR(readFIR(firIR::firBeamwidth_dat,firIR::firBeamwidth_datSize));
     
     // Initialize parameters
     std::ostringstream stringStreamTag;
@@ -220,19 +206,44 @@ bool JucebeamAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts)
 //==============================================================================
 void JucebeamAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
+    
     auto numInputChannels = getTotalNumInputChannels();
     
-    auto bufLen = std::max(FFT_SIZE,samplesPerBlock+(FFT_SIZE - MAX_FFT_BLOCK_LEN));
-    beamBuffer = AudioBuffer<float>(getTotalNumOutputChannels(),bufLen);
-    beamBuffer.clear();
+    size_t fftOrder = roundToInt (std::log2 (FIR_LEN + samplesPerBlock - 1));
     
-    fftInput = AudioBuffer<float>(1,2*FFT_SIZE);
-    fftBuffer = AudioBuffer<float>(1,2*FFT_SIZE);
-    fftOutput = AudioBuffer<float>(1,2*FFT_SIZE);
+    // Initialize FFT
+    fft = std::make_unique<dsp::FFT>(fftOrder);
+    
+    // Initialize firFFTs (already prepared for convolution)
+#ifdef BEAMSTEERING_ALG_IDEAL
+    firSteeringFFT = prepareIR(readFIR(firIR::firDASideal_dat,firIR::firDASideal_datSize));
+#else
+    firFFT = prepareIR(readFIR(firIR::firDASmeasured_dat,firIR::firDASmeasured_datSize));
+#endif
+    /* With Joe we decided that the way we want the interface to behave is to have
+     the eStick facing the user, mic 1 on the left, thus we have to reverse the order of the filters.
+     */
+    std::reverse(firSteeringFFT.begin(), firSteeringFFT.end());
+    firBeamwidthFFT = prepareIR(readFIR(firIR::firBeamwidth_dat,firIR::firBeamwidth_datSize));
+    
+    // Allocate beams output buffers
+    beamsBuffer = AudioBuffer<float>(getTotalNumOutputChannels(),getFftSize());
+    beamsBuffer.clear();
+    
+    // Allocate single channel buffers
+    fftInputLock.enter();
+    fftInput = AudioBuffer<float>(numInputChannels,2*getFftSize());
     fftInput.clear();
+    fftInputLock.exit();
+    
+    fftBuffer = AudioBuffer<float>(1,2*getFftSize());
     fftBuffer.clear();
+    
+    fftOutput = AudioBuffer<float>(1,2*getFftSize());
     fftOutput.clear();
     
+    
+    // Initialize gain ramps
     commonGain.reset();
     dsp::ProcessSpec spec;
     spec.maximumBlockSize = samplesPerBlock;
@@ -263,9 +274,9 @@ void JucebeamAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     
     // Meters
     inputMeterDecay = std::make_unique<MeterDecay>(sampleRate,METERS_DECAY,samplesPerBlock,numInputChannels);
-    inputMeters = std::vector<float>(numInputChannels);
+    inputMeters.resize(numInputChannels);
     beamMeterDecay = std::make_unique<MeterDecay>(sampleRate,METERS_DECAY,samplesPerBlock,NUM_BEAMS);
-    beamMeters = std::vector<float>(NUM_BEAMS);
+    beamMeters.resize(NUM_BEAMS);
 }
 
 void JucebeamAudioProcessor::releaseResources()
@@ -284,13 +295,7 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
     
     int blockNumSamples = buffer.getNumSamples();
     
-    commonGain.setGainDecibels(micGain->get());
-    {
-        auto block = juce::dsp::AudioBlock<float> (buffer);
-        auto contextToUse = juce::dsp::ProcessContextReplacing<float> (block);
-        commonGain.process(contextToUse);
-    }
-    
+    // HPF filtering
     if(prevHpfFreq != hpfFreq->get()){
         iirCoeffHPF = IIRCoefficients::makeHighPass(getSampleRate(), hpfFreq->get());
         prevHpfFreq = hpfFreq->get();
@@ -299,97 +304,94 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
             iirHPFfilters[idx]->setCoefficients(iirCoeffHPF);
         }
     }
-    
     for (int inChannel = 0; inChannel < totalNumInputChannels; ++inChannel)
     {
-        // HPF filtering
         iirHPFfilters[inChannel]->processSamples(buffer.getWritePointer(inChannel), blockNumSamples);
     }
     
-    // Meter
-    inputMeterDecay->push(buffer);
-    inputMetersLock.enter();
-    inputMeters = inputMeterDecay->get();
-    inputMetersLock.exit();
+    // Mic Gain
+    commonGain.setGainDecibels(micGain->get());
+    {
+        auto block = juce::dsp::AudioBlock<float> (buffer);
+        auto contextToUse = juce::dsp::ProcessContextReplacing<float> (block);
+        commonGain.process(contextToUse);
+    }
     
+    // Mic meter
+    inputMeterDecay->push(buffer);
+    {
+        GenericScopedLock<SpinLock> lock(inputMetersLock);
+        inputMeters = inputMeterDecay->get();
+    }
+    
+    // Compute and store fft for all input channels, so that DOA thread can operate
+    fftInputLock.enter();
+    fftInput.clear();
+    for (int inChannel = 0; inChannel < totalNumInputChannels; ++inChannel)
+    {
+        fftInput.copyFrom(inChannel, 0, buffer, inChannel, 0, blockNumSamples);
+        fft -> performRealOnlyForwardTransform(fftInput.getWritePointer(inChannel));
+        prepareForConvolution(fftInput.getWritePointer(inChannel),getFftSize());
+    }
+    newFftInputDataAvailable = true;
+    fftInputLock.exit();
+    
+    // Per input-channel processing
     for (int inChannel = 0; inChannel < totalNumInputChannels; ++inChannel)
     {
         
-        for (auto subBlockIdx = 0;subBlockIdx < std::ceil(float(blockNumSamples)/MAX_FFT_BLOCK_LEN);++subBlockIdx)
+        // Beam dependent processing
+        for (int beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx)
         {
-            auto subBlockFirstIdx = subBlockIdx * MAX_FFT_BLOCK_LEN;
-            auto subBlockLen = std::min(blockNumSamples - subBlockFirstIdx,MAX_FFT_BLOCK_LEN);
+            fftBuffer.copyFrom(0, 0, fftInput, inChannel, 0, fftInput.getNumSamples());
             
-            // Fill fft data buffer
-            fftInput.clear();
-            fftInput.copyFrom(0, 0, buffer, inChannel, subBlockFirstIdx, subBlockLen);
+            // Determine steering index
+            int steeringIdx = roundToInt(((steeringBeam[beamIdx]->get() + 1)/2.)*(firSteeringFFT.size()-1));
             
-            // Forward channel FFT
-            fft -> performRealOnlyForwardTransform(fftInput.getWritePointer(0));
+            // Determine beam width index
+            int beamWidthIdx = roundToInt(widthBeam[beamIdx]->get()*(firBeamwidthFFT.size()-1));
             
-            // Push FFT data for DOAthread to retrieve
-            const GenericScopedLock<SpinLock> scopedLock(fftLock);
+            // Beam width processing
+            fftOutput.clear();
+            convolutionProcessingAndAccumulate(fftBuffer.getReadPointer(0),firBeamwidthFFT[beamWidthIdx][inChannel].data(),fftOutput.getWritePointer(0),getFftSize());
             
-            pushBackFFTdata(fftInput.getReadPointer(0), inChannel);
+            // Beam steering processing
+            fftBuffer.copyFrom(0, 0, fftOutput, 0, 0, fftOutput.getNumSamples());
+            fftOutput.clear();
+            convolutionProcessingAndAccumulate(fftBuffer.getReadPointer(0),firSteeringFFT[steeringIdx][inChannel].data(),fftOutput.getWritePointer(0),getFftSize());
             
-            const GenericScopedUnlock<SpinLock> scopedUnlock(fftLock);
+            // FIR post processing
+            updateSymmetricFrequencyDomainData(fftOutput.getWritePointer(0),getFftSize());
             
-            // Beam dependent processing
-            for (int beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx)
-            {
+            // Inverse FFT
+            fft -> performRealOnlyInverseTransform(fftOutput.getWritePointer(0));
+            
+            // OLA
+            beamsBuffer.addFrom(beamIdx, 0, fftOutput.getReadPointer(0), getFftSize());
                 
-                fftBuffer.copyFrom(0, 0, fftInput, 0, 0, fftInput.getNumSamples());
-                
-                // Determine steering index
-                int steeringIdx = roundToInt(((steeringBeam[beamIdx]->get() + 1)/2.)*(firFFT.size()-1));
-                
-                // Determine beam width index
-                int beamWidthIdx = roundToInt(widthBeam[beamIdx]->get()*(firBeamwidthFft.size()-1));
-                
-                // FIR pre processing
-                prepareForConvolution(fftBuffer.getWritePointer(0));
-                
-                // Beam width processing
-                fftOutput.clear();
-                convolutionProcessingAndAccumulate(fftBuffer.getReadPointer(0),firBeamwidthFft[beamWidthIdx][inChannel].data(),fftOutput.getWritePointer(0));
-                
-                // Beam steering processing
-                fftBuffer.copyFrom(0, 0, fftOutput, 0, 0, fftOutput.getNumSamples());
-                fftOutput.clear();
-                convolutionProcessingAndAccumulate(fftBuffer.getReadPointer(0),firFFT[steeringIdx][inChannel].data(),fftOutput.getWritePointer(0));
-                
-                // FIR post processing
-                updateSymmetricFrequencyDomainData(fftOutput.getWritePointer(0));
-                
-                // Inverse FFT
-                fft -> performRealOnlyInverseTransform(fftOutput.getWritePointer(0));
-                
-                // OLA
-                beamBuffer.addFrom(beamIdx, subBlockFirstIdx, fftOutput.getReadPointer(0), FFT_SIZE);
-                
-            }
         }
     }
     
-    // Gain
+    // Beam gain
     {
-        
         for (auto beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx)
         {
-            auto block = juce::dsp::AudioBlock<float> (beamBuffer);
+            auto block = dsp::AudioBlock<float> (beamsBuffer);
             beamGain[beamIdx].setGainDecibels(levelBeam[beamIdx]->get());
             {
                 auto beamBlock = block.getSubsetChannelBlock(beamIdx, 1).getSubBlock(0, blockNumSamples);
-                auto contextToUse = juce::dsp::ProcessContextReplacing<float> (beamBlock);
+                auto contextToUse = dsp::ProcessContextReplacing<float> (beamBlock);
                 beamGain[beamIdx].process(contextToUse);
             }
         }
     }
     
-    beamMeterDecay->push(beamBuffer);
-    beamMetersLock.enter();
-    beamMeters = beamMeterDecay->get();
-    beamMetersLock.exit();
+    beamMeterDecay->push(beamsBuffer);
+    
+    {
+        GenericScopedLock<SpinLock> lock(beamMetersLock);
+        beamMeters = beamMeterDecay->get();
+    }
     
     // Sum beams in output channels
     for (int outChannel = 0; outChannel < totalNumOutputChannels; ++outChannel)
@@ -401,15 +403,15 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
             if (muteBeam[beamIdx]->get() == false){
                 float channelBeamGain = panToLinearGain(panBeam[beamIdx],outChannel==0);
                 // Add to buffer
-                buffer.addFrom(outChannel, 0, beamBuffer, beamIdx, 0, blockNumSamples, channelBeamGain);
+                buffer.addFrom(outChannel, 0, beamsBuffer, beamIdx, 0, blockNumSamples, channelBeamGain);
             }
         }
     }
     
     // Shift beam OLA buffer
     for (int beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx){
-        FloatVectorOperations::copy(beamBuffer.getWritePointer(beamIdx), &(beamBuffer.getReadPointer(beamIdx)[blockNumSamples]), beamBuffer.getNumSamples()-blockNumSamples);
-        beamBuffer.clear(beamIdx, beamBuffer.getNumSamples()-blockNumSamples, blockNumSamples);
+        FloatVectorOperations::copy(beamsBuffer.getWritePointer(beamIdx), &(beamsBuffer.getReadPointer(beamIdx)[blockNumSamples]), beamsBuffer.getNumSamples()-blockNumSamples);
+        beamsBuffer.clear(beamIdx, beamsBuffer.getNumSamples()-blockNumSamples, blockNumSamples);
     }
 }
 
@@ -421,7 +423,8 @@ bool JucebeamAudioProcessor::hasEditor() const
 
 AudioProcessorEditor* JucebeamAudioProcessor::createEditor()
 {
-    return new JucebeamAudioProcessorEditor (*this);
+    editor = new JucebeamAudioProcessorEditor (*this);
+    return editor;
 }
 
 //==============================================================================
@@ -446,13 +449,22 @@ void JucebeamAudioProcessor::getStateInformation (MemoryBlock& destData)
         xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(panBeam[beamIdx]));
         
         stringStreamTag.str(std::string());
-        stringStreamTag << "gainBeam" << (beamIdx+1);
+        stringStreamTag << "levelBeam" << (beamIdx+1);
         xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(levelBeam[beamIdx]));
 
         stringStreamTag.str(std::string());
         stringStreamTag << "muteBeam" << (beamIdx+1);
         xml->setAttribute(Identifier(stringStreamTag.str()), (bool) *(muteBeam[beamIdx]));
+        
     }
+    stringStreamTag.str(std::string());
+    stringStreamTag << "hpfFreq";
+    xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(hpfFreq));
+    
+    stringStreamTag.str(std::string());
+    stringStreamTag << "gainMic";
+    xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(micGain));
+    
     copyXmlToBinary (*xml, destData);
 }
 
@@ -478,13 +490,21 @@ void JucebeamAudioProcessor::setStateInformation (const void* data, int sizeInBy
                 *(panBeam[beamIdx]) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 0.0);
                 
                 stringStreamTag.str(std::string());
-                stringStreamTag << "gainBeam" << (beamIdx+1);
-                *(levelBeam[beamIdx]) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 10.0);
+                stringStreamTag << "levelBeam" << (beamIdx+1);
+                *(levelBeam[beamIdx]) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 0.0);
                 
                 stringStreamTag.str(std::string());
                 stringStreamTag << "muteBeam" << (beamIdx+1);
                 *(muteBeam[beamIdx]) = xmlState->getBoolAttribute(Identifier(stringStreamTag.str()), false);
+                
             }
+            stringStreamTag.str(std::string());
+            stringStreamTag << "hpfFreq";
+            *(hpfFreq) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 250.0);
+            
+            stringStreamTag.str(std::string());
+            stringStreamTag << "gainMic";
+            *(micGain) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 20.0);
         }
     }
 }
@@ -497,33 +517,6 @@ AudioProcessor* JUCE_CALLTYPE createPluginFilter()
     return new JucebeamAudioProcessor();
 }
 
-//==============================================================================
-
-void JucebeamAudioProcessor::firConvolve(const float *input, float *output, int inChannel, int beamWidthIdx, int steeringIdx)
-{
-    float fftTemp[2*FFT_SIZE];
-    
-    FloatVectorOperations::copy(fftTemp, input, 2*FFT_SIZE);
-    
-    // FIR pre processing
-    prepareForConvolution(fftTemp);
-    
-    // Beam width processing
-    FloatVectorOperations::clear(output, 2*FFT_SIZE);
-    convolutionProcessingAndAccumulate(fftTemp, firBeamwidthFft[beamWidthIdx][inChannel].data(), output);
-    
-    // Beam steering processing
-    FloatVectorOperations::copy(fftTemp, output, 2*FFT_SIZE);
-    FloatVectorOperations::clear(output, 2*FFT_SIZE);
-    convolutionProcessingAndAccumulate(fftTemp, firFFT[steeringIdx][inChannel].data(), output);
-    
-    // FIR post processing
-    updateSymmetricFrequencyDomainData(output);
-    
-    // Inverse FFT
-    fft -> performRealOnlyInverseTransform(output);
-}
-
 //=======================================================
 std::vector<std::vector<std::vector<float>>> JucebeamAudioProcessor::prepareIR(const std::vector<std::vector<std::vector<float>>> fir)
 {
@@ -533,11 +526,11 @@ std::vector<std::vector<std::vector<float>>> JucebeamAudioProcessor::prepareIR(c
         std::vector<std::vector<float>> firFFTAngle(fir[angleIdx].size());
         for (size_t micIdx = 0; micIdx < fir[angleIdx].size(); ++micIdx)
         {
-            std::vector<float> firFFTAngleMic(2*FFT_SIZE);
-            FloatVectorOperations::clear(firFFTAngleMic.data(), 2*FFT_SIZE);
+            std::vector<float> firFFTAngleMic(2*getFftSize());
+            FloatVectorOperations::clear(firFFTAngleMic.data(), 2*getFftSize());
             FloatVectorOperations::copy(firFFTAngleMic.data(), fir[angleIdx][micIdx].data() , static_cast<int>(fir[angleIdx][micIdx].size()));
             fft -> performRealOnlyForwardTransform(firFFTAngleMic.data());
-            prepareForConvolution(firFFTAngleMic.data());
+            prepareForConvolution(firFFTAngleMic.data(),getFftSize());
             firFFTAngle [micIdx] = firFFTAngleMic;
         }
         firFFT[angleIdx] = firFFTAngle;
@@ -549,9 +542,9 @@ std::vector<std::vector<std::vector<float>>> JucebeamAudioProcessor::prepareIR(c
 //========== copied from juce_Convolution.cpp ============
 
 /** After each FFT, this function is called to allow convolution to be performed with only 4 SIMD functions calls. */
-void JucebeamAudioProcessor::prepareForConvolution (float *samples) noexcept
+void JucebeamAudioProcessor::prepareForConvolution (float *samples, int fftSize) noexcept
 {
-    auto FFTSizeDiv2 = FFT_SIZE / 2;
+    auto FFTSizeDiv2 = fftSize / 2;
     
     for (size_t i = 0; i < FFTSizeDiv2; i++)
         samples[i] = samples[2 * i];
@@ -559,13 +552,13 @@ void JucebeamAudioProcessor::prepareForConvolution (float *samples) noexcept
     samples[FFTSizeDiv2] = 0;
     
     for (size_t i = 1; i < FFTSizeDiv2; i++)
-        samples[i + FFTSizeDiv2] = -samples[2 * (FFT_SIZE - i) + 1];
+        samples[i + FFTSizeDiv2] = -samples[2 * (fftSize - i) + 1];
 }
 
 /** Does the convolution operation itself only on half of the frequency domain samples. */
-void JucebeamAudioProcessor::convolutionProcessingAndAccumulate (const float *input, const float *impulse, float *output)
+void JucebeamAudioProcessor::convolutionProcessingAndAccumulate (const float *input, const float *impulse, float *output, int fftSize)
 {
-    auto FFTSizeDiv2 = FFT_SIZE / 2;
+    auto FFTSizeDiv2 = fftSize / 2;
     
     FloatVectorOperations::addWithMultiply      (output, input, impulse, static_cast<int> (FFTSizeDiv2));
     FloatVectorOperations::subtractWithMultiply (output, &(input[FFTSizeDiv2]), &(impulse[FFTSizeDiv2]), static_cast<int> (FFTSizeDiv2));
@@ -573,85 +566,58 @@ void JucebeamAudioProcessor::convolutionProcessingAndAccumulate (const float *in
     FloatVectorOperations::addWithMultiply      (&(output[FFTSizeDiv2]), input, &(impulse[FFTSizeDiv2]), static_cast<int> (FFTSizeDiv2));
     FloatVectorOperations::addWithMultiply      (&(output[FFTSizeDiv2]), &(input[FFTSizeDiv2]), impulse, static_cast<int> (FFTSizeDiv2));
     
-    output[FFT_SIZE] += input[FFT_SIZE] * impulse[FFT_SIZE];
+    output[fftSize] += input[fftSize] * impulse[fftSize];
 }
 
 /** Undo the re-organization of samples from the function prepareForConvolution.
  Then, takes the conjugate of the frequency domain first half of samples, to fill the
  second half, so that the inverse transform will return real samples in the time domain.
  */
-void JucebeamAudioProcessor::updateSymmetricFrequencyDomainData (float* samples) noexcept
+void JucebeamAudioProcessor::updateSymmetricFrequencyDomainData (float* samples, int fftSize) noexcept
 {
-    auto FFTSizeDiv2 = FFT_SIZE / 2;
+    auto FFTSizeDiv2 = fftSize / 2;
     
     for (size_t i = 1; i < FFTSizeDiv2; i++)
     {
-        samples[2 * (FFT_SIZE - i)] = samples[i];
-        samples[2 * (FFT_SIZE - i) + 1] = -samples[FFTSizeDiv2 + i];
+        samples[2 * (fftSize - i)] = samples[i];
+        samples[2 * (fftSize - i) + 1] = -samples[FFTSizeDiv2 + i];
     }
     
     samples[1] = 0.f;
     
     for (size_t i = 1; i < FFTSizeDiv2; i++)
     {
-        samples[2 * i] = samples[2 * (FFT_SIZE - i)];
-        samples[2 * i + 1] = -samples[2 * (FFT_SIZE - i) + 1];
+        samples[2 * i] = samples[2 * (fftSize - i)];
+        samples[2 * i + 1] = -samples[2 * (fftSize - i) + 1];
     }
 }
 
-int JucebeamAudioProcessor::bufferStatus()
-{
-    if(fftData.size() != getTotalNumInputChannels())
-        return 100; // The buffer is completely empty (no pushes yet)
-        
-    int cursor = BUFFER_UPPER_THRESHOLD;
-    for(int i = 0; i < getTotalNumInputChannels(); i++)
-        if(cursor > fftData.at(i).size())
-            cursor = fftData.at(i).size();
-    
-    if(cursor == BUFFER_UPPER_THRESHOLD)
-        return (cursor - BUFFER_UPPER_THRESHOLD);
-        
-    if(cursor < BUFFER_LOWER_THRESHOLD)
-        return (cursor - BUFFER_LOWER_THRESHOLD);
-        
-    return 0;
-}
 
-std::vector<const float*> JucebeamAudioProcessor::popFrontFFTdata()
-{
-    std::vector<const float*> result;
+AudioBuffer<float> JucebeamAudioProcessor::waitGetNewFFTinput(){
     
-    if(fftData.size() != getTotalNumInputChannels())
-        return result;
-    
-    for(int i = 0; i < getTotalNumInputChannels(); i++){
-        if(fftData.at(i).size() == 0){
-            // The first entry of the buffer hasn't been filled for all channels yet.
-            result.clear();
-            return result;
-        }
-        
-        result.push_back(fftData.at(i).front());
+    while (! newFftInputDataAvailable){
+        sleep(0.01);
     }
     
-    // If we reached this point, the first entry was full and result is ready.
-    for(int i = 0; i < getTotalNumInputChannels(); i++)
-        fftData.at(i).erase(fftData.at(i).begin());
+    AudioBuffer<float> fftInputCopy;
     
-    return result;
+    fftInputLock.enter();
+    fftInputCopy.makeCopyOf(fftInput);
+    newFftInputDataAvailable = false;
+    fftInputLock.exit();
+    
+    return fftInputCopy;
 }
 
-void JucebeamAudioProcessor::pushBackFFTdata(const float* input, int channelIdx)
-{
-    // Assuming the number of input channels won't change at runtime.
-    
-    if(fftData.size() != getTotalNumInputChannels())
-        fftData.resize(getTotalNumInputChannels());
-    
-    if(channelIdx < 0 || channelIdx > getTotalNumInputChannels())
-        return;
-    
-    fftData.at(channelIdx).push_back(input);
+//==============================================================================
+// Meters
+
+float JucebeamAudioProcessor::getBeamMeter(int channel){
+    GenericScopedLock<SpinLock> lock(beamMetersLock);
+    return beamMeters[channel];
 }
 
+std::vector<float> JucebeamAudioProcessor::getInputMeters(){
+    GenericScopedLock<SpinLock> lock(inputMetersLock);
+    return inputMeters;
+}

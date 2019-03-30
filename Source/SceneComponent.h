@@ -32,6 +32,7 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "PluginProcessor.h"
+#include "DOAthread.h"
 
 //==============================================================================
 
@@ -63,21 +64,14 @@ public:
     
     void resized() override;
     
-    void setSource(std::vector<float> &energy, SpinLock &lock)
-    {
-        this->energy = &energy;
-        this->lock = &lock;
-        
-        startTimer(GRID_REFRESH_TIMER);
-    };
+    void setSource(std::shared_ptr<DOAthread> d){doaThread = d;};
     
 private:
     
     TileComponent tiles[TILE_ROW_COUNT][TILE_COL_COUNT];
     Point<float> vertices[TILE_ROW_COUNT+1][TILE_COL_COUNT+1];
     
-    std::vector<float> *energy;
-    SpinLock *lock;
+    std::shared_ptr<DOAthread> doaThread;
     
     void computeVertices();
     void timerCallback() override;
