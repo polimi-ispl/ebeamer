@@ -4,9 +4,9 @@
 JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcessor& p)
 :  AudioProcessorEditor (&p), processor (p)
 {
-//    DOAt = std::make_shared<DOAthread>(p);
-//    scene.grid.setSource(DOAt);
-//    scene.grid.startTimerHz(ENERGY_UPDATE_FREQ);
+    DOAt = std::make_shared<DOAthread>(p);
+    scene.grid.setSource(DOAt);
+    scene.grid.startTimerHz(ENERGY_UPDATE_FREQ);
 
     setSize (GUI_WIDTH, GUI_HEIGHT);
 
@@ -182,11 +182,13 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     gainLabel.attachToComponent(&gainSlider, true);
     addAndMakeVisible(gainLabel);
     
+    // Start DOA Thread
+    DOAt->startThread();
+    
 }
 
 JucebeamAudioProcessorEditor::~JucebeamAudioProcessorEditor()
 {
-    DOAt->stopThread(100);
 }
 
 //==============================================================================

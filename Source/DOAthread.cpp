@@ -18,13 +18,11 @@ DOAthread::DOAthread(JucebeamAudioProcessor& p)
     fftOutput = AudioBuffer<float>(1,2*processor.getFftSize());
     directionalSignal = AudioBuffer<float>(1,processor.getFftSize());
     
-    startThread(3);
-    
 }
 
 DOAthread::~DOAthread()
 {
-    stopThread(2000);
+    stopThread(1000);
 }
 
 //==============================================================================
@@ -39,13 +37,14 @@ void DOAthread::run()
     while(!threadShouldExit())
     {
      
+        /*
         directionalSignal.setSize(1, processor.getFftSize());
         fftOutput.setSize(1, processor.getFftSize());
         
         while (newEnergyAvailable)
         {
 //            Wait to produce new energy estimate till the GUI consumes it
-            sleep (0.01);
+            sleep (100);
         }
         
         AudioBuffer<float> fftInput = processor.waitGetNewFFTinput();
@@ -79,11 +78,13 @@ void DOAthread::run()
         
         std::time(&processingEndTime);
         
-        energyLock.enter();
-        energy = tempEnergy;
-        newEnergyAvailable = true;
-        energyLock.exit();
-      
+        {
+            GenericScopedLock<SpinLock> lock(energyLock);
+            energy = tempEnergy;
+            newEnergyAvailable = true;
+        }
+
+         */
     }
 }
 

@@ -117,10 +117,12 @@ void GridComponent::timerCallback()
      }
      */
     
-    doaThread->energyLock.enter();
-    std::vector<float> energy = doaThread->energy;
-    doaThread->newEnergyAvailable = false;
-    doaThread->energyLock.exit();
+    std::vector<float> energy;
+    {
+        GenericScopedLock<SpinLock> lock(doaThread->energyLock);
+        energy = doaThread->energy;
+        doaThread->newEnergyAvailable = false;
+    }
     
     if(energy.size() != TILE_COL_COUNT){
         return;
