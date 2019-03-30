@@ -277,6 +277,7 @@ void JucebeamAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     inputMeters.resize(numInputChannels);
     beamMeterDecay = std::make_unique<MeterDecay>(sampleRate,METERS_DECAY,samplesPerBlock,NUM_BEAMS);
     beamMeters.resize(NUM_BEAMS);
+
 }
 
 void JucebeamAudioProcessor::releaseResources()
@@ -423,8 +424,7 @@ bool JucebeamAudioProcessor::hasEditor() const
 
 AudioProcessorEditor* JucebeamAudioProcessor::createEditor()
 {
-    editor = new JucebeamAudioProcessorEditor (*this);
-    return editor;
+    return new JucebeamAudioProcessorEditor (*this);
 }
 
 //==============================================================================

@@ -105,7 +105,6 @@ public:
 private:
     
     bool isHorizontal = true;
-    size_t num=0;
     const std::vector<float> *source;
     SpinLock *lock;
     std::vector<std::unique_ptr<RoundLed>> leds;
@@ -132,8 +131,6 @@ public:
 private:
     
     bool isHorizontal;
-    size_t num;
-    
     const std::vector<float> *source;
     int ch;
     SpinLock *lock;

@@ -33,6 +33,10 @@ void MultiChannelLedBar::makeLayout()
 {
     removeAllChildren();
     leds.clear();
+    if (source == nullptr){
+        return;
+    }
+    auto num = source->size();
     for (auto ledIdx = 0; ledIdx < num; ++ledIdx)
     {
         leds.push_back(std::make_unique<RoundLed>());
@@ -48,6 +52,10 @@ void MultiChannelLedBar::paint(Graphics& g){
 
 void MultiChannelLedBar::resized(){
     
+    if (source == nullptr){
+        return;
+    }
+    auto num = source->size();
     Rectangle<float> area = getLocalBounds().toFloat();
     float step = isHorizontal ? area.getWidth()/num : area.getHeight()/num;
     for (auto ledIdx = 0; ledIdx < num; ++ledIdx)
@@ -67,6 +75,11 @@ void MultiChannelLedBar::timerCallback()
     lock->enter();
     std::vector<float> values = *source;
     lock->exit();
+    
+    if (values.size() != leds.size())
+    {
+        makeLayout();
+    }
     
     for (auto ledIdx = 0; ledIdx < leds.size(); ++ledIdx)
     {
@@ -95,28 +108,26 @@ void MultiChannelLedBar::timerCallback()
 
 void MultiChannelLedBar::setSource(const std::vector<float> &source,SpinLock &lock)
 {
-    num = source.size();
-    makeLayout();
     this->source = &source;
     this->lock = &lock;
+    makeLayout();
 }
 
 
 SingleChannelLedBar::SingleChannelLedBar(size_t numLeds, bool isHorizontal){
     jassert(numLeds > 4);
     
-    this->num = numLeds;
     this->isHorizontal = isHorizontal;
     
     const float ledStep = 3; //dB
     
     leds.clear();
     th.clear();
-    for (auto ledIdx = 0; ledIdx < num; ++ledIdx)
+    for (auto ledIdx = 0; ledIdx < numLeds; ++ledIdx)
     {
         leds.push_back(std::make_unique<RoundLed>());
         
-        auto ledThDb = ledIdx == (num-1) ? RED_LT : -((num - 1 - ledIdx) *ledStep);
+        auto ledThDb = ledIdx == (numLeds-1) ? RED_LT : -((numLeds - 1 - ledIdx) *ledStep);
         th.push_back(ledThDb);
         leds[ledIdx]->colour = thToColour(ledThDb,false);
         
@@ -137,6 +148,7 @@ void SingleChannelLedBar::paint(Graphics& g){
 void SingleChannelLedBar::resized(){
     
     Rectangle<float> area = getLocalBounds().toFloat();
+    auto num = leds.size();
     float step = isHorizontal ? area.getWidth()/num : area.getHeight()/num;
     for (auto ledIdx = 0; ledIdx < num; ++ledIdx)
     {

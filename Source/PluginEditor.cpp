@@ -164,7 +164,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     hpfLabel.attachToComponent(&hpfSlider, true);
     addAndMakeVisible(hpfLabel);
     
-    inputMeter.setSource(p.inputMeters, p.inputMetersLock);
+    inputMeter.setSource(processor.inputMeters, processor.inputMetersLock);
     inputMeter.startTimerHz(INPUT_METER_UPDATE_FREQ);
     addAndMakeVisible(inputMeter);
     
