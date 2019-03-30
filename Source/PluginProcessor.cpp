@@ -231,10 +231,11 @@ void JucebeamAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     beamsBuffer.clear();
     
     // Allocate single channel buffers
-    fftInputLock.enter();
-    fftInput = AudioBuffer<float>(numInputChannels,2*getFftSize());
-    fftInput.clear();
-    fftInputLock.exit();
+    {
+        GenericScopedLock<SpinLock> lock(fftInputLock);
+        fftInput = AudioBuffer<float>(numInputChannels,2*getFftSize());
+        fftInput.clear();
+    }
     
     fftBuffer = AudioBuffer<float>(1,2*getFftSize());
     fftBuffer.clear();
@@ -326,16 +327,18 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
     }
     
     // Compute and store fft for all input channels, so that DOA thread can operate
-    fftInputLock.enter();
-    fftInput.clear();
-    for (int inChannel = 0; inChannel < totalNumInputChannels; ++inChannel)
+    
     {
-        fftInput.copyFrom(inChannel, 0, buffer, inChannel, 0, blockNumSamples);
-        fft -> performRealOnlyForwardTransform(fftInput.getWritePointer(inChannel));
-        prepareForConvolution(fftInput.getWritePointer(inChannel),getFftSize());
+        GenericScopedLock<SpinLock> lock(fftInputLock);
+        fftInput.clear();
+        for (int inChannel = 0; inChannel < totalNumInputChannels; ++inChannel)
+        {
+            fftInput.copyFrom(inChannel, 0, buffer, inChannel, 0, blockNumSamples);
+            fft -> performRealOnlyForwardTransform(fftInput.getWritePointer(inChannel));
+            prepareForConvolution(fftInput.getWritePointer(inChannel),getFftSize());
+        }
+        newFftInputDataAvailable = true;
     }
-    newFftInputDataAvailable = true;
-    fftInputLock.exit();
     
     // Per input-channel processing
     for (int inChannel = 0; inChannel < totalNumInputChannels; ++inChannel)
@@ -590,23 +593,6 @@ void JucebeamAudioProcessor::updateSymmetricFrequencyDomainData (float* samples,
         samples[2 * i] = samples[2 * (fftSize - i)];
         samples[2 * i + 1] = -samples[2 * (fftSize - i) + 1];
     }
-}
-
-
-AudioBuffer<float> JucebeamAudioProcessor::waitGetNewFFTinput(){
-    
-    while (! newFftInputDataAvailable){
-        sleep(0.01);
-    }
-    
-    AudioBuffer<float> fftInputCopy;
-    
-    fftInputLock.enter();
-    fftInputCopy.makeCopyOf(fftInput);
-    newFftInputDataAvailable = false;
-    fftInputLock.exit();
-    
-    return fftInputCopy;
 }
 
 //==============================================================================

@@ -38,6 +38,8 @@ private:
     time_t inputWaitStartTime, inputWaitEndTime;
     time_t outputWaitStartTime, outputWaitEndTime;
     
+    AudioBuffer<float> fftInput;
+    
     std::vector<int> directionIdxs;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DOAthread);

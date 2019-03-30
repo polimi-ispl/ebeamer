@@ -37,9 +37,9 @@ void DOAthread::run()
     while(!threadShouldExit())
     {
      
-        /*
         directionalSignal.setSize(1, processor.getFftSize());
         fftOutput.setSize(1, processor.getFftSize());
+        
         
         while (newEnergyAvailable)
         {
@@ -47,8 +47,13 @@ void DOAthread::run()
             sleep (100);
         }
         
-        AudioBuffer<float> fftInput = processor.waitGetNewFFTinput();
-        
+        {
+            GenericScopedLock<SpinLock> lock(processor.fftInputLock);
+            fftInput.makeCopyOf(processor.fftInput);
+            processor.newFftInputDataAvailable = false;
+        }
+
+        /*
         std::time(&processingStartTime);
         
         prevEnergy = energy;

@@ -78,11 +78,16 @@ public:
     std::unique_ptr<dsp::FFT> fft;
     const int getFftSize(){ return fft->getSize();}
     
+    //==============================================================================
+    // Buffers
+    AudioBuffer<float> fftInput;
+    bool newFftInputDataAvailable = false;
+    SpinLock fftInputLock;
     
     //==============================================================================
     // DOA
-    AudioBuffer<float> waitGetNewFFTinput();
     std::vector<std::vector<std::vector<float>>> firSteeringFFT;
+    
     
     //==============================================================================
     // Meters
@@ -107,10 +112,7 @@ private:
     
     //==============================================================================
     // Buffers
-    bool newFftInputDataAvailable = false;
-    SpinLock fftInputLock;
     AudioBuffer<float> beamsBuffer;
-    AudioBuffer<float> fftInput;
     AudioBuffer<float> fftBuffer;
     AudioBuffer<float> fftOutput;
     
