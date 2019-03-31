@@ -88,7 +88,7 @@ void DOAthread::run()
                 
             }
             
-            newEnergy[dirIdx] = directionalSignal.getRMSLevel(0, 0, directionalSignal.getNumSamples());
+            newEnergy[dirIdx] = (gain * (1-inertia) * directionalSignal.getRMSLevel(0, 0, directionalSignal.getNumSamples()) + inertia * prevEnergy[dirIdx]);
             
         }
 
