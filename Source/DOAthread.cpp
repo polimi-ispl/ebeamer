@@ -24,7 +24,7 @@ DOAthread::DOAthread(JucebeamAudioProcessor& p)
 
 DOAthread::~DOAthread()
 {
-    stopThread(1000);
+    stopThread(100);
 }
 
 //==============================================================================
@@ -33,7 +33,7 @@ void DOAthread::run()
 {
     ScopedNoDenormals noDenormals;
     
-    std::vector<float> frameEnergy;
+    std::vector<float> newEnergy;
     std::vector<float> prevEnergy;
     
     while(!threadShouldExit())
@@ -41,13 +41,13 @@ void DOAthread::run()
      
         directionalSignal.setSize(1, processor.getFftSize());
         
-        while (newEnergyAvailable)
+        while (!threadShouldExit() and newEnergyAvailable)
         {
             // Wait to produce new energy estimate till the GUI consumes it
             sleep (10);
         }
 
-        while (! processor.newFftInputDataAvailable)
+        while ((!threadShouldExit()) and (! processor.newFftInputDataAvailable))
         {
             // Wait until new data awailable
             sleep (10);
@@ -65,8 +65,8 @@ void DOAthread::run()
         }
         
         prevEnergy = energy;
-        frameEnergy.clear();
-        frameEnergy.resize(directionIdxs.size());
+        newEnergy.clear();
+        newEnergy.resize(directionIdxs.size());
         
         for (auto dirIdx = 0; dirIdx < directionIdxs.size(); ++dirIdx)
         {
@@ -88,13 +88,13 @@ void DOAthread::run()
                 
             }
             
-            frameEnergy[dirIdx] = directionalSignal.getRMSLevel(0, 0, directionalSignal.getNumSamples());
+            newEnergy[dirIdx] = directionalSignal.getRMSLevel(0, 0, directionalSignal.getNumSamples());
             
         }
 
         {
             GenericScopedLock<SpinLock> lock(energyLock);
-            energy = static_cast<const std::vector<float>>(frameEnergy);
+            energy = newEnergy;
             newEnergyAvailable = true;
         }
         

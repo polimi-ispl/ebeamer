@@ -3,11 +3,6 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "PluginProcessor.h"
 
-#define INITIAL_CONSIDERED_DIRECTIONS 25
-#define BUFFER_LOWER_THRESHOLD 5
-#define BUFFER_UPPER_THRESHOLD 500
-#define ENERGY_DECAY_RATE 0.9
-
 //==============================================================================
 
 class DOAthread     : public Thread
