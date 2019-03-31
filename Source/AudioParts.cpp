@@ -26,7 +26,7 @@ MeterDecay::MeterDecay(float fs, float duration, float blockSize, int numChannel
     
 }
 
-void MeterDecay::push(const AudioBuffer<float> signal)
+void MeterDecay::push(const AudioBuffer<float>& signal)
 {
     for (auto channelIdx = 0; channelIdx < signal.getNumChannels(); ++channelIdx)
     {

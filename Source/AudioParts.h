@@ -17,7 +17,7 @@ class MeterDecay
 public:
     
     MeterDecay(float fs, float duration, float blockSize, int numChannels);
-    void push(const AudioBuffer<float> signal);
+    void push(const AudioBuffer<float>& signal);
     std::vector<float> get();
     
 private:
