@@ -119,6 +119,9 @@ void GridComponent::timerCallback()
     
     std::vector<float> energy;
     {
+        if (doaThread->newEnergyAvailable == false){
+            return;
+        }
         GenericScopedLock<SpinLock> lock(doaThread->energyLock);
         energy = doaThread->energy;
         doaThread->newEnergyAvailable = false;

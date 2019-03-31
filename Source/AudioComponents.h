@@ -105,8 +105,8 @@ public:
 private:
     
     bool isHorizontal = true;
-    const std::vector<float> *source;
-    SpinLock *lock;
+    const std::vector<float> *source = nullptr;
+    SpinLock *lock = nullptr;
     std::vector<std::unique_ptr<RoundLed>> leds;
     
     void timerCallback() override;
@@ -131,9 +131,9 @@ public:
 private:
     
     bool isHorizontal;
-    const std::vector<float> *source;
-    int ch;
-    SpinLock *lock;
+    const std::vector<float> *source = nullptr;
+    int ch = 0;
+    SpinLock *lock = nullptr;
     
     std::vector<float> th;
     std::vector<std::unique_ptr<RoundLed>> leds;

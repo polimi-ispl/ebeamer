@@ -6,7 +6,7 @@
 #define INITIAL_CONSIDERED_DIRECTIONS 25
 #define BUFFER_LOWER_THRESHOLD 5
 #define BUFFER_UPPER_THRESHOLD 500
-#define EXP_DECAY_RATE 0.9999
+#define ENERGY_DECAY_RATE 0.9
 
 //==============================================================================
 
@@ -24,7 +24,6 @@ public:
     SpinLock energyLock;
     
     
-
 //==============================================================================
     
 private:
@@ -35,10 +34,6 @@ private:
     
     AudioBuffer<float> directionalSignal;
     AudioBuffer<float> fftOutput;
-    
-    time_t processingStartTime, processingEndTime;
-    time_t inputWaitStartTime, inputWaitEndTime;
-    time_t outputWaitStartTime, outputWaitEndTime;
     
     AudioBuffer<float> fftInput;
     

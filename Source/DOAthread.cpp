@@ -33,22 +33,26 @@ void DOAthread::run()
 {
     ScopedNoDenormals noDenormals;
     
-    std::vector<float> tempEnergy;
+    std::vector<float> frameEnergy;
     std::vector<float> prevEnergy;
     
     while(!threadShouldExit())
     {
      
         directionalSignal.setSize(1, processor.getFftSize());
-        fftOutput.setSize(1, processor.getFftSize());
-        
         
         while (newEnergyAvailable)
         {
-//            Wait to produce new energy estimate till the GUI consumes it
-            sleep (100);
+            // Wait to produce new energy estimate till the GUI consumes it
+            sleep (10);
         }
-        
+
+        while (! processor.newFftInputDataAvailable)
+        {
+            // Wait until new data awailable
+            sleep (10);
+        }
+
         {
             GenericScopedLock<SpinLock> lock(processor.fftInputLock);
             fftInput.makeCopyOf(processor.fftInput);
@@ -57,17 +61,17 @@ void DOAthread::run()
         
         if (fftInput.getNumSamples() != 2*fft->getSize()){
             fft = std::make_unique<dsp::FFT>(ceil(log2(processor.getFftSize())));
+            fftOutput.setSize(1, 2*processor.getFftSize());
         }
         
-        std::time(&processingStartTime);
-        
         prevEnergy = energy;
-        tempEnergy.clear();
-        tempEnergy.resize(directionIdxs.size());
-        
+        frameEnergy.clear();
+        frameEnergy.resize(directionIdxs.size());
         
         for (auto dirIdx = 0; dirIdx < directionIdxs.size(); ++dirIdx)
         {
+            
+            directionalSignal.clear();
             
             int steeringIdx = directionIdxs[dirIdx];
             
@@ -81,21 +85,18 @@ void DOAthread::run()
                 fft -> performRealOnlyInverseTransform(fftOutput.getWritePointer(0));
                 
                 directionalSignal.addFrom(0, 0, fftOutput, 0, 0, processor.getFftSize());
+                
             }
             
-            tempEnergy[dirIdx] = directionalSignal.getRMSLevel(0, 0, directionalSignal.getNumSamples());
+            frameEnergy[dirIdx] = directionalSignal.getRMSLevel(0, 0, directionalSignal.getNumSamples());
             
         }
-        
-        std::time(&processingEndTime);
-         /*
-        
+
         {
             GenericScopedLock<SpinLock> lock(energyLock);
-            energy = tempEnergy;
+            energy = static_cast<const std::vector<float>>(frameEnergy);
             newEnergyAvailable = true;
         }
-         */
         
     }
 }
