@@ -29,6 +29,8 @@ public:
     
 private:
     
+    std::unique_ptr<dsp::FFT> fft;
+    
     JucebeamAudioProcessor& processor;
     
     AudioBuffer<float> directionalSignal;

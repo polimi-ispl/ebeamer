@@ -18,6 +18,8 @@ DOAthread::DOAthread(JucebeamAudioProcessor& p)
     fftOutput = AudioBuffer<float>(1,2*processor.getFftSize());
     directionalSignal = AudioBuffer<float>(1,processor.getFftSize());
     
+    fft = std::make_unique<dsp::FFT>(ceil(log2(processor.getFftSize())));
+    
 }
 
 DOAthread::~DOAthread()
@@ -52,13 +54,17 @@ void DOAthread::run()
             fftInput.makeCopyOf(processor.fftInput);
             processor.newFftInputDataAvailable = false;
         }
-
-        /*
+        
+        if (fftInput.getNumSamples() != 2*fft->getSize()){
+            fft = std::make_unique<dsp::FFT>(ceil(log2(processor.getFftSize())));
+        }
+        
         std::time(&processingStartTime);
         
         prevEnergy = energy;
         tempEnergy.clear();
         tempEnergy.resize(directionIdxs.size());
+        
         
         for (auto dirIdx = 0; dirIdx < directionIdxs.size(); ++dirIdx)
         {
@@ -72,7 +78,7 @@ void DOAthread::run()
                  processor.convolutionProcessingAndAccumulate(fftInput.getReadPointer(inChannel),processor.firSteeringFFT[steeringIdx][inChannel].data(),fftOutput.getWritePointer(0),processor.getFftSize());
                  processor.updateSymmetricFrequencyDomainData(fftOutput.getWritePointer(0),processor.getFftSize());
                 
-                processor.fft -> performRealOnlyInverseTransform(fftOutput.getWritePointer(0));
+                fft -> performRealOnlyInverseTransform(fftOutput.getWritePointer(0));
                 
                 directionalSignal.addFrom(0, 0, fftOutput, 0, 0, processor.getFftSize());
             }
@@ -82,14 +88,15 @@ void DOAthread::run()
         }
         
         std::time(&processingEndTime);
+         /*
         
         {
             GenericScopedLock<SpinLock> lock(energyLock);
             energy = tempEnergy;
             newEnergyAvailable = true;
         }
-
          */
+        
     }
 }
 
