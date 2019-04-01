@@ -6,7 +6,7 @@
               pluginVSTCategory="kPlugCategSpacializer" pluginAUMainType="'aufx'"
               pluginName="eBeamer" pluginDesc="eStick double beam controller"
               pluginManufacturer="ISPL Polimi" pluginManufacturerCode="Ispl"
-              pluginCode="ebea" version="0.4" bundleIdentifier="it.polimi.deib.ispl.ebeamer"
+              pluginCode="ebea" version="0.4.1" bundleIdentifier="it.polimi.deib.ispl.ebeamer"
               companyWebsite="http://ispg.deib.polimi.it/" aaxIdentifier="it.polimi.deib.ispl.ebeamer"
               pluginAUExportPrefix="ebeamerAU">
   <MAINGROUP id="X7PQw9" name="eBeamer">
