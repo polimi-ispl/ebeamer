@@ -77,8 +77,8 @@ private:
     Slider widthBeam2Knob;
 
     Label panLabel;
-    Slider panBeam1Knob;
-    Slider panBeam2Knob;
+    PanSlider panBeam1Knob;
+    PanSlider panBeam2Knob;
 
     Label levelLabel;
     DecibelSlider levelBeam1Knob;
