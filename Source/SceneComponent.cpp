@@ -174,7 +174,7 @@ void GridComponent::computeVertices()
     float h = w/2;
     
     float angle_diff = MathConstants<float>::pi / TILE_COL_COUNT;
-    float radius_diff = h / TILE_ROW_COUNT;
+    // float radius_diff = h / TILE_ROW_COUNT;
     
     for(int i = 0; i <= TILE_ROW_COUNT; i++){
         // Linear

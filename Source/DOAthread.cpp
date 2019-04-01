@@ -109,7 +109,7 @@ void DOAthread::run()
         }
         
         // Automatic gain
-        auto rangeEnergy = FloatVectorOperations::findMinAndMax(newEnergy.data(), newEnergy.size());
+        auto rangeEnergy = FloatVectorOperations::findMinAndMax(newEnergy.data(), (int)newEnergy.size());
         if (gain > minGain and
             rangeEnergy.getEnd() > 0){
             gain-=2;
