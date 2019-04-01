@@ -128,6 +128,8 @@ public:
     void paint(Graphics&) override;
     void resized() override;
     
+    static Colour thToColour(float th, bool active);
+    
 private:
     
     bool isHorizontal;
@@ -138,7 +140,7 @@ private:
     std::vector<float> th;
     std::vector<std::unique_ptr<RoundLed>> leds;
     
-    static Colour thToColour(float th, bool active);
+    
     
     void timerCallback() override;
     

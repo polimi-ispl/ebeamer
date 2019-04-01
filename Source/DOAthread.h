@@ -34,8 +34,11 @@ private:
     
     std::vector<int> directionIdxs;
     
-    float inertia = 0.7;
-    float gain = 10;
+    float inertia = 0.9;
+    float gain = 18;
+    
+    IIRCoefficients iirCoeffHPF;
+    std::unique_ptr<IIRFilter> iirHPFfilter;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DOAthread);
     

@@ -32,6 +32,7 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "PluginProcessor.h"
+#include "AudioComponents.h"
 #include "DOAthread.h"
 
 //==============================================================================
@@ -72,6 +73,8 @@ private:
     Point<float> vertices[TILE_ROW_COUNT+1][TILE_COL_COUNT+1];
     
     std::shared_ptr<DOAthread> doaThread;
+    
+    std::vector<float> th;
     
     void computeVertices();
     void timerCallback() override;

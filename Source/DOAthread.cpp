@@ -20,6 +20,11 @@ DOAthread::DOAthread(JucebeamAudioProcessor& p)
     
     fft = std::make_unique<dsp::FFT>(ceil(log2(processor.getFftSize())));
     
+    // Initialize HPF
+    iirCoeffHPF = IIRCoefficients::makeBandPass(processor.getSampleRate(), 2000, 0.8);
+    iirHPFfilter = std::make_unique<IIRFilter>();
+    iirHPFfilter->setCoefficients(iirCoeffHPF);
+    
 }
 
 DOAthread::~DOAthread()
@@ -88,7 +93,13 @@ void DOAthread::run()
                 
             }
             
-            newEnergy[dirIdx] = (gain * (1-inertia) * directionalSignal.getRMSLevel(0, 0, directionalSignal.getNumSamples()) + inertia * prevEnergy[dirIdx]);
+            iirHPFfilter->processSamples(directionalSignal.getWritePointer(0), directionalSignal.getNumSamples());
+            
+            auto range = FloatVectorOperations::findMinAndMax(directionalSignal.getReadPointer(0), directionalSignal.getNumSamples());
+            auto maxAbs = jmax(abs(range.getStart()),abs(range.getEnd()));
+            auto maxAbsDb = Decibels::gainToDecibels(maxAbs);
+            
+            newEnergy[dirIdx] = ((1-inertia) * (maxAbsDb + gain)) + (inertia * prevEnergy[dirIdx]);
             
         }
 

@@ -55,6 +55,17 @@ GridComponent::GridComponent()
             addAndMakeVisible (tiles[i][j]);
     
     computeVertices();
+    
+    // Compute led tresholds
+    const float ledStep = 3; //dB
+    
+    th.clear();
+    for (auto ledIdx = TILE_ROW_COUNT - 1; ledIdx >= 0; --ledIdx)
+    {
+        auto ledThDb = ledIdx == (TILE_ROW_COUNT-1) ? RED_LT : -((TILE_ROW_COUNT - 1 - ledIdx) *ledStep);
+        th.push_back(ledThDb);
+    }
+    
 }
 
 GridComponent::~GridComponent()
@@ -117,7 +128,7 @@ void GridComponent::timerCallback()
      }
      */
     
-    std::vector<float> energy;
+    std::vector<float> energy; // dB
     {
         if (doaThread->newEnergyAvailable == false){
             return;
@@ -133,37 +144,12 @@ void GridComponent::timerCallback()
     
     for(int j = 0; j < TILE_COL_COUNT; j++){
         
-        if(energy.at(j) > 1)
-            energy.at(j) = 1;
-        if(energy.at(j) < 0)
-            energy.at(j) = 0;
-        
-        int level = TILE_ROW_COUNT - ceil(TILE_ROW_COUNT * energy.at(j));
-        
         for(int i = 0; i < TILE_ROW_COUNT; i++){
             
 #ifdef PLANAR_MODE
             // 2D grid
             
-            if(i < level){
-                if(i < TILE_ROW_COUNT/4)
-                    tiles[i][j].tileColour = Colours::red.darker(0.9);
-                
-                if(TILE_ROW_COUNT/4 <= i && i < TILE_ROW_COUNT/2)
-                    tiles[i][j].tileColour = Colours::yellow.darker(0.9);
-                
-                if(i >= TILE_ROW_COUNT/2)
-                    tiles[i][j].tileColour = Colours::green.darker(0.9);
-            } else {
-                if(i < TILE_ROW_COUNT/4)
-                    tiles[i][j].tileColour = Colours::red;
-                
-                if(TILE_ROW_COUNT/4 <= i && i < TILE_ROW_COUNT/2)
-                    tiles[i][j].tileColour = Colours::yellow;
-                
-                if(i >= TILE_ROW_COUNT/2)
-                    tiles[i][j].tileColour = Colours::green;
-            }
+            tiles[i][j].tileColour = SingleChannelLedBar::thToColour(th[i],energy[j] > th[i]);
             
 #else
             // 3D grid
