@@ -34,9 +34,9 @@ private:
     
     std::vector<int> directionIdxs;
     
-    float inertia = 0.85;
-    float gain = 0;
-    const float maxGain = 60, minGain = 0;
+    double inertia = 0.85;
+	double gain = 0;
+    const double maxGain = 60, minGain = 0;
     
     IIRCoefficients iirCoeffHPF, iirCoeffLPF;
     std::unique_ptr<IIRFilter> iirHPFfilter, iirLPFfilter;

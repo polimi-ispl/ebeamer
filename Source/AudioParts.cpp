@@ -14,7 +14,7 @@
 MeterDecay::MeterDecay(float fs, float duration, float blockSize, int numChannels)
 {
     
-    int numBlocks = ceil(duration*fs/blockSize);
+    int numBlocks = (int)ceil(duration*fs/blockSize);
     
     minMaxCircularBuffer.resize(numChannels);
     idxs.resize(numChannels);

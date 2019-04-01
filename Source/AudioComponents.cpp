@@ -46,7 +46,7 @@ void MultiChannelLedBar::makeLayout()
     resized();
 }
 
-void MultiChannelLedBar::paint(Graphics& g){
+void MultiChannelLedBar::paint(Graphics&){
     
 }
 
@@ -106,10 +106,10 @@ void MultiChannelLedBar::timerCallback()
     repaint();
 }
 
-void MultiChannelLedBar::setSource(const std::vector<float> &source,SpinLock &lock)
+void MultiChannelLedBar::setSource(const std::vector<float> &newSource,SpinLock &newLock)
 {
-    this->source = &source;
-    this->lock = &lock;
+    source = &newSource;
+    lock = &newLock;
     makeLayout();
 }
 
@@ -135,13 +135,13 @@ SingleChannelLedBar::SingleChannelLedBar(size_t numLeds, bool isHorizontal){
     }
 }
 
-void SingleChannelLedBar::setSource(const std::vector<float> &source,int ch, SpinLock &lock){
-    this->source = &source;
-    this->ch = ch;
-    this->lock = &lock;
+void SingleChannelLedBar::setSource(const std::vector<float> &newSource,int newCh, SpinLock &newLock){
+    source = &newSource;
+    ch = newCh;
+    lock = &newLock;
 }
 
-void SingleChannelLedBar::paint(Graphics& g){
+void SingleChannelLedBar::paint(Graphics&){
     
 }
 

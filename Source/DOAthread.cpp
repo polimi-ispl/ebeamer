@@ -50,13 +50,13 @@ void DOAthread::run()
      
         directionalSignal.setSize(1, processor.getFftSize());
         
-        while (!threadShouldExit() and newEnergyAvailable)
+        while (!threadShouldExit() && newEnergyAvailable)
         {
             // Wait to produce new energy estimate till the GUI consumes it
             sleep (10);
         }
 
-        while ((!threadShouldExit()) and (! processor.newFftInputDataAvailable))
+        while ((!threadShouldExit()) && (! processor.newFftInputDataAvailable))
         {
             // Wait until new data awailable
             sleep (10);
@@ -110,21 +110,21 @@ void DOAthread::run()
         
         // Automatic gain
         auto rangeEnergy = FloatVectorOperations::findMinAndMax(newEnergy.data(), (int)newEnergy.size());
-        if (gain > minGain and
+        if (gain > minGain &&
             rangeEnergy.getEnd() > 0){
             gain-=2;
         }
-        else if (gain < maxGain and
+        else if (gain < maxGain &&
              rangeEnergy.getEnd() < -18){
             gain+=2;
         }
-        else if (gain < maxGain and
-            rangeEnergy.getEnd() < -9 and
+        else if (gain < maxGain &&
+            rangeEnergy.getEnd() < -9 &&
             rangeEnergy.getLength() > 15)
         {
             gain+=0.5;
         }
-        else if (gain > minGain and
+        else if (gain > minGain &&
              rangeEnergy.getStart() > -9){
             gain-=0.5;
         }
