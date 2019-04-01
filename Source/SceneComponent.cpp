@@ -261,9 +261,11 @@ void BeamComponent::paint(Graphics& g)
     path.applyTransform(AffineTransform::rotation( (MathConstants<float>::pi/2) * position));
     path.applyTransform(AffineTransform::translation(SCENE_WIDTH/2, SCENE_WIDTH/2));
     
-    g.setColour(baseColour.brighter());
-    g.setOpacity(0.4);
-    g.fillPath(path);
+    if (status){
+        g.setColour(baseColour.brighter());
+        g.setOpacity(0.4);
+        g.fillPath(path);
+    }
     
     g.setColour (baseColour);
     g.setOpacity(0.8);
@@ -288,6 +290,12 @@ void BeamComponent::move(float new_position)
 void BeamComponent::scale(float new_width)
 {
     width = (0.1 + 2.9*new_width) * SCENE_WIDTH/10;
+    repaint();
+}
+
+void BeamComponent::setStatus(bool s)
+{
+    status = s;
     repaint();
 }
 

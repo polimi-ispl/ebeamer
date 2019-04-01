@@ -94,6 +94,7 @@ public:
     
     void move(float);
     void scale(float);
+    void setStatus(bool);
     
     void setBaseColor(Colour colour){baseColour = colour;}
     
@@ -101,6 +102,8 @@ private:
     
     float position;
     float width;
+    bool status;
+    
     Colour baseColour = Colours::lightblue;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BeamComponent)

@@ -30,6 +30,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     steeringBeam1Slider.setRange(parameterRange.start,parameterRange.end,0.01);
     steeringBeam1Slider.setValue(processor.steeringBeam[0]->get());
     scene.beams[0].move(processor.steeringBeam[0]->get());
+    scene.beams[0].setStatus(!processor.muteBeam[0]->get());
     steeringBeam1Slider.addListener(this);
     steeringBeam1Slider.setSliderStyle(Slider::LinearHorizontal);
     steeringBeam1Slider.setTextBoxStyle(Slider::TextBoxRight,false,LABEL_WIDTH,LABEL_HEIGHT);
@@ -41,6 +42,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     steeringBeam2Slider.setRange(parameterRange.start,parameterRange.end,0.01);
     steeringBeam2Slider.setValue(processor.steeringBeam[1]->get());
     scene.beams[1].move(processor.steeringBeam[1]->get());
+    scene.beams[1].setStatus(!processor.muteBeam[1]->get());
     steeringBeam2Slider.addListener(this);
     steeringBeam2Slider.setSliderStyle(Slider::LinearHorizontal);
     steeringBeam2Slider.setTextBoxStyle(Slider::TextBoxRight,false,LABEL_WIDTH,LABEL_HEIGHT);
@@ -289,11 +291,13 @@ void JucebeamAudioProcessorEditor::buttonClicked(Button *button)
     {
         *(processor.muteBeam[0]) = 1 - *(processor.muteBeam[0]);
         setMuteButtonColor(0);
+        scene.beams[0].setStatus(!processor.muteBeam[0]->get());
     }
     else if(button == &beam2MuteButton)
     {
         *(processor.muteBeam[1]) = 1 - *(processor.muteBeam[1]);
         setMuteButtonColor(1);
+        scene.beams[1].setStatus(!processor.muteBeam[1]->get());
     }
 }
 
