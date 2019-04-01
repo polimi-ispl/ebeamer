@@ -196,7 +196,7 @@ bool JucebeamAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts)
     
     int numInputChannels = layouts.getNumChannels(true,0);
     int numOutputChannels = layouts.getNumChannels(false, 0);
-    if( (numInputChannels >= 2) && (numInputChannels <= 16) && (numOutputChannels == 2) ){
+    if( (numInputChannels >= 2) && (numInputChannels <= 16) && (numOutputChannels >= 2) && (numOutputChannels <= 16) ){
         return true;
     }
     return false;
@@ -208,6 +208,7 @@ void JucebeamAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
 {
     
     auto numInputChannels = getTotalNumInputChannels();
+    auto numOutputChannels = getTotalNumOutputChannels();
     
     size_t fftOrder = roundToInt (std::log2 (FIR_LEN + samplesPerBlock - 1));
     
@@ -276,7 +277,7 @@ void JucebeamAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     // Meters
     inputMeterDecay = std::make_unique<MeterDecay>(sampleRate,METERS_DECAY,samplesPerBlock,numInputChannels);
     inputMeters.resize(numInputChannels);
-    beamMeterDecay = std::make_unique<MeterDecay>(sampleRate,METERS_DECAY,samplesPerBlock,NUM_BEAMS);
+    beamMeterDecay = std::make_unique<MeterDecay>(sampleRate,METERS_DECAY,samplesPerBlock,numOutputChannels);
     beamMeters.resize(NUM_BEAMS);
 
 }
