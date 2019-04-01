@@ -2,11 +2,10 @@
 #include "PluginEditor.h"
 
 JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcessor& p)
-:  AudioProcessorEditor (&p), inputMeter(p.getTotalNumInputChannels()), processor (p)
+:  AudioProcessorEditor (&p), processor (p)
 {
-    DOAt = std::make_unique<DOAthread>(p);
-    
-    scene.grid.setSource(DOAt->energy,DOAt->energyLock);
+    DOAt = std::make_shared<DOAthread>(p);
+    scene.grid.setSource(DOAt);
     scene.grid.startTimerHz(ENERGY_UPDATE_FREQ);
 
     setSize (GUI_WIDTH, GUI_HEIGHT);
@@ -165,7 +164,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     hpfLabel.attachToComponent(&hpfSlider, true);
     addAndMakeVisible(hpfLabel);
     
-    inputMeter.setSource(p.inputMeters,p.inputMetersLock);
+    inputMeter.setSource(processor.inputMeters, processor.inputMetersLock);
     inputMeter.startTimerHz(INPUT_METER_UPDATE_FREQ);
     addAndMakeVisible(inputMeter);
     
@@ -182,6 +181,9 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcess
     gainLabel.setJustificationType(Justification::left);
     gainLabel.attachToComponent(&gainSlider, true);
     addAndMakeVisible(gainLabel);
+    
+    // Start DOA Thread
+    DOAt->startThread();
     
 }
 

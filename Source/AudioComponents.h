@@ -43,6 +43,7 @@ private:
 };
 
 //==============================================================================
+
 class FrequencySlider : public Slider
 {
 public:
@@ -68,6 +69,7 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FrequencySlider)
 };
 
+//==============================================================================
 
 class RoundLed : public Component
 {
@@ -85,32 +87,36 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RoundLed)
 };
 
+//==============================================================================
 class MultiChannelLedBar : public Component, public Timer
 {
 public:
     
-    MultiChannelLedBar(int num, bool isHorizontal = true);
+    MultiChannelLedBar(){};
     ~MultiChannelLedBar(){};
     void paint(Graphics&) override;
     void resized() override;
 
-    void setSource(std::vector<float> &source,SpinLock &lock);
+    void setSource(const std::vector<float> &source,SpinLock &lock);
+    void setHorizontal(){isHorizontal = true;};
+    void setVertical(){isHorizontal = false;};
+    
 
 private:
     
-    bool isHorizontal;
-    size_t num;
-    std::vector<float> *source;
-    SpinLock *lock;
+    bool isHorizontal = true;
+    const std::vector<float> *source = nullptr;
+    SpinLock *lock = nullptr;
     std::vector<std::unique_ptr<RoundLed>> leds;
     
     void timerCallback() override;
     
-    void makeLayout(size_t num);
+    void makeLayout();
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MultiChannelLedBar)
 };
 
+//==============================================================================
 class SingleChannelLedBar : public Component, public Timer
 {
 public:
@@ -118,22 +124,23 @@ public:
     SingleChannelLedBar(size_t numLeds = 7, bool isHorizontal = false);
     ~SingleChannelLedBar(){};
 
+    void setSource(const std::vector<float> &source,int ch, SpinLock &lock);
     void paint(Graphics&) override;
     void resized() override;
     
-    void setSource(std::vector<float> &source,size_t ch,SpinLock &lock);
+    static Colour thToColour(float th, bool active);
     
 private:
     
     bool isHorizontal;
-    size_t num;
-    size_t ch;
-    std::vector<float> *source;
-    SpinLock *lock;
+    const std::vector<float> *source = nullptr;
+    int ch = 0;
+    SpinLock *lock = nullptr;
+    
     std::vector<float> th;
     std::vector<std::unique_ptr<RoundLed>> leds;
     
-    static Colour thToColour(float th, bool active);
+    
     
     void timerCallback() override;
     

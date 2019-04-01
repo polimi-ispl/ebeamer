@@ -3,17 +3,37 @@
 //==============================================================================
 
 DOAthread::DOAthread(JucebeamAudioProcessor& p)
-        : Thread("Direction of arrival thread"),  processor(p)
+        : Thread("DOA"),  processor(p)
 {
-    startThread(3);
+    
+    directionIdxs.clear();
+    for (auto idx = 0; idx < processor.firSteeringFFT.size(); ++idx)
+    {
+        directionIdxs.push_back(idx);
+    }
     
     energy.clear();
-    energy.resize(INITIAL_CONSIDERED_DIRECTIONS);
+    energy.resize(directionIdxs.size());
+    
+    fftOutput = AudioBuffer<float>(1,2*processor.getFftSize());
+    directionalSignal = AudioBuffer<float>(1,processor.getFftSize());
+    
+    fft = std::make_unique<dsp::FFT>(ceil(log2(processor.getFftSize())));
+    
+    // Initialize HPF and LPF
+    iirCoeffHPF = IIRCoefficients::makeHighPass(processor.getSampleRate(), 500);
+    iirHPFfilter = std::make_unique<IIRFilter>();
+    iirHPFfilter->setCoefficients(iirCoeffHPF);
+    
+    iirCoeffLPF = IIRCoefficients::makeLowPass(processor.getSampleRate(), 5000);
+    iirLPFfilter = std::make_unique<IIRFilter>();
+    iirLPFfilter->setCoefficients(iirCoeffLPF);
+    
 }
 
 DOAthread::~DOAthread()
 {
-    stopThread(2000);
+    stopThread(100);
 }
 
 //==============================================================================
@@ -22,72 +42,101 @@ void DOAthread::run()
 {
     ScopedNoDenormals noDenormals;
     
-    std::vector<float*> fftData;
-    std::vector<float> tempEnergy;
+    std::vector<float> newEnergy;
     std::vector<float> prevEnergy;
-    
-    float fftOutput[2*FFT_SIZE];
     
     while(!threadShouldExit())
     {
-        const GenericScopedLock<SpinLock> scopedFFTlock(processor.fftLock);
+     
+        directionalSignal.setSize(1, processor.getFftSize());
         
-        // Check buffer size to assess performance.
-        int status = processor.bufferStatus();
-        
-        if(status < 0){
-            // DOAthread is too fast.
-            // Increase considered directions, or frequencies, or ...
-            wait(50);
-            continue;
+        while (!threadShouldExit() and newEnergyAvailable)
+        {
+            // Wait to produce new energy estimate till the GUI consumes it
+            sleep (10);
+        }
+
+        while ((!threadShouldExit()) and (! processor.newFftInputDataAvailable))
+        {
+            // Wait until new data awailable
+            sleep (10);
+        }
+
+        {
+            GenericScopedLock<SpinLock> lock(processor.fftInputLock);
+            fftInput.makeCopyOf(processor.fftInput);
+            processor.newFftInputDataAvailable = false;
         }
         
-        if(status > 0){
-            // DOAthread is too slow.
-            // Decrease considered directions, or frequencies, or ...
+        if (fftInput.getNumSamples() != 2*fft->getSize()){
+            fft = std::make_unique<dsp::FFT>(ceil(log2(processor.getFftSize())));
+            fftOutput.setSize(1, 2*processor.getFftSize());
         }
         
-        if(status == 0){
-            // DOAthread is on time.
-        }
-        
-        // Retrieve fft data from processor.
-        
-        fftData = processor.popFrontFFTdata();
-        
-        const GenericScopedUnlock<SpinLock> scopedFFTunlock(processor.fftLock);
-        
-        // Compute energy, stored in temp.
-        
-        energyLock.enter();
         prevEnergy = energy;
-        energyLock.exit();
+        newEnergy.clear();
+        newEnergy.resize(directionIdxs.size());
         
-        tempEnergy.clear();
-        tempEnergy.resize(INITIAL_CONSIDERED_DIRECTIONS);
-        
-        for(int inChannel = 0; inChannel < fftData.size(); ++inChannel){
-            for(int beamIdx = 0; beamIdx < INITIAL_CONSIDERED_DIRECTIONS; ++beamIdx){
+        for (auto dirIdx = 0; dirIdx < directionIdxs.size(); ++dirIdx)
+        {
+            
+            directionalSignal.clear();
+            
+            int steeringIdx = directionIdxs[dirIdx];
+            
+            for (auto inChannel = 0; inChannel < fftInput.getNumChannels(); ++inChannel)
+            {
                 
-                int steeringIdx = round(beamIdx / (INITIAL_CONSIDERED_DIRECTIONS - 1));
-                int beamWidthIdx = 0;
+                fftOutput.clear();
+                 processor.convolutionProcessingAndAccumulate(fftInput.getReadPointer(inChannel),processor.firSteeringFFT[steeringIdx][inChannel].data(),fftOutput.getWritePointer(0),processor.getFftSize());
+                 processor.updateSymmetricFrequencyDomainData(fftOutput.getWritePointer(0),processor.getFftSize());
                 
-                // FIR processing (includes reverse FFT)
-                processor.firConvolve(fftData.at(inChannel), fftOutput, inChannel, beamWidthIdx, steeringIdx);
+                fft -> performRealOnlyInverseTransform(fftOutput.getWritePointer(0));
                 
-                tempEnergy.at(beamIdx) = prevEnergy.at(beamIdx);
+                directionalSignal.addFrom(0, 0, fftOutput, 0, 0, processor.getFftSize());
                 
-                for(int t = 0; t < FFT_SIZE; t++)
-                    if(100 * fftOutput[t] > tempEnergy.at(beamIdx) * EXP_DECAY_RATE)
-                        tempEnergy.at(beamIdx) = 100 * fftOutput[t];
-                    else
-                        tempEnergy.at(beamIdx) = tempEnergy.at(beamIdx) * EXP_DECAY_RATE;
             }
+            
+            iirHPFfilter->processSamples(directionalSignal.getWritePointer(0), directionalSignal.getNumSamples());
+            iirLPFfilter->processSamples(directionalSignal.getWritePointer(0), directionalSignal.getNumSamples());
+            
+            auto range = FloatVectorOperations::findMinAndMax(directionalSignal.getReadPointer(0), directionalSignal.getNumSamples());
+            auto maxAbs = jmax(abs(range.getStart()),abs(range.getEnd()));
+            auto maxAbsDb = Decibels::gainToDecibels(maxAbs);
+            
+            newEnergy[dirIdx] = ((1-inertia) * (maxAbsDb + gain)) + (inertia * prevEnergy[dirIdx]);
+            
         }
         
-        energyLock.enter();
-        energy = tempEnergy;
-        energyLock.exit();
+        // Automatic gain
+        auto rangeEnergy = FloatVectorOperations::findMinAndMax(newEnergy.data(), newEnergy.size());
+        if (gain > minGain and
+            rangeEnergy.getEnd() > 0){
+            gain-=2;
+        }
+        else if (gain < maxGain and
+             rangeEnergy.getEnd() < -18){
+            gain+=2;
+        }
+        else if (gain < maxGain and
+            rangeEnergy.getEnd() < -9 and
+            rangeEnergy.getLength() > 15)
+        {
+            gain+=0.5;
+        }
+        else if (gain > minGain and
+             rangeEnergy.getStart() > -9){
+            gain-=0.5;
+        }
+        else
+
+        // Make new energy available
+        {
+            GenericScopedLock<SpinLock> lock(energyLock);
+            energy = newEnergy;
+            newEnergyAvailable = true;
+        }
+        
     }
 }
 

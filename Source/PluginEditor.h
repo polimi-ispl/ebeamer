@@ -25,17 +25,18 @@
 #define BEAM_LED_WIDTH 5
 #define BEAM_TOP_BOTTOM_MARGIN 10
 #define BEAM_LEFT_RIGHT_MARGIN 10
-#define BEAM_METER_UPDATE_FREQ 15 //Hz
-#define ENERGY_UPDATE_FREQ 15 //Hz
 
 #define INPUT_SECTION_TOP_MARGIN 20
 #define INPUT_HPF_SLIDER_HEIGHT 40
 #define INPUT_HPF_LABEL_WIDTH 50
 #define INPUT_LEFT_RIGHT_MARGIN 100
 #define INPUT_LED_HEIGHT 5
-#define INPUT_METER_UPDATE_FREQ 15 //Hz
 #define INPUT_GAIN_SLIDER_HEIGHT 40
 #define INPUT_GAIN_LABEL_WIDTH 50
+
+#define INPUT_METER_UPDATE_FREQ 10 //Hz
+#define BEAM_METER_UPDATE_FREQ 10 //Hz
+#define ENERGY_UPDATE_FREQ 10 //Hz
 
 
 //==============================================================================
@@ -57,7 +58,7 @@ private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     JucebeamAudioProcessor& processor;
-    std::unique_ptr<DOAthread> DOAt;
+    std::shared_ptr<DOAthread> DOAt;
 
     // Project specific
 
