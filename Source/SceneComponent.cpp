@@ -55,6 +55,17 @@ GridComponent::GridComponent()
             addAndMakeVisible (tiles[i][j]);
     
     computeVertices();
+    
+    // Compute led tresholds
+    const float ledStep = 3; //dB
+    
+    th.clear();
+    for (auto ledIdx = TILE_ROW_COUNT - 1; ledIdx >= 0; --ledIdx)
+    {
+        auto ledThDb = ledIdx == (TILE_ROW_COUNT-1) ? RED_LT : -((TILE_ROW_COUNT - 1 - ledIdx) *ledStep);
+        th.push_back(ledThDb);
+    }
+    
 }
 
 GridComponent::~GridComponent()
@@ -117,9 +128,15 @@ void GridComponent::timerCallback()
      }
      */
     
-    lock->enter();
-    std::vector<float> energy = *(this->energy);
-    lock->exit();
+    std::vector<float> energy; // dB
+    {
+        if (doaThread->newEnergyAvailable == false){
+            return;
+        }
+        GenericScopedLock<SpinLock> lock(doaThread->energyLock);
+        energy = doaThread->energy;
+        doaThread->newEnergyAvailable = false;
+    }
     
     if(energy.size() != TILE_COL_COUNT){
         return;
@@ -127,37 +144,12 @@ void GridComponent::timerCallback()
     
     for(int j = 0; j < TILE_COL_COUNT; j++){
         
-        if(energy.at(j) > 1)
-            energy.at(j) = 1;
-        if(energy.at(j) < 0)
-            energy.at(j) = 0;
-        
-        int level = TILE_ROW_COUNT - ceil(TILE_ROW_COUNT * energy.at(j));
-        
         for(int i = 0; i < TILE_ROW_COUNT; i++){
             
 #ifdef PLANAR_MODE
             // 2D grid
             
-            if(i < level){
-                if(i < TILE_ROW_COUNT/4)
-                    tiles[i][j].tileColour = Colours::red.darker(0.9);
-                
-                if(TILE_ROW_COUNT/4 <= i && i < TILE_ROW_COUNT/2)
-                    tiles[i][j].tileColour = Colours::yellow.darker(0.9);
-                
-                if(i >= TILE_ROW_COUNT/2)
-                    tiles[i][j].tileColour = Colours::green.darker(0.9);
-            } else {
-                if(i < TILE_ROW_COUNT/4)
-                    tiles[i][j].tileColour = Colours::red;
-                
-                if(TILE_ROW_COUNT/4 <= i && i < TILE_ROW_COUNT/2)
-                    tiles[i][j].tileColour = Colours::yellow;
-                
-                if(i >= TILE_ROW_COUNT/2)
-                    tiles[i][j].tileColour = Colours::green;
-            }
+            tiles[i][j].tileColour = SingleChannelLedBar::thToColour(th[i],energy[j] > th[i]);
             
 #else
             // 3D grid
@@ -181,7 +173,7 @@ void GridComponent::computeVertices()
     float w = SCENE_WIDTH;
     float h = w/2;
     
-    float angle_diff = PI / TILE_COL_COUNT;
+    float angle_diff = MathConstants<float>::pi / TILE_COL_COUNT;
     float radius_diff = h / TILE_ROW_COUNT;
     
     for(int i = 0; i <= TILE_ROW_COUNT; i++){
@@ -266,14 +258,14 @@ void BeamComponent::paint(Graphics& g)
     path.cubicTo(-width, -SCENE_WIDTH/2, -width, -SCENE_WIDTH/3, 0, 0);
     path.closeSubPath();
     
-    path.applyTransform(AffineTransform::rotation( (PI/2) * position));
+    path.applyTransform(AffineTransform::rotation( (MathConstants<float>::pi/2) * position));
     path.applyTransform(AffineTransform::translation(SCENE_WIDTH/2, SCENE_WIDTH/2));
     
-    g.setColour(Colours::lightblue);
+    g.setColour(baseColour.brighter());
     g.setOpacity(0.4);
     g.fillPath(path);
     
-    g.setColour (Colours::blue);
+    g.setColour (baseColour);
     g.setOpacity(0.8);
     PathStrokeType strokeType(2);
     g.strokePath(path, strokeType);
@@ -331,6 +323,14 @@ void SceneComponent::resized()
     grid.setBounds(getLocalBounds());
     for(int i = 0; i < NUM_BEAMS; i++)
         beams[i].setBounds(getLocalBounds());
+}
+
+void SceneComponent::setBeamColors(const std::vector<Colour> &colours){
+    jassert(colours.size() == NUM_BEAMS);
+    for (auto beamIdx = 0;beamIdx < NUM_BEAMS;++beamIdx)
+    {
+        beams[beamIdx].setBaseColor(colours[beamIdx]);
+    }
 }
 
 //==============================================================================

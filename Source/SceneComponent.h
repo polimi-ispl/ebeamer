@@ -14,23 +14,25 @@
 
 #define PERSPECTIVE_RATIO 5
 
-#define TILE_ROW_COUNT 10
+#define TILE_ROW_COUNT 7
 #define TILE_COL_COUNT 25
-#define PI 3.14159265
 
 #define SCENE_WIDTH 460
 
 #ifdef PLANAR_MODE
-#define GUI_HEIGHT 750
+#define GUI_HEIGHT 800
 #define SCENE_HEIGHT 230
 #else
 #define GUI_HEIGHT 980
 #define SCENE_HEIGHT 460
 #endif
 
+#define GRID_REFRESH_TIMER 50
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "PluginProcessor.h"
+#include "AudioComponents.h"
+#include "DOAthread.h"
 
 //==============================================================================
 
@@ -62,20 +64,16 @@ public:
     
     void resized() override;
     
-    void setSource(std::vector<float> &energy, SpinLock &lock)
-    {
-        this->energy = &energy;
-        this->lock = &lock;
-        
-    };
+    void setSource(std::shared_ptr<DOAthread> d){doaThread = d;};
     
 private:
     
     TileComponent tiles[TILE_ROW_COUNT][TILE_COL_COUNT];
     Point<float> vertices[TILE_ROW_COUNT+1][TILE_COL_COUNT+1];
     
-    std::vector<float> *energy;
-    SpinLock *lock;
+    std::shared_ptr<DOAthread> doaThread;
+    
+    std::vector<float> th;
     
     void computeVertices();
     void timerCallback() override;
@@ -97,10 +95,13 @@ public:
     void move(float);
     void scale(float);
     
+    void setBaseColor(Colour colour){baseColour = colour;}
+    
 private:
     
     float position;
     float width;
+    Colour baseColour = Colours::lightblue;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BeamComponent)
 };
@@ -112,6 +113,8 @@ class SceneComponent    : public Component
 public:
     SceneComponent();
     ~SceneComponent();
+    
+    void setBeamColors(const std::vector<Colour> &colours);
     
     void paint(Graphics&) override;
     void resized() override;

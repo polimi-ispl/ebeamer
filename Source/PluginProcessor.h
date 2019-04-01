@@ -1,14 +1,11 @@
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
+#include "AudioParts.h"
 
-#define FFT_SIZE 1024
 #define FIR_LEN 512
-#define MAX_FFT_BLOCK_LEN (FFT_SIZE - FIR_LEN)
 #define NUM_BEAMS 2
-#define HPF_FREQ 20.0 //Hz
-#define METERS_INERTIA 0.9f
-//#define METERS_MODE_RMS
+#define METERS_DECAY 0.15 //s
 #define BEAMSTEERING_ALG_IDEAL
 
 
@@ -55,49 +52,81 @@ public:
     void getStateInformation (MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
     
-    // Project specific
-    std::vector<float*> popFrontFFTdata();
-    int bufferStatus();
-    SpinLock fftLock;
+    //==============================================================================
+    // Convolution operations
+    static void prepareForConvolution (float *samples, int fftSize) noexcept;
+    static void convolutionProcessingAndAccumulate (const float *input, const float *impulse, float *output, int fftSize);
+    static void updateSymmetricFrequencyDomainData (float* samples, int fftSize) noexcept;
     
-    bool passThrough = false;
-    bool bypass = false;
+    //==============================================================================
+    // Meters
+    float getBeamMeter(int channel);
+    std::vector<float> getInputMeters();
+    
+    //==============================================================================
+    // VST parameters
     AudioParameterFloat* steeringBeam[NUM_BEAMS];
     AudioParameterFloat* widthBeam[NUM_BEAMS];
     AudioParameterFloat* panBeam[NUM_BEAMS];
-    AudioParameterFloat* gainBeam[NUM_BEAMS];
+    AudioParameterFloat* levelBeam[NUM_BEAMS];
     AudioParameterBool*  muteBeam[NUM_BEAMS];
+    AudioParameterFloat* micGain;
+    AudioParameterFloat* hpfFreq;
     
+    //==============================================================================
+    // FFT
+    const int getFftSize(){ return fft->getSize();}
+    
+    //==============================================================================
+    // Buffers
+    AudioBuffer<float> fftInput;
+    bool newFftInputDataAvailable = false;
+    SpinLock fftInputLock;
+    
+    //==============================================================================
+    // DOA
+    std::vector<std::vector<std::vector<float>>> firSteeringFFT;
+    
+    
+    //==============================================================================
+    // Meters
     std::vector<float> inputMeters;
     std::vector<float> beamMeters;
     SpinLock inputMetersLock;
     SpinLock beamMetersLock;
-    
+
 private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JucebeamAudioProcessor)
     
-    // Project specific
-    std::vector<std::vector<std::vector<float>>> prepareIR(const std::vector<std::vector<std::vector<float>>> fir);
-    void prepareForConvolution (float *samples) noexcept;
-    void convolutionProcessingAndAccumulate (const float *input, const float *impulse, float *output);
-    void updateSymmetricFrequencyDomainData (float* samples) noexcept;
-    
-    void pushBackFFTdata(float*);
-    
-    std::vector<std::vector<float*>> fftData;
-    
-    AudioBuffer<float> beamBuffer;
+    //==============================================================================
+    // FFT
     std::unique_ptr<dsp::FFT> fft;
-    float fftInput[2*FFT_SIZE];
-    float fftBuffer[2*FFT_SIZE];
-    float fftOutput[2*FFT_SIZE];
     
-    std::vector<std::vector<std::vector<float>>> firBeamwidthFft;
-    std::vector<std::vector<std::vector<float>>> firFFT;
+    //==============================================================================
+    // Meters
+    std::unique_ptr<MeterDecay> inputMeterDecay;
+    std::unique_ptr<MeterDecay> beamMeterDecay;
     
+    //==============================================================================
+    std::vector<std::vector<std::vector<float>>> prepareIR(const std::vector<std::vector<std::vector<float>>> fir);
+    // FIR filters, ready for convolution
+    std::vector<std::vector<std::vector<float>>> firBeamwidthFFT;
+    
+    //==============================================================================
+    // Buffers
+    AudioBuffer<float> beamsBuffer;
+    AudioBuffer<float> fftBuffer;
+    AudioBuffer<float> fftOutput;
+    
+    //==============================================================================
+    // HPF filters
+    float prevHpfFreq = 0;
     IIRCoefficients iirCoeffHPF;
-    
     std::vector<std::unique_ptr<IIRFilter>> iirHPFfilters;
+
+    //==============================================================================
+    // Gains
+    dsp::Gain<float> commonGain, beamGain[NUM_BEAMS];
     
 };
