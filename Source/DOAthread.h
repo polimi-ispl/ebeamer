@@ -34,11 +34,12 @@ private:
     
     std::vector<int> directionIdxs;
     
-    float inertia = 0.9;
-    float gain = 18;
+    float inertia = 0.85;
+    float gain = 0;
+    const float maxGain = 60, minGain = 0;
     
-    IIRCoefficients iirCoeffHPF;
-    std::unique_ptr<IIRFilter> iirHPFfilter;
+    IIRCoefficients iirCoeffHPF, iirCoeffLPF;
+    std::unique_ptr<IIRFilter> iirHPFfilter, iirLPFfilter;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DOAthread);
     

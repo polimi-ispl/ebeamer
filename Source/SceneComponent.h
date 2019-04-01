@@ -14,9 +14,8 @@
 
 #define PERSPECTIVE_RATIO 5
 
-#define TILE_ROW_COUNT 10
+#define TILE_ROW_COUNT 7
 #define TILE_COL_COUNT 25
-#define PI 3.14159265
 
 #define SCENE_WIDTH 460
 

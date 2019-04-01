@@ -173,7 +173,7 @@ void GridComponent::computeVertices()
     float w = SCENE_WIDTH;
     float h = w/2;
     
-    float angle_diff = PI / TILE_COL_COUNT;
+    float angle_diff = MathConstants<float>::pi / TILE_COL_COUNT;
     float radius_diff = h / TILE_ROW_COUNT;
     
     for(int i = 0; i <= TILE_ROW_COUNT; i++){
@@ -258,7 +258,7 @@ void BeamComponent::paint(Graphics& g)
     path.cubicTo(-width, -SCENE_WIDTH/2, -width, -SCENE_WIDTH/3, 0, 0);
     path.closeSubPath();
     
-    path.applyTransform(AffineTransform::rotation( (PI/2) * position));
+    path.applyTransform(AffineTransform::rotation( (MathConstants<float>::pi/2) * position));
     path.applyTransform(AffineTransform::translation(SCENE_WIDTH/2, SCENE_WIDTH/2));
     
     g.setColour(baseColour.brighter());

@@ -20,10 +20,14 @@ DOAthread::DOAthread(JucebeamAudioProcessor& p)
     
     fft = std::make_unique<dsp::FFT>(ceil(log2(processor.getFftSize())));
     
-    // Initialize HPF
-    iirCoeffHPF = IIRCoefficients::makeBandPass(processor.getSampleRate(), 2000, 0.8);
+    // Initialize HPF and LPF
+    iirCoeffHPF = IIRCoefficients::makeHighPass(processor.getSampleRate(), 500);
     iirHPFfilter = std::make_unique<IIRFilter>();
     iirHPFfilter->setCoefficients(iirCoeffHPF);
+    
+    iirCoeffLPF = IIRCoefficients::makeLowPass(processor.getSampleRate(), 5000);
+    iirLPFfilter = std::make_unique<IIRFilter>();
+    iirLPFfilter->setCoefficients(iirCoeffLPF);
     
 }
 
@@ -94,6 +98,7 @@ void DOAthread::run()
             }
             
             iirHPFfilter->processSamples(directionalSignal.getWritePointer(0), directionalSignal.getNumSamples());
+            iirLPFfilter->processSamples(directionalSignal.getWritePointer(0), directionalSignal.getNumSamples());
             
             auto range = FloatVectorOperations::findMinAndMax(directionalSignal.getReadPointer(0), directionalSignal.getNumSamples());
             auto maxAbs = jmax(abs(range.getStart()),abs(range.getEnd()));
@@ -102,7 +107,30 @@ void DOAthread::run()
             newEnergy[dirIdx] = ((1-inertia) * (maxAbsDb + gain)) + (inertia * prevEnergy[dirIdx]);
             
         }
+        
+        // Automatic gain
+        auto rangeEnergy = FloatVectorOperations::findMinAndMax(newEnergy.data(), newEnergy.size());
+        if (gain > minGain and
+            rangeEnergy.getEnd() > 0){
+            gain-=2;
+        }
+        else if (gain < maxGain and
+             rangeEnergy.getEnd() < -18){
+            gain+=2;
+        }
+        else if (gain < maxGain and
+            rangeEnergy.getEnd() < -9 and
+            rangeEnergy.getLength() > 15)
+        {
+            gain+=0.5;
+        }
+        else if (gain > minGain and
+             rangeEnergy.getStart() > -9){
+            gain-=0.5;
+        }
+        else
 
+        // Make new energy available
         {
             GenericScopedLock<SpinLock> lock(energyLock);
             energy = newEnergy;
