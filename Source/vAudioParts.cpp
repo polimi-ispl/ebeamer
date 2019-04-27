@@ -8,7 +8,7 @@
   ==============================================================================
 */
 
-#include "AudioParts.h"
+#include "vAudioParts.h"
 
 
 MeterDecay::MeterDecay(float fs, float duration, float blockSize, int numChannels)

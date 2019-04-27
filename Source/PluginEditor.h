@@ -1,9 +1,9 @@
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
-#include "DOAthread.h"
-#include "SceneComponent.h"
-#include "AudioComponents.h"
+#include "vDOAthread.h"
+#include "vSceneComponent.h"
+#include "vAudioComponents.h"
 
 #define GUI_WIDTH 540
 

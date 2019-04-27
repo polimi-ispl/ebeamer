@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
-#include "AudioParts.h"
+#include "vAudioParts.h"
 #include "vFIR.h"
 
 #define FIR_LEN 512

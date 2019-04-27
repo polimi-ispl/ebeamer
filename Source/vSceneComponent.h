@@ -31,8 +31,8 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "PluginProcessor.h"
-#include "AudioComponents.h"
-#include "DOAthread.h"
+#include "vAudioComponents.h"
+#include "vDOAthread.h"
 
 //==============================================================================
 

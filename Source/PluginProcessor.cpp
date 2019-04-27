@@ -328,7 +328,6 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
     }
     
     // Compute and store fft for all input channels, so that DOA thread can operate
-    
     {
         GenericScopedLock<SpinLock> lock(fftInputLock);
         fftInput.clear();
