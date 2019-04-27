@@ -2,6 +2,7 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "AudioParts.h"
+#include "vFIR.h"
 
 #define FIR_LEN 512
 #define NUM_BEAMS 2
@@ -51,12 +52,6 @@ public:
     //==============================================================================
     void getStateInformation (MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
-    
-    //==============================================================================
-    // Convolution operations
-    static void prepareForConvolution (float *samples, int fftSize) noexcept;
-    static void convolutionProcessingAndAccumulate (const float *input, const float *impulse, float *output, int fftSize);
-    static void updateSymmetricFrequencyDomainData (float* samples, int fftSize) noexcept;
     
     //==============================================================================
     // Meters

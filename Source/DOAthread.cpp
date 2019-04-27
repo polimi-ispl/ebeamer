@@ -88,8 +88,8 @@ void DOAthread::run()
             {
                 
                 fftOutput.clear();
-                 processor.convolutionProcessingAndAccumulate(fftInput.getReadPointer(inChannel),processor.firSteeringFFT[steeringIdx][inChannel].data(),fftOutput.getWritePointer(0),processor.getFftSize());
-                 processor.updateSymmetricFrequencyDomainData(fftOutput.getWritePointer(0),processor.getFftSize());
+                vFIR::convolutionProcessingAndAccumulate(fftInput.getReadPointer(inChannel),processor.firSteeringFFT[steeringIdx][inChannel].data(),fftOutput.getWritePointer(0),processor.getFftSize());
+                 vFIR::updateSymmetricFrequencyDomainData(fftOutput.getWritePointer(0),processor.getFftSize());
                 
                 fft -> performRealOnlyInverseTransform(fftOutput.getWritePointer(0));
                 

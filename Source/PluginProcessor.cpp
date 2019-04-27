@@ -336,7 +336,7 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
         {
             fftInput.copyFrom(inChannel, 0, buffer, inChannel, 0, blockNumSamples);
             fft -> performRealOnlyForwardTransform(fftInput.getWritePointer(inChannel));
-            prepareForConvolution(fftInput.getWritePointer(inChannel),getFftSize());
+            vFIR::prepareForConvolution(fftInput.getWritePointer(inChannel),getFftSize());
         }
         newFftInputDataAvailable = true;
     }
@@ -358,15 +358,15 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
             
             // Beam width processing
             fftOutput.clear();
-            convolutionProcessingAndAccumulate(fftBuffer.getReadPointer(0),firBeamwidthFFT[beamWidthIdx][inChannel].data(),fftOutput.getWritePointer(0),getFftSize());
+            vFIR::convolutionProcessingAndAccumulate(fftBuffer.getReadPointer(0),firBeamwidthFFT[beamWidthIdx][inChannel].data(),fftOutput.getWritePointer(0),getFftSize());
             
             // Beam steering processing
             fftBuffer.copyFrom(0, 0, fftOutput, 0, 0, fftOutput.getNumSamples());
             fftOutput.clear();
-            convolutionProcessingAndAccumulate(fftBuffer.getReadPointer(0),firSteeringFFT[steeringIdx][inChannel].data(),fftOutput.getWritePointer(0),getFftSize());
+            vFIR::convolutionProcessingAndAccumulate(fftBuffer.getReadPointer(0),firSteeringFFT[steeringIdx][inChannel].data(),fftOutput.getWritePointer(0),getFftSize());
             
             // FIR post processing
-            updateSymmetricFrequencyDomainData(fftOutput.getWritePointer(0),getFftSize());
+            vFIR::updateSymmetricFrequencyDomainData(fftOutput.getWritePointer(0),getFftSize());
             
             // Inverse FFT
             fft -> performRealOnlyInverseTransform(fftOutput.getWritePointer(0));
@@ -534,66 +534,13 @@ std::vector<std::vector<std::vector<float>>> JucebeamAudioProcessor::prepareIR(c
             FloatVectorOperations::clear(firFFTAngleMic.data(), 2*getFftSize());
             FloatVectorOperations::copy(firFFTAngleMic.data(), fir[angleIdx][micIdx].data() , static_cast<int>(fir[angleIdx][micIdx].size()));
             fft -> performRealOnlyForwardTransform(firFFTAngleMic.data());
-            prepareForConvolution(firFFTAngleMic.data(),getFftSize());
+            vFIR::prepareForConvolution(firFFTAngleMic.data(),getFftSize());
             firFFTAngle [micIdx] = firFFTAngleMic;
         }
         firFFT[angleIdx] = firFFTAngle;
     }
     
     return firFFT;
-}
-
-//========== copied from juce_Convolution.cpp ============
-
-/** After each FFT, this function is called to allow convolution to be performed with only 4 SIMD functions calls. */
-void JucebeamAudioProcessor::prepareForConvolution (float *samples, int fftSize) noexcept
-{
-    auto FFTSizeDiv2 = fftSize / 2;
-    
-    for (size_t i = 0; i < FFTSizeDiv2; i++)
-        samples[i] = samples[2 * i];
-    
-    samples[FFTSizeDiv2] = 0;
-    
-    for (size_t i = 1; i < FFTSizeDiv2; i++)
-        samples[i + FFTSizeDiv2] = -samples[2 * (fftSize - i) + 1];
-}
-
-/** Does the convolution operation itself only on half of the frequency domain samples. */
-void JucebeamAudioProcessor::convolutionProcessingAndAccumulate (const float *input, const float *impulse, float *output, int fftSize)
-{
-    auto FFTSizeDiv2 = fftSize / 2;
-    
-    FloatVectorOperations::addWithMultiply      (output, input, impulse, static_cast<int> (FFTSizeDiv2));
-    FloatVectorOperations::subtractWithMultiply (output, &(input[FFTSizeDiv2]), &(impulse[FFTSizeDiv2]), static_cast<int> (FFTSizeDiv2));
-    
-    FloatVectorOperations::addWithMultiply      (&(output[FFTSizeDiv2]), input, &(impulse[FFTSizeDiv2]), static_cast<int> (FFTSizeDiv2));
-    FloatVectorOperations::addWithMultiply      (&(output[FFTSizeDiv2]), &(input[FFTSizeDiv2]), impulse, static_cast<int> (FFTSizeDiv2));
-    
-    output[fftSize] += input[fftSize] * impulse[fftSize];
-}
-
-/** Undo the re-organization of samples from the function prepareForConvolution.
- Then, takes the conjugate of the frequency domain first half of samples, to fill the
- second half, so that the inverse transform will return real samples in the time domain.
- */
-void JucebeamAudioProcessor::updateSymmetricFrequencyDomainData (float* samples, int fftSize) noexcept
-{
-    auto FFTSizeDiv2 = fftSize / 2;
-    
-    for (size_t i = 1; i < FFTSizeDiv2; i++)
-    {
-        samples[2 * (fftSize - i)] = samples[i];
-        samples[2 * (fftSize - i) + 1] = -samples[FFTSizeDiv2 + i];
-    }
-    
-    samples[1] = 0.f;
-    
-    for (size_t i = 1; i < FFTSizeDiv2; i++)
-    {
-        samples[2 * i] = samples[2 * (fftSize - i)];
-        samples[2 * i + 1] = -samples[2 * (fftSize - i) + 1];
-    }
 }
 
 //==============================================================================
