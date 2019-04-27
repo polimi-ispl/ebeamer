@@ -17,4 +17,6 @@ namespace vFIR{
     void prepareForConvolution (float *samples, int fftSize) noexcept;
     void convolutionProcessingAndAccumulate (const float *input, const float *impulse, float *output, int fftSize);
     void updateSymmetricFrequencyDomainData (float* samples, int fftSize) noexcept;
+    std::vector<std::vector<std::vector<float> > > readFIR(const char* array,const int len);
 }
+

@@ -15,6 +15,10 @@
       <FILE id="hAi9Of" name="firIR.h" compile="0" resource="0" file="Source/Binary/firIR.h"/>
     </GROUP>
     <GROUP id="{52771D1D-3211-6CF7-CE70-5C5684F5D0E1}" name="Source">
+      <FILE id="VeVCOr" name="vMimoProcessor.cpp" compile="1" resource="0"
+            file="Source/vMimoProcessor.cpp"/>
+      <FILE id="wrf4Va" name="vMimoProcessor.h" compile="0" resource="0"
+            file="Source/vMimoProcessor.h"/>
       <GROUP id="{AC0EAE82-70E6-47BD-23DD-295BD02717C2}" name="gui">
         <FILE id="wmu0lC" name="vDOAthread.cpp" compile="1" resource="0" file="Source/vDOAthread.cpp"/>
         <FILE id="qrd71c" name="vDOAthread.h" compile="0" resource="0" file="Source/vDOAthread.h"/>

@@ -2,12 +2,9 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "vAudioParts.h"
-#include "vFIR.h"
+#include "vMimoProcessor.h"
 
-#define FIR_LEN 512
-#define NUM_BEAMS 2
 #define METERS_DECAY 0.15 //s
-#define BEAMSTEERING_ALG_IDEAL
 
 
 //==============================================================================
@@ -53,10 +50,6 @@ public:
     void getStateInformation (MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
     
-    //==============================================================================
-    // Meters
-    float getBeamMeter(int channel);
-    std::vector<float> getInputMeters();
     
     //==============================================================================
     // VST parameters
@@ -69,50 +62,33 @@ public:
     AudioParameterFloat* hpfFreq;
     
     //==============================================================================
-    // FFT
-    const int getFftSize(){ return fft->getSize();}
-    
-    //==============================================================================
-    // Buffers
+    // Buffer to allow external access to input signals FFT
     AudioBuffer<float> fftInput;
     bool newFftInputDataAvailable = false;
     SpinLock fftInputLock;
     
-    //==============================================================================
-    // DOA
-    std::vector<std::vector<std::vector<float>>> firSteeringFFT;
-    
     
     //==============================================================================
     // Meters
+    float getBeamMeter(int channel);
+    std::vector<float> getInputMeters();
     std::vector<float> inputMeters;
     std::vector<float> beamMeters;
     SpinLock inputMetersLock;
     SpinLock beamMetersLock;
+    
+    //==============================================================================
+    // vMimoProcessor
+    const std::shared_ptr<vMimoProcessor> getMimoProcessor(){return mimoProcessor;};
 
 private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JucebeamAudioProcessor)
     
     //==============================================================================
-    // FFT
-    std::unique_ptr<dsp::FFT> fft;
-    
-    //==============================================================================
     // Meters
     std::unique_ptr<vMeterDecay> inputMeterDecay;
     std::unique_ptr<vMeterDecay> beamMeterDecay;
-    
-    //==============================================================================
-    std::vector<std::vector<std::vector<float>>> prepareIR(const std::vector<std::vector<std::vector<float>>> fir);
-    // FIR filters, ready for convolution
-    std::vector<std::vector<std::vector<float>>> firBeamwidthFFT;
-    
-    //==============================================================================
-    // Buffers
-    AudioBuffer<float> beamsBuffer;
-    AudioBuffer<float> fftBuffer;
-    AudioBuffer<float> fftOutput;
     
     //==============================================================================
     // HPF filters
@@ -124,4 +100,7 @@ private:
     // Gains
     dsp::Gain<float> commonGain, beamGain[NUM_BEAMS];
     
+    //==============================================================================
+    // vMimoProcessor
+    std::shared_ptr<vMimoProcessor> mimoProcessor;
 };
