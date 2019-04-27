@@ -275,9 +275,9 @@ void JucebeamAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     }
     
     // Meters
-    inputMeterDecay = std::make_unique<MeterDecay>(sampleRate,METERS_DECAY,samplesPerBlock,numInputChannels);
+    inputMeterDecay = std::make_unique<vMeterDecay>(sampleRate,METERS_DECAY,samplesPerBlock,numInputChannels);
     inputMeters.resize(numInputChannels);
-    beamMeterDecay = std::make_unique<MeterDecay>(sampleRate,METERS_DECAY,samplesPerBlock,numOutputChannels);
+    beamMeterDecay = std::make_unique<vMeterDecay>(sampleRate,METERS_DECAY,samplesPerBlock,numOutputChannels);
     beamMeters.resize(NUM_BEAMS);
 
 }

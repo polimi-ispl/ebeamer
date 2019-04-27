@@ -2,7 +2,7 @@
 
 //==============================================================================
 
-DOAthread::DOAthread(JucebeamAudioProcessor& p)
+vDOAthread::vDOAthread(JucebeamAudioProcessor& p)
         : Thread("DOA"),  processor(p)
 {
     
@@ -31,14 +31,14 @@ DOAthread::DOAthread(JucebeamAudioProcessor& p)
     
 }
 
-DOAthread::~DOAthread()
+vDOAthread::~vDOAthread()
 {
     stopThread(100);
 }
 
 //==============================================================================
 
-void DOAthread::run()
+void vDOAthread::run()
 {
     ScopedNoDenormals noDenormals;
     

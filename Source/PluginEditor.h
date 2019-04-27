@@ -58,11 +58,11 @@ private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     JucebeamAudioProcessor& processor;
-    std::shared_ptr<DOAthread> DOAt;
+    std::shared_ptr<vDOAthread> DOAt;
 
     // Project specific
 
-    SceneComponent scene;
+    vSceneComponent scene;
     
     Label labelBeam1;
     Label labelBeam2;
@@ -77,26 +77,26 @@ private:
     Slider widthBeam2Knob;
 
     Label panLabel;
-    PanSlider panBeam1Knob;
-    PanSlider panBeam2Knob;
+    vPanSlider panBeam1Knob;
+    vPanSlider panBeam2Knob;
 
     Label levelLabel;
-    DecibelSlider levelBeam1Knob;
-    DecibelSlider levelBeam2Knob;
+    vDecibelSlider levelBeam1Knob;
+    vDecibelSlider levelBeam2Knob;
 
     Label muteLabel;
     TextButton beam1MuteButton;
     TextButton beam2MuteButton;
     
-    MultiChannelLedBar inputMeter;
-    SingleChannelLedBar beam1Meter;
-    SingleChannelLedBar beam2Meter;
+    vMultiChannelLedBar inputMeter;
+    vSingleChannelLedBar beam1Meter;
+    vSingleChannelLedBar beam2Meter;
     
     Label hpfLabel;
-    FrequencySlider hpfSlider;
+    vFrequencySlider hpfSlider;
     
     Label gainLabel;
-    DecibelSlider gainSlider;
+    vDecibelSlider gainSlider;
 
     void setMuteButtonColor(uint8 beamIdx);
     

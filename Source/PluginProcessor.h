@@ -100,8 +100,8 @@ private:
     
     //==============================================================================
     // Meters
-    std::unique_ptr<MeterDecay> inputMeterDecay;
-    std::unique_ptr<MeterDecay> beamMeterDecay;
+    std::unique_ptr<vMeterDecay> inputMeterDecay;
+    std::unique_ptr<vMeterDecay> beamMeterDecay;
     
     //==============================================================================
     std::vector<std::vector<std::vector<float>>> prepareIR(const std::vector<std::vector<std::vector<float>>> fir);

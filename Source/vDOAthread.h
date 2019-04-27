@@ -6,12 +6,12 @@
 
 //==============================================================================
 
-class DOAthread     : public Thread
+class vDOAthread     : public Thread
 {
 public:
 
-    DOAthread(JucebeamAudioProcessor& p);
-    ~DOAthread();
+    vDOAthread(JucebeamAudioProcessor& p);
+    ~vDOAthread();
     
     void run() override;
     
@@ -42,6 +42,6 @@ private:
     IIRCoefficients iirCoeffHPF, iirCoeffLPF;
     std::unique_ptr<IIRFilter> iirHPFfilter, iirLPFfilter;
     
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DOAthread);
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (vDOAthread);
     
 };
