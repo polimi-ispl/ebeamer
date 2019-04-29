@@ -14,31 +14,33 @@
 //=======================================================
 vMimoProcessor::vMimoProcessor(int samplesPerBlock_){
     
-    // initialize a proper FFT
-    samplesPerBlock = samplesPerBlock_;
-    size_t fftOrder = roundToInt(ceil(std::log2 (FIR_LEN + samplesPerBlock - 1)));
-    fft = std::make_shared<dsp::FFT>(fftOrder);
-    
     // Initialize firFFT
-    std::vector<AudioBuffer<float>> tmpFIR;
+    std::vector<AudioBuffer<float>> tmpSteeringFIR, tmpBeamwidthFIR;
     
-    vFIR::readFIR(tmpFIR,
+    vFIR::readFIR(tmpSteeringFIR,
 #ifdef BEAMSTEERING_ALG_IDEAL
                   firIR::firDASideal_dat,firIR::firDASideal_datSize
 #else
                   firIR::firDASmeasured_dat,firIR::firDASmeasured_datSize
 #endif
                   );
-    firSteeringFFT.resize(tmpFIR.size());
+    vFIR::readFIR(tmpBeamwidthFIR,firIR::firBeamwidth_dat,firIR::firBeamwidth_datSize);
+    
+    // initialize a proper FFT
+    samplesPerBlock = samplesPerBlock_;
+    size_t fftOrder = roundToInt(ceil(std::log2 (tmpSteeringFIR[0].getNumSamples() + tmpBeamwidthFIR[0].getNumSamples() + samplesPerBlock - 1)));
+    fft = std::make_shared<dsp::FFT>(fftOrder);
+    
+    // Prepare FIR in FFT domain
+    firSteeringFFT.resize(tmpSteeringFIR.size());
     for (auto idx = 0; idx < firSteeringFFT.size(); ++idx){
-        firSteeringFFT[idx] = vFIR::AudioBufferFFT(tmpFIR[idx],fft);
+        firSteeringFFT[idx] = vFIR::AudioBufferFFT(tmpSteeringFIR[idx],fft);
         firSteeringFFT[idx].prepareForConvolution();
     }
 
-    vFIR::readFIR(tmpFIR,firIR::firBeamwidth_dat,firIR::firBeamwidth_datSize);
-    firBeamwidthFFT.resize(tmpFIR.size());
+    firBeamwidthFFT.resize(tmpBeamwidthFIR.size());
     for (auto idx = 0; idx < firBeamwidthFFT.size(); ++idx){
-        firBeamwidthFFT[idx] = vFIR::AudioBufferFFT(tmpFIR[idx],fft);
+        firBeamwidthFFT[idx] = vFIR::AudioBufferFFT(tmpBeamwidthFIR[idx],fft);
         firBeamwidthFFT[idx].prepareForConvolution();
     }
     
@@ -49,8 +51,7 @@ vMimoProcessor::vMimoProcessor(int samplesPerBlock_){
     
     // Allocate single channel buffers
     fftBuffers = vFIR::AudioBufferFFT(NUM_BUFFERS,fft);
-    
-    
+
 }
 
 //=======================================================

@@ -13,7 +13,6 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "vFIR.h"
 
-#define FIR_LEN 512
 #define NUM_BUFFERS 1
 #define BEAMSTEERING_ALG_IDEAL
 
