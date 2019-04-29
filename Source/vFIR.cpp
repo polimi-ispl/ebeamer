@@ -116,6 +116,8 @@ namespace vFIR{
         for (int channelIdx = 0; channelIdx < buffer.getNumChannels(); ++channelIdx){
             fft->performRealOnlyForwardTransform(buffer.getWritePointer(channelIdx));
         }
+        
+        readyForConvolution = false;
     }
     
     void AudioBufferFFT::updateSymmetricFrequency() {
