@@ -17,13 +17,14 @@ vMimoProcessor::vMimoProcessor(int samplesPerBlock_){
     // Initialize firFFT
     std::vector<AudioBuffer<float>> tmpSteeringFIR, tmpBeamwidthFIR;
     
-    vFIR::readFIR(tmpSteeringFIR,
-#ifdef BEAMSTEERING_ALG_IDEAL
-                  firIR::firDASideal_dat,firIR::firDASideal_datSize
-#else
-                  firIR::firDASmeasured_dat,firIR::firDASmeasured_datSize
-#endif
-                  );
+    switch (algorithm){
+        case MEASURED:
+            vFIR::readFIR(tmpSteeringFIR,firIR::firDASmeasured_dat,firIR::firDASmeasured_datSize);
+            break;
+        case IDEAL:
+            vFIR::readFIR(tmpSteeringFIR,firIR::firDASideal_dat,firIR::firDASideal_datSize);
+            break;
+    }
     vFIR::readFIR(tmpBeamwidthFIR,firIR::firBeamwidth_dat,firIR::firBeamwidth_datSize);
     
     // initialize a proper FFT
@@ -49,8 +50,8 @@ vMimoProcessor::vMimoProcessor(int samplesPerBlock_){
      */
     std::reverse(firSteeringFFT.begin(), firSteeringFFT.end());
     
-    // Allocate single channel buffers
-    fftBuffers = vFIR::AudioBufferFFT(NUM_BUFFERS,fft);
+    // Allocate buffers
+    fftBuffers = vFIR::AudioBufferFFT(numBuffers,fft);
 
 }
 

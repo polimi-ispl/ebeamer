@@ -22,10 +22,11 @@ namespace vFIR{
         AudioBuffer<float> convBuffer;
         std::shared_ptr<dsp::FFT> fft;
         bool readyForConvolution = false;
-        float* getConvReady(int);
+        
         static void prepareForConvolution (float *samples, int fftSize) noexcept;
         static void convolutionProcessingAndAccumulate (const float *input, const float *impulse, float *output, int fftSize);
         static void updateSymmetricFrequencyDomainData (float* samples, int fftSize) noexcept;
+        
         void updateSymmetricFrequency();
         
     public:

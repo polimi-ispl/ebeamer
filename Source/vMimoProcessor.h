@@ -13,9 +13,6 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "vFIR.h"
 
-#define NUM_BUFFERS 1
-#define BEAMSTEERING_ALG_IDEAL
-
 class vMimoProcessor{
     
 public:
@@ -23,14 +20,10 @@ public:
     vMimoProcessor(int samplesPerBlock);
     
     //==============================================================================
-    
-    // DOA filters, ready for convolution
+    // DOA filters
     std::vector<vFIR::AudioBufferFFT> firSteeringFFT;
-
-    // FIR filters, ready for convolution
+    // Beamwidth filters
     std::vector<vFIR::AudioBufferFFT> firBeamwidthFFT;
-    
-    //==============================================================================
     // FFT
     std::shared_ptr<dsp::FFT> fft;
     
@@ -49,9 +42,12 @@ private:
         
     //==============================================================================
     // Buffers
-    vFIR::AudioBufferFFT fftBuffers; // numChannels = NUM_BUFFERS; numSamples = 2*fftSize
+    vFIR::AudioBufferFFT fftBuffers;
+    int samplesPerBlock;
     
     //==============================================================================
-    int samplesPerBlock;
+    // Parameters
+    const enum {MEASURED,IDEAL} algorithm = IDEAL;
+    const int numBuffers = 1;
     
 };

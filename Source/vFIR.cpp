@@ -168,11 +168,6 @@ namespace vFIR{
         }
     }
 
-    float* AudioBufferFFT::getConvReady(int channelIdx){
-        prepareForConvolution();
-        return getWritePointer(channelIdx);
-    }
-
     void AudioBufferFFT::convolve(int outputChannel, const AudioBufferFFT& in_, int inChannel, AudioBufferFFT& filter_, int filterChannel ){
         
         jassert(in_.isReadyForConvolution());
