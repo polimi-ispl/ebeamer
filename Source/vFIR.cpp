@@ -15,9 +15,9 @@ namespace vFIR{
     //========== copied from juce_Convolution.cpp ============
 
     /** After each FFT, this function is called to allow convolution to be performed with only 4 SIMD functions calls. */
-        void prepareForConvolution (float *samples, int fftSize) noexcept
+    void prepareForConvolution (float *samples, int fftSize) noexcept
     {
-        auto FFTSizeDiv2 = fftSize / 2;
+        int FFTSizeDiv2 = fftSize / 2;
         
         for (size_t i = 0; i < FFTSizeDiv2; i++)
             samples[i] = samples[2 * i];
@@ -31,13 +31,13 @@ namespace vFIR{
     /** Does the convolution operation itself only on half of the frequency domain samples. */
     void convolutionProcessingAndAccumulate (const float *input, const float *impulse, float *output, int fftSize)
     {
-        auto FFTSizeDiv2 = fftSize / 2;
+        int FFTSizeDiv2 = fftSize / 2;
         
-        FloatVectorOperations::addWithMultiply      (output, input, impulse, static_cast<int> (FFTSizeDiv2));
-        FloatVectorOperations::subtractWithMultiply (output, &(input[FFTSizeDiv2]), &(impulse[FFTSizeDiv2]), static_cast<int> (FFTSizeDiv2));
+        FloatVectorOperations::addWithMultiply      (output, input, impulse, FFTSizeDiv2);
+        FloatVectorOperations::subtractWithMultiply (output, &(input[FFTSizeDiv2]), &(impulse[FFTSizeDiv2]), FFTSizeDiv2);
         
-        FloatVectorOperations::addWithMultiply      (&(output[FFTSizeDiv2]), input, &(impulse[FFTSizeDiv2]), static_cast<int> (FFTSizeDiv2));
-        FloatVectorOperations::addWithMultiply      (&(output[FFTSizeDiv2]), &(input[FFTSizeDiv2]), impulse, static_cast<int> (FFTSizeDiv2));
+        FloatVectorOperations::addWithMultiply      (&(output[FFTSizeDiv2]), input, &(impulse[FFTSizeDiv2]), FFTSizeDiv2);
+        FloatVectorOperations::addWithMultiply      (&(output[FFTSizeDiv2]), &(input[FFTSizeDiv2]), impulse, FFTSizeDiv2);
         
         output[fftSize] += input[fftSize] * impulse[fftSize];
     }
@@ -89,5 +89,60 @@ namespace vFIR{
         return fir;
     }
 
-}
+    AudioBufferFFT::AudioBufferFFT(const AudioBuffer<float>& in_,std::shared_ptr<dsp::FFT>&fft_){
+        /**
+         Given a time signal computes the fft->for each channel
+         */
+        fft = fft_;
+        if (fft->getSize() < in_.getNumSamples()){
+            throw std::runtime_error("fft->too small for the provided input signal");
+        }
+        convBuffer = AudioBuffer<SampleType>(1,fft->getSize()*2);
+        
+        // initialize and copy from in_ to buffer
+        buffer = AudioBuffer<SampleType>(in_.getNumChannels(),fft->getSize()*2);
+        buffer.clear();
+        for (int channelIdx = 0; channelIdx < buffer.getNumChannels(); ++channelIdx){
+            buffer.copyFrom(channelIdx, 0, in_, channelIdx, 0, in_.getNumSamples());
+        }
+        // perform FFT
+        for (int channelIdx = 0; channelIdx < buffer.getNumChannels(); ++channelIdx){
+            fft->performRealOnlyForwardTransform(buffer.getWritePointer(channelIdx));
+        }
+    }
+    
+    void AudioBufferFFT::getTimeSeries(AudioBuffer<float>& out){
+        out.clear();
+        
+        if (readyForConvolution){
+            for (int channelIdx = 0; channelIdx < buffer.getNumChannels(); ++channelIdx){
+                updateSymmetricFrequencyDomainData(buffer.getWritePointer(channelIdx), fft->getSize());
+            }
+            readyForConvolution = false;
+        }
+        
+        for (int channelIdx = 0; channelIdx < buffer.getNumChannels(); ++channelIdx){
+            convBuffer.copyFrom(0, 0, buffer, channelIdx, 0, fft->getSize()*2);
+            fft->performRealOnlyInverseTransform(convBuffer.getWritePointer(0));
+            out.copyFrom(channelIdx, 0, convBuffer, 0, 0, fft->getSize());
+        }
+        
+    }
+    
+    float* AudioBufferFFT::getConvReady(int channelIdx){
+        if (! readyForConvolution){
+            for (int channelIdx = 0; channelIdx < buffer.getNumChannels(); ++channelIdx){
+                prepareForConvolution(buffer.getWritePointer(channelIdx), fft->getSize());
+            }
+            readyForConvolution = true;
+        }
+        return buffer.getWritePointer(channelIdx);
+    }
+    
+    void AudioBufferFFT::convolve(int signalChannel, const AudioBufferFFT& filter, int filterChannel, AudioBufferFFT& output, int outputChannel){
+        convolutionProcessingAndAccumulate(buffer.getReadPointer(signalChannel),filter.getReadPointer(filterChannel),output.getWritePointer(outputChannel),fft->getSize());
+    }
+
+    
+} // End namespace vFIR
 
