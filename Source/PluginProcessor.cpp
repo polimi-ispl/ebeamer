@@ -181,17 +181,20 @@ bool JucebeamAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts)
 #endif
 
 //==============================================================================
-void JucebeamAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+void JucebeamAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock_)
 {
     
-    auto numInputChannels = getTotalNumInputChannels();
-    auto numOutputChannels = getTotalNumOutputChannels();
+    int numInputChannels = getTotalNumInputChannels();
     
     // Initialize vMimoProcessor
-    mimoProcessor = std::make_unique<vMimoProcessor>(samplesPerBlock,numInputChannels,numOutputChannels);
+    samplesPerBlock = samplesPerBlock_;
+    mimoProcessor = std::make_unique<vMimoProcessor>(samplesPerBlock);
+    numSteeringDirections = mimoProcessor->getNumSteeringFir();
+    numBeamwidthChoices = mimoProcessor->getNumBeamwidthFir();
+    beamsBuffer = AudioBuffer<float>(NUM_BEAMS,mimoProcessor->fft->getSize());
     {
         GenericScopedLock<SpinLock> lock(fftInputLock);
-        
+        inputsFFT = vFIR::AudioBufferFFT(numInputChannels,mimoProcessor->fft);
     }
     
     // Initialize gain ramps
@@ -199,7 +202,7 @@ void JucebeamAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     dsp::ProcessSpec spec;
     spec.maximumBlockSize = samplesPerBlock;
     spec.sampleRate = sampleRate;
-    spec.numChannels = numOutputChannels;
+    spec.numChannels = numInputChannels;
     commonGain.prepare(spec);
     commonGain.setGainDecibels(0);
     commonGain.setRampDurationSeconds(0.1);
@@ -226,7 +229,7 @@ void JucebeamAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     // Meters
     inputMeterDecay = std::make_unique<vMeterDecay>(sampleRate,METERS_DECAY,samplesPerBlock,numInputChannels);
     inputMeters.resize(numInputChannels);
-    beamMeterDecay = std::make_unique<vMeterDecay>(sampleRate,METERS_DECAY,samplesPerBlock,numOutputChannels);
+    beamMeterDecay = std::make_unique<vMeterDecay>(sampleRate,METERS_DECAY,samplesPerBlock,NUM_BEAMS);
     beamMeters.resize(NUM_BEAMS);
 
 }
@@ -243,9 +246,6 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
 {
     ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
-    
-    int samplesPerBlock = buffer.getNumSamples();
-    mimoProcessor->newBlock();
     
     // HPF filtering
     if(prevHpfFreq != hpfFreq->get()){
@@ -277,25 +277,26 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
     }
     
     // Compute and store fft for all input channels, so that DOA thread can operate
-    mimoProcessor->preComputeInputFFT(buffer);
     {
         GenericScopedLock<SpinLock> lock(fftInputLock);
-        mimoProcessor->getInputFFT(fftInput);
+        inputsFFT.setTimeSeries(buffer);
+        inputsFFT.prepareForConvolution();
         newFftInputDataAvailable = true;
     }
     
     // Per input-channel processing
+    mimoProcessor->newBlock(beamsBuffer);
     for (int inChannel = 0; inChannel < totalNumInputChannels; ++inChannel)
     {
         // Beam dependent processing
         for (int beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx)
         {
             // Determine steering index
-            int steeringIdx = roundToInt(((steeringBeam[beamIdx]->get() + 1)/2.)*(mimoProcessor->getNumSteeringFir()-1));
+            int steeringIdx = roundToInt(((steeringBeam[beamIdx]->get() + 1)/2.)*(numSteeringDirections-1));
             // Determine beam width index
-            int beamWidthIdx = roundToInt(widthBeam[beamIdx]->get()*(mimoProcessor->getNumBeamwidthFir()-1));
+            int beamWidthIdx = roundToInt(widthBeam[beamIdx]->get()*(numBeamwidthChoices-1));
             
-            mimoProcessor->processBlock(inChannel,beamIdx,steeringIdx,beamWidthIdx);
+            mimoProcessor->processBlock(inputsFFT,inChannel,beamsBuffer,beamIdx,steeringIdx,beamWidthIdx);
         }
     }
     
@@ -303,7 +304,7 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
     {
         for (auto beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx)
         {
-            auto block = dsp::AudioBlock<float>(mimoProcessor->beamsBuffer);
+            auto block = dsp::AudioBlock<float>(beamsBuffer);
             beamGain[beamIdx].setGainDecibels(levelBeam[beamIdx]->get());
             {
                 auto beamBlock = block.getSubsetChannelBlock(beamIdx, 1).getSubBlock(0, samplesPerBlock);
@@ -314,14 +315,14 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
     }
     
     // Beam meters
-    beamMeterDecay->push(mimoProcessor->getBeams());
+    beamMeterDecay->push(beamsBuffer);
     {
         GenericScopedLock<SpinLock> lock(beamMetersLock);
         beamMeters = beamMeterDecay->get();
     }
     
     // Sum beams in output channels
-    for (int outChannel = 0; outChannel < 2; ++outChannel)
+    for (int outChannel = 0; outChannel < OUT_CHANNELS; ++outChannel)
     {
         // Clean output buffer
         buffer.clear(outChannel,0,samplesPerBlock);
@@ -330,11 +331,11 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
             if (muteBeam[beamIdx]->get() == false){
                 float channelBeamGain = panToLinearGain(panBeam[beamIdx],outChannel==0);
                 // Add to buffer
-                buffer.addFrom(outChannel, 0, mimoProcessor->getBeams(), beamIdx, 0, samplesPerBlock, channelBeamGain);
+                buffer.addFrom(outChannel, 0, beamsBuffer, beamIdx, 0, samplesPerBlock, channelBeamGain);
             }
         }
     }
-    for (int outChannel = 2; outChannel < buffer.getNumChannels(); ++outChannel){
+    for (int outChannel = OUT_CHANNELS; outChannel < buffer.getNumChannels(); ++outChannel){
         buffer.clear(outChannel,0,samplesPerBlock);
     }
     

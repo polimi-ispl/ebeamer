@@ -3,7 +3,8 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "vAudioParts.h"
 #include "vMimoProcessor.h"
-
+#define NUM_BEAMS 2
+#define OUT_CHANNELS 2
 #define METERS_DECAY 0.15 //s
 
 
@@ -63,7 +64,7 @@ public:
     
     //==============================================================================
     // Buffer to allow external access to input signals FFT
-    AudioBuffer<float> fftInput;
+    vFIR::AudioBufferFFT inputsFFT;
     bool newFftInputDataAvailable = false;
     SpinLock fftInputLock;
     
@@ -103,4 +104,11 @@ private:
     //==============================================================================
     // vMimoProcessor
     std::shared_ptr<vMimoProcessor> mimoProcessor;
+    size_t numSteeringDirections;
+    size_t numBeamwidthChoices;
+    int samplesPerBlock;
+    
+    //==============================================================================
+    // Beams buffers
+    AudioBuffer<float> beamsBuffer;
 };

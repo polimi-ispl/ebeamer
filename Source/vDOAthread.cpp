@@ -14,12 +14,7 @@ vDOAthread::vDOAthread(JucebeamAudioProcessor& p)
     
     energy.clear();
     energy.resize(directionIdxs.size());
-    
-    fftOutput = AudioBuffer<float>(1,2*processor.getMimoProcessor()->getFftSize());
-    directionalSignal = AudioBuffer<float>(1,processor.getMimoProcessor()->getFftSize());
-    
-    fft = std::make_unique<dsp::FFT>(ceil(log2(processor.getMimoProcessor()->getFftSize())));
-    
+        
     // Initialize HPF and LPF
     iirCoeffHPF = IIRCoefficients::makeHighPass(processor.getSampleRate(), 500);
     iirHPFfilter = std::make_unique<IIRFilter>();
@@ -48,7 +43,7 @@ void vDOAthread::run()
     while(!threadShouldExit())
     {
      
-        directionalSignal.setSize(1, processor.getMimoProcessor()->getFftSize());
+        directionalSignal.setSize(1, processor.getMimoProcessor()->fft->getSize());
         
         while (!threadShouldExit() && newEnergyAvailable)
         {
@@ -64,39 +59,21 @@ void vDOAthread::run()
 
         {
             GenericScopedLock<SpinLock> lock(processor.fftInputLock);
-            fftInput.makeCopyOf(processor.fftInput);
+            inputsFFT = processor.inputsFFT;
             processor.newFftInputDataAvailable = false;
         }
-        
-        int fftSize = processor.getMimoProcessor()->getFftSize();
-        if (fftInput.getNumSamples() != 2*fft->getSize()){
-            fft = std::make_unique<dsp::FFT>(ceil(log2(fftSize)));
-            fftOutput.setSize(1, 2*fftSize);
-        }
-        
+
         prevEnergy = energy;
         newEnergy.clear();
         newEnergy.resize(directionIdxs.size());
         
         for (auto dirIdx = 0; dirIdx < directionIdxs.size(); ++dirIdx)
         {
-            
-            directionalSignal.clear();
-            
+            processor.getMimoProcessor()->newBlock(directionalSignal);
             int steeringIdx = directionIdxs[dirIdx];
-            
-            for (auto inChannel = 0; inChannel < fftInput.getNumChannels(); ++inChannel)
+            for (auto inChannel = 0; inChannel < inputsFFT.getNumChannels(); ++inChannel)
             {
-                
-                fftOutput.clear();
-                vFIR::convolutionProcessingAndAccumulate(fftInput.getReadPointer(inChannel),processor.getMimoProcessor()->getFirSteeringFFT(steeringIdx,inChannel),fftOutput.getWritePointer(0),fftSize);
-                 vFIR::updateSymmetricFrequencyDomainData(fftOutput.getWritePointer(0),fftSize);
-                
-                fft -> performRealOnlyInverseTransform(fftOutput.getWritePointer(0));
-                
-                
-                directionalSignal.addFrom(0, 0, fftOutput, 0, 0, fftSize);
-                
+                processor.getMimoProcessor()->processBlock(inputsFFT,inChannel,directionalSignal,0,steeringIdx,-1);
             }
             
             iirHPFfilter->processSamples(directionalSignal.getWritePointer(0), directionalSignal.getNumSamples());

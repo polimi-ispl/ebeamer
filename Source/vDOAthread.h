@@ -25,15 +25,10 @@ public:
     
 private:
     
-    std::unique_ptr<dsp::FFT> fft;
-    
     JucebeamAudioProcessor& processor;
     
     AudioBuffer<float> directionalSignal;
-    AudioBuffer<float> fftOutput;
-    
-    AudioBuffer<float> fftInput;
-    
+    vFIR::AudioBufferFFT inputsFFT;
     std::vector<int> directionIdxs;
     
     double inertia = 0.85;
