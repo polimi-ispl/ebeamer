@@ -24,7 +24,7 @@ vMimoProcessor::vMimoProcessor(int samplesPerBlock_,int numInputChannels,int num
 #ifdef BEAMSTEERING_ALG_IDEAL
     firSteeringFFT = prepareIR(vFIR::readFIR(firIR::firDASideal_dat,firIR::firDASideal_datSize));
 #else
-    firFFT = prepareIR(readFIR(firIR::firDASmeasured_dat,firIR::firDASmeasured_datSize));
+    firFFT = prepareIR(vFIR::readFIR(firIR::firDASmeasured_dat,firIR::firDASmeasured_datSize));
 #endif
     /* With Joe we decided that the way we want the interface to behave is to have
      the eStick facing the user, mic 1 on the left, thus we have to reverse the order of the filters.
