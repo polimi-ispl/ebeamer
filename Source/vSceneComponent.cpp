@@ -8,22 +8,22 @@
   ==============================================================================
 */
 
-#include "SceneComponent.h"
+#include "vSceneComponent.h"
 
 //==============================================================================
 //==============================================================================
 
-TileComponent::TileComponent()
+vTileComponent::vTileComponent()
 {
 }
 
-TileComponent::~TileComponent()
+vTileComponent::~vTileComponent()
 {
 }
 
 //==============================================================================
 
-void TileComponent::paint(Graphics& g)
+void vTileComponent::paint(Graphics& g)
 {
     Path path;
     
@@ -41,14 +41,14 @@ void TileComponent::paint(Graphics& g)
     g.strokePath(path, strokeType);
 }
 
-void TileComponent::resized()
+void vTileComponent::resized()
 {
 }
 
 //==============================================================================
 //==============================================================================
 
-GridComponent::GridComponent()
+vGridComponent::vGridComponent()
 {
     for(int i = 0; i < TILE_ROW_COUNT; i++)
         for(int j = 0; j < TILE_COL_COUNT; j++)
@@ -68,13 +68,13 @@ GridComponent::GridComponent()
     
 }
 
-GridComponent::~GridComponent()
+vGridComponent::~vGridComponent()
 {
 }
 
 //==============================================================================
 
-void GridComponent::resized()
+void vGridComponent::resized()
 {
     computeVertices();
     
@@ -115,7 +115,7 @@ void GridComponent::resized()
     }
 }
 
-void GridComponent::timerCallback()
+void vGridComponent::timerCallback()
 {
     // TODO: keep track of # of directions (DOAthread might change it for performance)
     // and re-compute the grid if necessary.
@@ -149,7 +149,7 @@ void GridComponent::timerCallback()
 #ifdef PLANAR_MODE
             // 2D grid
             
-            tiles[i][j].tileColour = SingleChannelLedBar::thToColour(th[i],energy[j] > th[i]);
+            tiles[i][j].tileColour = vSingleChannelLedBar::thToColour(th[i],energy[j] > th[i]);
             
 #else
             // 3D grid
@@ -165,7 +165,7 @@ void GridComponent::timerCallback()
     
 }
 
-void GridComponent::computeVertices()
+void vGridComponent::computeVertices()
 {
 #ifdef PLANAR_MODE
     // 2D grid
@@ -236,18 +236,18 @@ void GridComponent::computeVertices()
 //==============================================================================
 //==============================================================================
 
-BeamComponent::BeamComponent()
+vBeamComponent::vBeamComponent()
 {
     position = 0;
 }
 
-BeamComponent::~BeamComponent()
+vBeamComponent::~vBeamComponent()
 {
 }
 
 //==============================================================================
 
-void BeamComponent::paint(Graphics& g)
+void vBeamComponent::paint(Graphics& g)
 {
 #ifdef PLANAR_MODE
     
@@ -277,23 +277,23 @@ void BeamComponent::paint(Graphics& g)
 #endif
 }
 
-void BeamComponent::resized()
+void vBeamComponent::resized()
 {
 }
 
-void BeamComponent::move(float new_position)
+void vBeamComponent::move(float new_position)
 {
     position = new_position;
     repaint();
 }
 
-void BeamComponent::scale(float new_width)
+void vBeamComponent::scale(float new_width)
 {
     width = (0.1 + 2.9*new_width) * SCENE_WIDTH/10;
     repaint();
 }
 
-void BeamComponent::setStatus(bool s)
+void vBeamComponent::setStatus(bool s)
 {
     status = s;
     repaint();
@@ -302,7 +302,7 @@ void BeamComponent::setStatus(bool s)
 //==============================================================================
 //==============================================================================
 
-SceneComponent::SceneComponent()
+vSceneComponent::vSceneComponent()
 {
     addAndMakeVisible (grid);
     for(int i = 0; i < NUM_BEAMS; i++)
@@ -315,25 +315,25 @@ SceneComponent::SceneComponent()
     beams[1].scale(0.5);
 }
 
-SceneComponent::~SceneComponent()
+vSceneComponent::~vSceneComponent()
 {
 }
 
 //==============================================================================
 
-void SceneComponent::paint(Graphics& g)
+void vSceneComponent::paint(Graphics& g)
 {
     g.fillAll(getLookAndFeel().findColour (ResizableWindow::backgroundColourId));
 }
 
-void SceneComponent::resized()
+void vSceneComponent::resized()
 {
     grid.setBounds(getLocalBounds());
     for(int i = 0; i < NUM_BEAMS; i++)
         beams[i].setBounds(getLocalBounds());
 }
 
-void SceneComponent::setBeamColors(const std::vector<Colour> &colours){
+void vSceneComponent::setBeamColors(const std::vector<Colour> &colours){
     jassert(colours.size() == NUM_BEAMS);
     for (auto beamIdx = 0;beamIdx < NUM_BEAMS;++beamIdx)
     {

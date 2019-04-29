@@ -8,10 +8,10 @@
   ==============================================================================
 */
 
-#include "AudioParts.h"
+#include "vAudioParts.h"
 
 
-MeterDecay::MeterDecay(float fs, float duration, float blockSize, int numChannels)
+vMeterDecay::vMeterDecay(float fs, float duration, float blockSize, int numChannels)
 {
     
     int numBlocks = (int)ceil(duration*fs/blockSize);
@@ -26,7 +26,7 @@ MeterDecay::MeterDecay(float fs, float duration, float blockSize, int numChannel
     
 }
 
-void MeterDecay::push(const AudioBuffer<float>& signal)
+void vMeterDecay::push(const AudioBuffer<float>& signal)
 {
     for (auto channelIdx = 0; channelIdx < signal.getNumChannels(); ++channelIdx)
     {
@@ -39,7 +39,7 @@ void MeterDecay::push(const AudioBuffer<float>& signal)
     }
 }
 
-std::vector<float> MeterDecay::get()
+std::vector<float> vMeterDecay::get()
 {
     std::vector<float> values(minMaxCircularBuffer.size());
     for (auto channelIdx = 0; channelIdx < minMaxCircularBuffer.size(); ++channelIdx)
