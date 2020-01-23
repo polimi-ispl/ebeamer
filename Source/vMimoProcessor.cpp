@@ -68,9 +68,7 @@ void vMimoProcessor::newBlock(AudioBuffer<float>& outTimeSeries){
 
 void vMimoProcessor::processBlock(const vFIR::AudioBufferFFT& inFFT, int inChannel, vFIR::AudioBufferFFT& outFFT, int outChannel, int steeringIdx, int beamWidthIdx){
     
-    if (outFFT.getNumSamples() != 2*fft->getSize()){
-        throw std::runtime_error("outFFT has a wrong number of samples");
-    }
+    jassert(outFFT.getNumSamples() == 2*fft->getSize());
     
     // Beam width processing
     if (beamWidthIdx >= 0){
@@ -87,9 +85,7 @@ void vMimoProcessor::processBlock(const vFIR::AudioBufferFFT& inFFT, int inChann
 
 void vMimoProcessor::processBlock(const vFIR::AudioBufferFFT& inFFT, int inChannel, AudioBuffer<float>& outTimeSeries, int outChannel, int steeringIdx, int beamWidthIdx){
     
-    if (outTimeSeries.getNumSamples() < fft->getSize()){
-        throw std::runtime_error("outTimeSeries doesn't have enough samples");
-    }
+    jassert(outTimeSeries.getNumSamples() >= fft->getSize());
     
     vFIR::AudioBufferFFT outFFT(1,fft);
     processBlock(inFFT,inChannel,outFFT,0,steeringIdx,beamWidthIdx);

@@ -40,7 +40,7 @@ namespace ProjectInfo
 {
     const char* const  projectName    = "eBeamer";
     const char* const  companyName    = "ISPL Polimi";
-    const char* const  versionString  = "0.4.2";
-    const int          versionNumber  = 0x402;
+    const char* const  versionString  = "0.4.3";
+    const int          versionNumber  = 0x403;
 }
 #endif
