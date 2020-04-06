@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="NEjZ3r" name="eBeamer" projectType="audioplug" jucerVersion="5.4.4"
+<JUCERPROJECT id="NEjZ3r" name="eBeamer" projectType="audioplug" jucerVersion="5.4.7"
               companyName="ISPL Polimi" pluginFormats="buildStandalone,buildVST3"
               pluginVST3Category="Spatial" pluginAAXCategory="512" pluginRTASCategory="512"
               pluginVSTCategory="kPlugCategSpacializer" pluginAUMainType="'aufx'"
-              pluginName="eBeamer" pluginDesc="eStick double beam controller"
-              pluginManufacturer="ISPL Polimi" pluginManufacturerCode="Ispl"
-              pluginCode="ebea" version="0.4.3" bundleIdentifier="it.polimi.deib.ispl.ebeamer"
-              companyWebsite="http://ispg.deib.polimi.it/" aaxIdentifier="it.polimi.deib.ispl.ebeamer"
-              pluginAUExportPrefix="ebeamerAU">
+              pluginName="eBeamer" pluginDesc="eStick beam controller" pluginManufacturer="ISPL Polimi"
+              pluginManufacturerCode="Ispl" pluginCode="ebea" version="0.4.3"
+              bundleIdentifier="it.polimi.deib.ispl.ebeamer" companyWebsite="http://ispl.deib.polimi.it/"
+              aaxIdentifier="it.polimi.deib.ispl.ebeamer" pluginAUExportPrefix="ebeamerAU">
   <MAINGROUP id="X7PQw9" name="eBeamer">
     <GROUP id="{518A4CE0-60DE-E43A-9B5F-0BA3454FC937}" name="Binary">
       <FILE id="qBbjmE" name="firIR.cpp" compile="1" resource="0" file="Source/Binary/firIR.cpp"/>
@@ -72,20 +71,20 @@
     </XCODE_MAC>
   </EXPORTFORMATS>
   <MODULES>
-    <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="1" useGlobalPath="1"/>
-    <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="1" useGlobalPath="1"/>
-    <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="1" useGlobalPath="1"/>
-    <MODULE id="juce_audio_plugin_client" showAllCode="1" useLocalCopy="1"
+    <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_plugin_client" showAllCode="1" useLocalCopy="0"
             useGlobalPath="1"/>
-    <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="1" useGlobalPath="1"/>
-    <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="1" useGlobalPath="1"/>
-    <MODULE id="juce_core" showAllCode="1" useLocalCopy="1" useGlobalPath="1"/>
-    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="1" useGlobalPath="1"/>
-    <MODULE id="juce_dsp" showAllCode="1" useLocalCopy="1" useGlobalPath="1"/>
-    <MODULE id="juce_events" showAllCode="1" useLocalCopy="1" useGlobalPath="1"/>
-    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="1" useGlobalPath="1"/>
-    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="1" useGlobalPath="1"/>
-    <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="1" useGlobalPath="1"/>
+    <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_dsp" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
   </MODULES>
   <LIVE_SETTINGS>
     <OSX/>
