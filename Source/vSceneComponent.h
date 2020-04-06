@@ -40,7 +40,7 @@ class vTileComponent    : public Component
 {
 public:
     
-    Point<float> corners[2][2];
+    juce::Point<float> corners[2][2];
     Colour tileColour;
     
     vTileComponent();
@@ -69,7 +69,7 @@ public:
 private:
     
     vTileComponent tiles[TILE_ROW_COUNT][TILE_COL_COUNT];
-    Point<float> vertices[TILE_ROW_COUNT+1][TILE_COL_COUNT+1];
+    juce::Point<float> vertices[TILE_ROW_COUNT+1][TILE_COL_COUNT+1];
     
     std::shared_ptr<vDOAthread> doaThread;
     
