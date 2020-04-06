@@ -3,7 +3,8 @@
 
     SceneComponent.h
     Created: 15 Mar 2019 5:39:56pm
-    Author:  Luca Bondi
+    Author:  Matteo Scerbo (matteo.scerbo@mail.polimi.it)
+    Author:  Luca Bondi (luca.bondi@polimi.it)
 
   ==============================================================================
 */
