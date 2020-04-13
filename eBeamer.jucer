@@ -14,27 +14,26 @@
       <FILE id="hAi9Of" name="firIR.h" compile="0" resource="0" file="Source/Binary/firIR.h"/>
     </GROUP>
     <GROUP id="{52771D1D-3211-6CF7-CE70-5C5684F5D0E1}" name="Source">
-      <FILE id="VeVCOr" name="vMimoProcessor.cpp" compile="1" resource="0"
-            file="Source/vMimoProcessor.cpp"/>
-      <FILE id="wrf4Va" name="vMimoProcessor.h" compile="0" resource="0"
-            file="Source/vMimoProcessor.h"/>
       <GROUP id="{AC0EAE82-70E6-47BD-23DD-295BD02717C2}" name="gui">
-        <FILE id="wmu0lC" name="vDOAthread.cpp" compile="1" resource="0" file="Source/vDOAthread.cpp"/>
-        <FILE id="qrd71c" name="vDOAthread.h" compile="0" resource="0" file="Source/vDOAthread.h"/>
-        <FILE id="wmvu4j" name="vSceneComponent.cpp" compile="1" resource="0"
-              file="Source/vSceneComponent.cpp"/>
-        <FILE id="xYiNGT" name="vSceneComponent.h" compile="0" resource="0"
-              file="Source/vSceneComponent.h"/>
-        <FILE id="K0vtPd" name="vAudioComponents.cpp" compile="1" resource="0"
-              file="Source/vAudioComponents.cpp"/>
-        <FILE id="ppijeG" name="vAudioComponents.h" compile="0" resource="0"
-              file="Source/vAudioComponents.h"/>
+        <FILE id="wmu0lC" name="DOAthread.cpp" compile="1" resource="0" file="Source/DOAthread.cpp"/>
+        <FILE id="qrd71c" name="DOAthread.h" compile="0" resource="0" file="Source/DOAthread.h"/>
+        <FILE id="wmvu4j" name="SceneComponent.cpp" compile="1" resource="0"
+              file="Source/SceneComponent.cpp"/>
+        <FILE id="xYiNGT" name="SceneComponent.h" compile="0" resource="0"
+              file="Source/SceneComponent.h"/>
+        <FILE id="K0vtPd" name="AudioComponents.cpp" compile="1" resource="0"
+              file="Source/AudioComponents.cpp"/>
+        <FILE id="ppijeG" name="AudioComponents.h" compile="0" resource="0"
+              file="Source/AudioComponents.h"/>
       </GROUP>
       <GROUP id="{E9D0D3F7-D6D8-F478-824A-818882ADDC02}" name="lib">
-        <FILE id="RYq6o2" name="vAudioParts.cpp" compile="1" resource="0" file="Source/vAudioParts.cpp"/>
-        <FILE id="gSP93w" name="vAudioParts.h" compile="0" resource="0" file="Source/vAudioParts.h"/>
-        <FILE id="RUNOuV" name="vFIR.cpp" compile="1" resource="0" file="Source/vFIR.cpp"/>
-        <FILE id="ZOxevA" name="vFIR.h" compile="0" resource="0" file="Source/vFIR.h"/>
+        <FILE id="VeVCOr" name="MimoProcessor.cpp" compile="1" resource="0"
+              file="Source/MimoProcessor.cpp"/>
+        <FILE id="wrf4Va" name="MimoProcessor.h" compile="0" resource="0" file="Source/MimoProcessor.h"/>
+        <FILE id="RYq6o2" name="AudioParts.cpp" compile="1" resource="0" file="Source/AudioParts.cpp"/>
+        <FILE id="gSP93w" name="AudioParts.h" compile="0" resource="0" file="Source/AudioParts.h"/>
+        <FILE id="RUNOuV" name="FIR.cpp" compile="1" resource="0" file="Source/FIR.cpp"/>
+        <FILE id="ZOxevA" name="FIR.h" compile="0" resource="0" file="Source/FIR.h"/>
       </GROUP>
       <FILE id="T0rnb7" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>

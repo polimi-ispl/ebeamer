@@ -11,12 +11,12 @@
 #pragma once
 #include "../JuceLibraryCode/JuceHeader.h"
 
-class vMeterDecay
+class MeterDecay
 {
     
 public:
     
-    vMeterDecay(float fs, float duration, float blockSize, int numChannels);
+    MeterDecay(float fs, float duration, float blockSize, int numChannels);
     void push(const AudioBuffer<float>& signal);
     std::vector<float> get();
     
@@ -25,5 +25,7 @@ private:
     std::vector<int> idxs;
     std::vector<std::vector<float>> minMaxCircularBuffer;
     
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (vMeterDecay)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MeterDecay)
 };
+
+float panToLinearGain(const AudioParameterFloat* gain, const bool isLeftChannel) ;

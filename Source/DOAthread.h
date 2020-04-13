@@ -1,18 +1,19 @@
+
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "PluginProcessor.h"
-#include "vFIR.h"
-#include "vMimoProcessor.h"
+#include "FIR.h"
+#include "MimoProcessor.h"
 
 //==============================================================================
 
-class vDOAthread     : public Thread
+class DOAthread     : public Thread
 {
 public:
 
-    vDOAthread(JucebeamAudioProcessor& p);
-    ~vDOAthread();
+    DOAthread(JucebeamAudioProcessor& p);
+    ~DOAthread();
     
     void run() override;
     
@@ -28,7 +29,7 @@ private:
     JucebeamAudioProcessor& processor;
     
     AudioBuffer<float> directionalSignal;
-    vFIR::AudioBufferFFT inputsFFT;
+    FIR::AudioBufferFFT inputsFFT;
     std::vector<int> directionIdxs;
     
     double inertia = 0.85;
@@ -38,6 +39,6 @@ private:
     IIRCoefficients iirCoeffHPF, iirCoeffLPF;
     std::unique_ptr<IIRFilter> iirHPFfilter, iirLPFfilter;
     
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (vDOAthread);
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DOAthread);
     
 };

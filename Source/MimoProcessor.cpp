@@ -1,31 +1,31 @@
 /*
   ==============================================================================
 
-    vMimoProcessor.cpp
+    MimoProcessor.cpp
     Created: 27 Apr 2019 10:19:55am
     Author:  Luca Bondi
 
   ==============================================================================
 */
 
-#include "vMimoProcessor.h"
+#include "MimoProcessor.h"
 #include "Binary/firIR.h"
 
 //=======================================================
-vMimoProcessor::vMimoProcessor(int samplesPerBlock_){
+MimoProcessor::MimoProcessor(int samplesPerBlock_){
     
     // Initialize firFFT
     std::vector<AudioBuffer<float>> tmpSteeringFIR, tmpBeamwidthFIR;
     
     switch (algorithm){
         case MEASURED:
-            vFIR::readFIR(tmpSteeringFIR,firIR::firDASmeasured_dat,firIR::firDASmeasured_datSize);
+            FIR::readFIR(tmpSteeringFIR,firIR::firDASmeasured_dat,firIR::firDASmeasured_datSize);
             break;
         case IDEAL:
-            vFIR::readFIR(tmpSteeringFIR,firIR::firDASideal_dat,firIR::firDASideal_datSize);
+            FIR::readFIR(tmpSteeringFIR,firIR::firDASideal_dat,firIR::firDASideal_datSize);
             break;
     }
-    vFIR::readFIR(tmpBeamwidthFIR,firIR::firBeamwidth_dat,firIR::firBeamwidth_datSize);
+    FIR::readFIR(tmpBeamwidthFIR,firIR::firBeamwidth_dat,firIR::firBeamwidth_datSize);
     
     // initialize a proper FFT
     samplesPerBlock = samplesPerBlock_;
@@ -35,13 +35,13 @@ vMimoProcessor::vMimoProcessor(int samplesPerBlock_){
     // Prepare FIR in FFT domain
     firSteeringFFT.resize(tmpSteeringFIR.size());
     for (auto idx = 0; idx < firSteeringFFT.size(); ++idx){
-        firSteeringFFT[idx] = vFIR::AudioBufferFFT(tmpSteeringFIR[idx],fft);
+        firSteeringFFT[idx] = FIR::AudioBufferFFT(tmpSteeringFIR[idx],fft);
         firSteeringFFT[idx].prepareForConvolution();
     }
 
     firBeamwidthFFT.resize(tmpBeamwidthFIR.size());
     for (auto idx = 0; idx < firBeamwidthFFT.size(); ++idx){
-        firBeamwidthFFT[idx] = vFIR::AudioBufferFFT(tmpBeamwidthFIR[idx],fft);
+        firBeamwidthFFT[idx] = FIR::AudioBufferFFT(tmpBeamwidthFIR[idx],fft);
         firBeamwidthFFT[idx].prepareForConvolution();
     }
     
@@ -51,13 +51,13 @@ vMimoProcessor::vMimoProcessor(int samplesPerBlock_){
     std::reverse(firSteeringFFT.begin(), firSteeringFFT.end());
     
     // Allocate buffers
-    fftBuffers = vFIR::AudioBufferFFT(numBuffers,fft);
+    fftBuffers = FIR::AudioBufferFFT(numBuffers,fft);
 
 }
 
 //=======================================================
 
-void vMimoProcessor::newBlock(AudioBuffer<float>& outTimeSeries){
+void MimoProcessor::newBlock(AudioBuffer<float>& outTimeSeries){
     
     // Shift beam OLA buffer
     for (int idx = 0; idx < outTimeSeries.getNumChannels(); ++idx){
@@ -66,7 +66,7 @@ void vMimoProcessor::newBlock(AudioBuffer<float>& outTimeSeries){
     }
 }
 
-void vMimoProcessor::processBlock(const vFIR::AudioBufferFFT& inFFT, int inChannel, vFIR::AudioBufferFFT& outFFT, int outChannel, int steeringIdx, int beamWidthIdx){
+void MimoProcessor::processBlock(const FIR::AudioBufferFFT& inFFT, int inChannel, FIR::AudioBufferFFT& outFFT, int outChannel, int steeringIdx, int beamWidthIdx){
     
     jassert(outFFT.getNumSamples() == 2*fft->getSize());
     
@@ -83,20 +83,20 @@ void vMimoProcessor::processBlock(const vFIR::AudioBufferFFT& inFFT, int inChann
     
 }
 
-void vMimoProcessor::processBlock(const vFIR::AudioBufferFFT& inFFT, int inChannel, AudioBuffer<float>& outTimeSeries, int outChannel, int steeringIdx, int beamWidthIdx){
+void MimoProcessor::processBlock(const FIR::AudioBufferFFT& inFFT, int inChannel, AudioBuffer<float>& outTimeSeries, int outChannel, int steeringIdx, int beamWidthIdx){
     
     jassert(outTimeSeries.getNumSamples() >= fft->getSize());
     
-    vFIR::AudioBufferFFT outFFT(1,fft);
+    FIR::AudioBufferFFT outFFT(1,fft);
     processBlock(inFFT,inChannel,outFFT,0,steeringIdx,beamWidthIdx);
     
     outFFT.addTimeSeries(0,outTimeSeries,outChannel);
     
 }
 
-void vMimoProcessor::processBlock(const AudioBuffer<float>& inTimeSeries, int inChannel, AudioBuffer<float>& outTimeSeries, int outChannel, int steeringIdx, int beamWidthIdx){
+void MimoProcessor::processBlock(const AudioBuffer<float>& inTimeSeries, int inChannel, AudioBuffer<float>& outTimeSeries, int outChannel, int steeringIdx, int beamWidthIdx){
     
-    vFIR::AudioBufferFFT inFFT(inTimeSeries,fft);
+    FIR::AudioBufferFFT inFFT(inTimeSeries,fft);
     processBlock(inFFT, inChannel, outTimeSeries,outChannel, steeringIdx, beamWidthIdx);
     
 }

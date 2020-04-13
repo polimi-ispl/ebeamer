@@ -18,11 +18,11 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 
 //==============================================================================
-class vDecibelSlider : public Slider
+class DecibelSlider : public Slider
 {
 public:
     
-    vDecibelSlider(){};
+    DecibelSlider(){};
     
     double getValueFromText (const String& text) override
     {
@@ -39,16 +39,16 @@ public:
     }
     
 private:
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (vDecibelSlider)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DecibelSlider)
 };
 
 //==============================================================================
 
-class vFrequencySlider : public Slider
+class FrequencySlider : public Slider
 {
 public:
     
-    vFrequencySlider(){};
+    FrequencySlider(){};
     
     double getValueFromText (const String& text) override
     {
@@ -66,16 +66,16 @@ public:
     }
     
 private:
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (vFrequencySlider)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FrequencySlider)
 };
 
 //==============================================================================
 
-class vPanSlider : public Slider
+class PanSlider : public Slider
 {
 public:
     
-    vPanSlider(){};
+    PanSlider(){};
     
     double getValueFromText (const String& text) override
     {
@@ -115,16 +115,16 @@ public:
     }
     
 private:
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (vPanSlider)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PanSlider)
 };
 
 //==============================================================================
 
-class vRoundLed : public Component
+class RoundLed : public Component
 {
 public:
     
-    vRoundLed(){};
+    RoundLed(){};
     
     Colour colour;
     
@@ -133,16 +133,16 @@ public:
     
 private:
     
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (vRoundLed)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RoundLed)
 };
 
 //==============================================================================
-class vMultiChannelLedBar : public Component, public Timer
+class MultiChannelLedBar : public Component, public Timer
 {
 public:
     
-    vMultiChannelLedBar(){};
-    ~vMultiChannelLedBar(){};
+    MultiChannelLedBar(){};
+    ~MultiChannelLedBar(){};
     void paint(Graphics&) override;
     void resized() override;
 
@@ -156,22 +156,22 @@ private:
     bool isHorizontal = true;
     const std::vector<float> *source = nullptr;
     SpinLock *lock = nullptr;
-    std::vector<std::unique_ptr<vRoundLed>> leds;
+    std::vector<std::unique_ptr<RoundLed>> leds;
     
     void timerCallback() override;
     
     void makeLayout();
     
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (vMultiChannelLedBar)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MultiChannelLedBar)
 };
 
 //==============================================================================
-class vSingleChannelLedBar : public Component, public Timer
+class SingleChannelLedBar : public Component, public Timer
 {
 public:
     
-    vSingleChannelLedBar(size_t numLeds = 7, bool isHorizontal = false);
-    ~vSingleChannelLedBar(){};
+    SingleChannelLedBar(size_t numLeds = 7, bool isHorizontal = false);
+    ~SingleChannelLedBar(){};
 
     void setSource(const std::vector<float> &source,int ch, SpinLock &lock);
     void paint(Graphics&) override;
@@ -187,11 +187,11 @@ private:
     SpinLock *lock = nullptr;
     
     std::vector<float> th;
-    std::vector<std::unique_ptr<vRoundLed>> leds;
+    std::vector<std::unique_ptr<RoundLed>> leds;
     
     
     
     void timerCallback() override;
     
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (vSingleChannelLedBar)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SingleChannelLedBar)
 };

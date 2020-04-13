@@ -1,27 +1,11 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-static float panToLinearGain(const AudioParameterFloat* gain, const bool isLeftChannel) {
-    const float db_at0 = -4.5; //How many dB at each channel when pan is centered (0)
-    float gainParam = gain->get();
-    jassert(gainParam >= -1);
-    jassert(gainParam <= 1);
-    float alpha = std::pow(10.,(db_at0/20.));
-    if (isLeftChannel){
-        gainParam = -gainParam;
-    }
-    float y = (0.5-alpha)*std::pow(gainParam,2.)+0.5*gainParam+alpha;
-    return y;
-}
-
-
-
 //==============================================================================
 JucebeamAudioProcessor::JucebeamAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
      : AudioProcessor (BusesProperties()
                        .withInput  ("Input",  AudioChannelSet::ambisonic(3), true)
-                       /*.withInput  ("Input",  AudioChannelSet::stereo(), true)*/
                        .withOutput ("Output", AudioChannelSet::stereo(), true)
                        )
 #endif
@@ -174,6 +158,8 @@ bool JucebeamAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts)
     int numInputChannels = layouts.getNumChannels(true,0);
     int numOutputChannels = layouts.getNumChannels(false, 0);
     if( (numInputChannels >= 2) && (numInputChannels <= 16) && (numOutputChannels >= 2) && (numOutputChannels <= 16) ){
+        /* Even though the plug-in only generates two audio outputs,
+         some hosts - like Reaper - require the number of input channels to be equal to the number of output channels*/
         return true;
     }
     return false;
@@ -188,13 +174,13 @@ void JucebeamAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     
     // Initialize vMimoProcessor
     samplesPerBlock = samplesPerBlock_;
-    mimoProcessor = std::make_unique<vMimoProcessor>(samplesPerBlock);
+    mimoProcessor = std::make_unique<MimoProcessor>(samplesPerBlock);
     numSteeringDirections = mimoProcessor->getNumSteeringFir();
     numBeamwidthChoices = mimoProcessor->getNumBeamwidthFir();
     beamsBuffer = AudioBuffer<float>(NUM_BEAMS,mimoProcessor->fft->getSize());
     {
         GenericScopedLock<SpinLock> lock(fftInputLock);
-        inputsFFT = vFIR::AudioBufferFFT(numInputChannels,mimoProcessor->fft);
+        inputsFFT = FIR::AudioBufferFFT(numInputChannels,mimoProcessor->fft);
     }
     
     // Initialize gain ramps
@@ -227,9 +213,9 @@ void JucebeamAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     }
     
     // Meters
-    inputMeterDecay = std::make_unique<vMeterDecay>(sampleRate,METERS_DECAY,samplesPerBlock,numInputChannels);
+    inputMeterDecay = std::make_unique<MeterDecay>(sampleRate,METERS_DECAY,samplesPerBlock,numInputChannels);
     inputMeters.resize(numInputChannels);
-    beamMeterDecay = std::make_unique<vMeterDecay>(sampleRate,METERS_DECAY,samplesPerBlock,NUM_BEAMS);
+    beamMeterDecay = std::make_unique<MeterDecay>(sampleRate,METERS_DECAY,samplesPerBlock,NUM_BEAMS);
     beamMeters.resize(NUM_BEAMS);
 
 }

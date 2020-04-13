@@ -8,10 +8,10 @@
   ==============================================================================
 */
 
-#include "vFIR.h"
+#include "FIR.h"
 
 
-namespace vFIR{
+namespace FIR{
     
     void readFIR(std::vector<AudioBuffer<float>>& firTimeSeries, const char* array,const int len) {
         MemoryInputStream inputStream(array, len,false);

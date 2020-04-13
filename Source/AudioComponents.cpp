@@ -8,11 +8,11 @@
  ==============================================================================
  */
 
-#include "vAudioComponents.h"
+#include "AudioComponents.h"
 
 
 
-void vRoundLed::paint(Graphics& g){
+void RoundLed::paint(Graphics& g){
     
     Rectangle<float> area = getLocalBounds().toFloat();
     auto side = area.getHeight() > area.getWidth() ? area.getWidth() : area.getHeight();
@@ -24,12 +24,12 @@ void vRoundLed::paint(Graphics& g){
     g.fillEllipse(area);
 }
 
-void vRoundLed::resized(){
+void RoundLed::resized(){
     
 }
 
 
-void vMultiChannelLedBar::makeLayout()
+void MultiChannelLedBar::makeLayout()
 {
     removeAllChildren();
     leds.clear();
@@ -39,18 +39,18 @@ void vMultiChannelLedBar::makeLayout()
     auto num = source->size();
     for (auto ledIdx = 0; ledIdx < num; ++ledIdx)
     {
-        leds.push_back(std::make_unique<vRoundLed>());
+        leds.push_back(std::make_unique<RoundLed>());
         leds[ledIdx]->colour = Colours::grey;
         addAndMakeVisible(leds[ledIdx].get());
     }
     resized();
 }
 
-void vMultiChannelLedBar::paint(Graphics&){
+void MultiChannelLedBar::paint(Graphics&){
     
 }
 
-void vMultiChannelLedBar::resized(){
+void MultiChannelLedBar::resized(){
     
     if (source == nullptr){
         return;
@@ -66,7 +66,7 @@ void vMultiChannelLedBar::resized(){
     
 }
 
-void vMultiChannelLedBar::timerCallback()
+void MultiChannelLedBar::timerCallback()
 {
     
     if (source == nullptr)
@@ -106,7 +106,7 @@ void vMultiChannelLedBar::timerCallback()
     repaint();
 }
 
-void vMultiChannelLedBar::setSource(const std::vector<float> &newSource,SpinLock &newLock)
+void MultiChannelLedBar::setSource(const std::vector<float> &newSource,SpinLock &newLock)
 {
     source = &newSource;
     lock = &newLock;
@@ -114,7 +114,7 @@ void vMultiChannelLedBar::setSource(const std::vector<float> &newSource,SpinLock
 }
 
 
-vSingleChannelLedBar::vSingleChannelLedBar(size_t numLeds, bool isHorizontal){
+SingleChannelLedBar::SingleChannelLedBar(size_t numLeds, bool isHorizontal){
     jassert(numLeds > 4);
     
     this->isHorizontal = isHorizontal;
@@ -125,7 +125,7 @@ vSingleChannelLedBar::vSingleChannelLedBar(size_t numLeds, bool isHorizontal){
     th.clear();
     for (auto ledIdx = 0; ledIdx < numLeds; ++ledIdx)
     {
-        leds.push_back(std::make_unique<vRoundLed>());
+        leds.push_back(std::make_unique<RoundLed>());
         
         auto ledThDb = ledIdx == (numLeds-1) ? RED_LT : -((numLeds - 1 - ledIdx) *ledStep);
         th.push_back(ledThDb);
@@ -135,17 +135,17 @@ vSingleChannelLedBar::vSingleChannelLedBar(size_t numLeds, bool isHorizontal){
     }
 }
 
-void vSingleChannelLedBar::setSource(const std::vector<float> &newSource,int newCh, SpinLock &newLock){
+void SingleChannelLedBar::setSource(const std::vector<float> &newSource,int newCh, SpinLock &newLock){
     source = &newSource;
     ch = newCh;
     lock = &newLock;
 }
 
-void vSingleChannelLedBar::paint(Graphics&){
+void SingleChannelLedBar::paint(Graphics&){
     
 }
 
-void vSingleChannelLedBar::resized(){
+void SingleChannelLedBar::resized(){
     
     Rectangle<float> area = getLocalBounds().toFloat();
     auto num = leds.size();
@@ -158,7 +158,7 @@ void vSingleChannelLedBar::resized(){
     
 }
 
-void vSingleChannelLedBar::timerCallback()
+void SingleChannelLedBar::timerCallback()
 {
     lock->enter();
     auto valueDb = Decibels::gainToDecibels(source->at(ch));
@@ -169,7 +169,7 @@ void vSingleChannelLedBar::timerCallback()
     repaint();
 }
 
-Colour vSingleChannelLedBar::thToColour(float th, bool active)
+Colour SingleChannelLedBar::thToColour(float th, bool active)
 {
     if (th >= RED_LT)
     {

@@ -1,8 +1,8 @@
-#include "vDOAthread.h"
+#include "DOAthread.h"
 
 //==============================================================================
 
-vDOAthread::vDOAthread(JucebeamAudioProcessor& p)
+DOAthread::DOAthread(JucebeamAudioProcessor& p)
         : Thread("DOA"),  processor(p)
 {
     
@@ -26,14 +26,14 @@ vDOAthread::vDOAthread(JucebeamAudioProcessor& p)
     
 }
 
-vDOAthread::~vDOAthread()
+DOAthread::~DOAthread()
 {
     stopThread(100);
 }
 
 //==============================================================================
 
-void vDOAthread::run()
+void DOAthread::run()
 {
     ScopedNoDenormals noDenormals;
     

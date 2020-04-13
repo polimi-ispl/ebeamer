@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    vMimoProcessor.h
+    MimoProcessor.h
     Created: 27 Apr 2019 10:19:55am
     Author:  Luca Bondi
 
@@ -11,38 +11,38 @@
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
-#include "vFIR.h"
+#include "FIR.h"
 
-class vMimoProcessor{
+class MimoProcessor{
     
 public:
     
-    vMimoProcessor(int samplesPerBlock);
+    MimoProcessor(int samplesPerBlock);
     
     //==============================================================================
     // DOA filters
-    std::vector<vFIR::AudioBufferFFT> firSteeringFFT;
+    std::vector<FIR::AudioBufferFFT> firSteeringFFT;
     // Beamwidth filters
-    std::vector<vFIR::AudioBufferFFT> firBeamwidthFFT;
+    std::vector<FIR::AudioBufferFFT> firBeamwidthFFT;
     // FFT
     std::shared_ptr<dsp::FFT> fft;
     
     //==============================================================================
     void newBlock(AudioBuffer<float>& outTimeSeries);
     void processBlock(const AudioBuffer<float>& inTimeSeries, int inChannel, AudioBuffer<float>& outTimeSeries, int outChannel, int steeringIdx, int beamWidthIdx);
-    void processBlock(const vFIR::AudioBufferFFT& inFFT, int inChannel, AudioBuffer<float>& outTimeSeries, int outChannel, int steeringIdx, int beamWidthIdx);
-    void processBlock(const vFIR::AudioBufferFFT& inFFT, int inChannel, vFIR::AudioBufferFFT& outFFT, int outChannel, int steeringIdx, int beamWidthIdx);
+    void processBlock(const FIR::AudioBufferFFT& inFFT, int inChannel, AudioBuffer<float>& outTimeSeries, int outChannel, int steeringIdx, int beamWidthIdx);
+    void processBlock(const FIR::AudioBufferFFT& inFFT, int inChannel, FIR::AudioBufferFFT& outFFT, int outChannel, int steeringIdx, int beamWidthIdx);
     
     size_t getNumSteeringFir(){return firSteeringFFT.size();};
     size_t getNumBeamwidthFir(){return firBeamwidthFFT.size();};
     
 private:
     //==============================================================================
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (vMimoProcessor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MimoProcessor)
         
     //==============================================================================
     // Buffers
-    vFIR::AudioBufferFFT fftBuffers;
+    FIR::AudioBufferFFT fftBuffers;
     int samplesPerBlock;
     
     //==============================================================================

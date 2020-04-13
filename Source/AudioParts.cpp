@@ -8,10 +8,10 @@
   ==============================================================================
 */
 
-#include "vAudioParts.h"
+#include "AudioParts.h"
 
 
-vMeterDecay::vMeterDecay(float fs, float duration, float blockSize, int numChannels)
+MeterDecay::MeterDecay(float fs, float duration, float blockSize, int numChannels)
 {
     
     int numBlocks = (int)ceil(duration*fs/blockSize);
@@ -26,7 +26,7 @@ vMeterDecay::vMeterDecay(float fs, float duration, float blockSize, int numChann
     
 }
 
-void vMeterDecay::push(const AudioBuffer<float>& signal)
+void MeterDecay::push(const AudioBuffer<float>& signal)
 {
     for (auto channelIdx = 0; channelIdx < signal.getNumChannels(); ++channelIdx)
     {
@@ -39,7 +39,7 @@ void vMeterDecay::push(const AudioBuffer<float>& signal)
     }
 }
 
-std::vector<float> vMeterDecay::get()
+std::vector<float> MeterDecay::get()
 {
     std::vector<float> values(minMaxCircularBuffer.size());
     for (auto channelIdx = 0; channelIdx < minMaxCircularBuffer.size(); ++channelIdx)
@@ -52,4 +52,17 @@ std::vector<float> vMeterDecay::get()
         values[channelIdx] = maxVal;
     }
     return values;
+}
+
+float panToLinearGain(const AudioParameterFloat* gain, const bool isLeftChannel) {
+    const float db_at0 = -4.5; //How many dB at each channel when pan is centered (0)
+    float gainParam = gain->get();
+    jassert(gainParam >= -1);
+    jassert(gainParam <= 1);
+    float alpha = std::pow(10.,(db_at0/20.));
+    if (isLeftChannel){
+        gainParam = -gainParam;
+    }
+    float y = (0.5-alpha)*std::pow(gainParam,2.)+0.5*gainParam+alpha;
+    return y;
 }

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
-#include "vAudioParts.h"
-#include "vMimoProcessor.h"
+#include "AudioParts.h"
+#include "MimoProcessor.h"
 #define NUM_BEAMS 2
 #define OUT_CHANNELS 2
 #define METERS_DECAY 0.15 //s
@@ -64,7 +64,7 @@ public:
     
     //==============================================================================
     // Buffer to allow external access to input signals FFT
-    vFIR::AudioBufferFFT inputsFFT;
+    FIR::AudioBufferFFT inputsFFT;
     bool newFftInputDataAvailable = false;
     SpinLock fftInputLock;
     
@@ -80,7 +80,7 @@ public:
     
     //==============================================================================
     // vMimoProcessor
-    const std::shared_ptr<vMimoProcessor> getMimoProcessor(){return mimoProcessor;};
+    const std::shared_ptr<MimoProcessor> getMimoProcessor(){return mimoProcessor;};
 
 private:
     //==============================================================================
@@ -88,8 +88,8 @@ private:
     
     //==============================================================================
     // Meters
-    std::unique_ptr<vMeterDecay> inputMeterDecay;
-    std::unique_ptr<vMeterDecay> beamMeterDecay;
+    std::unique_ptr<MeterDecay> inputMeterDecay;
+    std::unique_ptr<MeterDecay> beamMeterDecay;
     
     //==============================================================================
     // HPF filters
@@ -103,7 +103,7 @@ private:
     
     //==============================================================================
     // vMimoProcessor
-    std::shared_ptr<vMimoProcessor> mimoProcessor;
+    std::shared_ptr<MimoProcessor> mimoProcessor;
     size_t numSteeringDirections;
     size_t numBeamwidthChoices;
     int samplesPerBlock;

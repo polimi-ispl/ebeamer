@@ -4,7 +4,7 @@
 JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (JucebeamAudioProcessor& p)
 :  AudioProcessorEditor (&p), processor (p)
 {
-    DOAt = std::make_shared<vDOAthread>(p);
+    DOAt = std::make_shared<DOAthread>(p);
     scene.grid.setSource(DOAt);
     scene.grid.startTimerHz(ENERGY_UPDATE_FREQ);
 

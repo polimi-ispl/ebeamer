@@ -1,9 +1,9 @@
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
-#include "vDOAthread.h"
-#include "vSceneComponent.h"
-#include "vAudioComponents.h"
+#include "DOAthread.h"
+#include "SceneComponent.h"
+#include "AudioComponents.h"
 
 #define GUI_WIDTH 540
 
@@ -58,11 +58,11 @@ private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     JucebeamAudioProcessor& processor;
-    std::shared_ptr<vDOAthread> DOAt;
+    std::shared_ptr<DOAthread> DOAt;
 
     // Project specific
 
-    vSceneComponent scene;
+    SceneComponent scene;
     
     Label labelBeam1;
     Label labelBeam2;
@@ -77,26 +77,26 @@ private:
     Slider widthBeam2Knob;
 
     Label panLabel;
-    vPanSlider panBeam1Knob;
-    vPanSlider panBeam2Knob;
+    PanSlider panBeam1Knob;
+    PanSlider panBeam2Knob;
 
     Label levelLabel;
-    vDecibelSlider levelBeam1Knob;
-    vDecibelSlider levelBeam2Knob;
+    DecibelSlider levelBeam1Knob;
+    DecibelSlider levelBeam2Knob;
 
     Label muteLabel;
     TextButton beam1MuteButton;
     TextButton beam2MuteButton;
     
-    vMultiChannelLedBar inputMeter;
-    vSingleChannelLedBar beam1Meter;
-    vSingleChannelLedBar beam2Meter;
+    MultiChannelLedBar inputMeter;
+    SingleChannelLedBar beam1Meter;
+    SingleChannelLedBar beam2Meter;
     
     Label hpfLabel;
-    vFrequencySlider hpfSlider;
+    FrequencySlider hpfSlider;
     
     Label gainLabel;
-    vDecibelSlider gainSlider;
+    DecibelSlider gainSlider;
 
     void setMuteButtonColor(uint8 beamIdx);
     

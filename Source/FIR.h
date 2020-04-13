@@ -12,7 +12,7 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 
-namespace vFIR{
+namespace FIR{
     // Convolution operations
     void readFIR(std::vector<AudioBuffer<float>>& firTimeSeries, const char* array,const int len);
     

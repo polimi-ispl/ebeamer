@@ -32,63 +32,63 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "PluginProcessor.h"
-#include "vAudioComponents.h"
-#include "vDOAthread.h"
+#include "AudioComponents.h"
+#include "DOAthread.h"
 
 //==============================================================================
 
-class vTileComponent    : public Component
+class TileComponent    : public Component
 {
 public:
     
     juce::Point<float> corners[2][2];
     Colour tileColour;
     
-    vTileComponent();
-    ~vTileComponent();
+    TileComponent();
+    ~TileComponent();
     
     void paint(Graphics&) override;
     void resized() override;
     
 private:
     
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (vTileComponent)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TileComponent)
 };
 
 //==============================================================================
 
-class vGridComponent    : public Component, public Timer
+class GridComponent    : public Component, public Timer
 {
 public:
-    vGridComponent();
-    ~vGridComponent();
+    GridComponent();
+    ~GridComponent();
     
     void resized() override;
     
-    void setSource(std::shared_ptr<vDOAthread> d){doaThread = d;};
+    void setSource(std::shared_ptr<DOAthread> d){doaThread = d;};
     
 private:
     
-    vTileComponent tiles[TILE_ROW_COUNT][TILE_COL_COUNT];
+    TileComponent tiles[TILE_ROW_COUNT][TILE_COL_COUNT];
     juce::Point<float> vertices[TILE_ROW_COUNT+1][TILE_COL_COUNT+1];
     
-    std::shared_ptr<vDOAthread> doaThread;
+    std::shared_ptr<DOAthread> doaThread;
     
     std::vector<float> th;
     
     void computeVertices();
     void timerCallback() override;
     
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (vGridComponent)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GridComponent)
 };
 
 //==============================================================================
 
-class vBeamComponent    : public Component
+class BeamComponent    : public Component
 {
 public:
-    vBeamComponent();
-    ~vBeamComponent();
+    BeamComponent();
+    ~BeamComponent();
     
     void paint(Graphics&) override;
     void resized() override;
@@ -107,26 +107,26 @@ private:
     
     Colour baseColour = Colours::lightblue;
     
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (vBeamComponent)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BeamComponent)
 };
 
 //==============================================================================
 
-class vSceneComponent    : public Component
+class SceneComponent    : public Component
 {
 public:
-    vSceneComponent();
-    ~vSceneComponent();
+    SceneComponent();
+    ~SceneComponent();
     
     void setBeamColors(const std::vector<Colour> &colours);
     
     void paint(Graphics&) override;
     void resized() override;
     
-    vGridComponent grid;
-    vBeamComponent beams[NUM_BEAMS];
+    GridComponent grid;
+    BeamComponent beams[NUM_BEAMS];
     
 private:
     
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (vSceneComponent)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SceneComponent)
 };
