@@ -306,7 +306,7 @@ void BeamComponent::setStatus(bool s)
 SceneComponent::SceneComponent()
 {
     addAndMakeVisible (grid);
-    for(int i = 0; i < NUM_BEAMS; i++)
+    for(int i = 0; i < EbeamerAudioProcessor::numBeams; i++)
         addAndMakeVisible (beams[i]);
     
     beams[0].move(-0.5);
@@ -330,13 +330,13 @@ void SceneComponent::paint(Graphics& g)
 void SceneComponent::resized()
 {
     grid.setBounds(getLocalBounds());
-    for(int i = 0; i < NUM_BEAMS; i++)
+    for(int i = 0; i < EbeamerAudioProcessor::numBeams; i++)
         beams[i].setBounds(getLocalBounds());
 }
 
 void SceneComponent::setBeamColors(const std::vector<Colour> &colours){
-    jassert(colours.size() == NUM_BEAMS);
-    for (auto beamIdx = 0;beamIdx < NUM_BEAMS;++beamIdx)
+    jassert(colours.size() == EbeamerAudioProcessor::numBeams);
+    for (auto beamIdx = 0;beamIdx < EbeamerAudioProcessor::numBeams;++beamIdx)
     {
         beams[beamIdx].setBaseColor(colours[beamIdx]);
     }

@@ -3,12 +3,10 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "AudioParts.h"
 #include "MimoProcessor.h"
-#define NUM_BEAMS 2
-#define OUT_CHANNELS 2
-#define METERS_DECAY 0.15 //s
-
+#include "Beamformer.h"
 
 //==============================================================================
+
 
 class EbeamerAudioProcessor  : public AudioProcessor
 {
@@ -43,12 +41,16 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     
     //==============================================================================
+    /** Number of beams */
+    static const int numBeams = 2;
+    
+    //==============================================================================
     // VST parameters
-    AudioParameterFloat* steeringBeamParam[NUM_BEAMS];
-    AudioParameterFloat* widthBeamParam[NUM_BEAMS];
-    AudioParameterFloat* panBeamParam[NUM_BEAMS];
-    AudioParameterFloat* levelBeamParam[NUM_BEAMS];
-    AudioParameterBool*  muteBeamParam[NUM_BEAMS];
+    AudioParameterFloat* steeringBeamParam[numBeams];
+    AudioParameterFloat* widthBeamParam[numBeams];
+    AudioParameterFloat* panBeamParam[numBeams];
+    AudioParameterFloat* levelBeamParam[numBeams];
+    AudioParameterBool*  muteBeamParam[numBeams];
     AudioParameterFloat* micGainParam;
     AudioParameterFloat* hpfFreqParam;
     
@@ -94,7 +96,7 @@ private:
     // Gains
     /** Time Constant for input gain variations */
     const float inputGainTimeConst = 0.1;
-    dsp::Gain<float> micGain, beamGain[NUM_BEAMS];
+    dsp::Gain<float> micGain, beamGain[numBeams];
     
     //==============================================================================
     // MimoProcessor
@@ -108,9 +110,10 @@ private:
     
     //==============================================================================
     
-    /* Number of active input channels */
+    /** Number of active input channels */
     juce::uint32 numActiveInputChannels = 0;
-    const juce::uint32 numActiveOutputChannels = 2;
+    /** Number of active output channels */
+    const juce::uint32 numActiveOutputChannels = numBeams;
     
     
 };

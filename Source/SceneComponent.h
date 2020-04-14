@@ -124,7 +124,7 @@ public:
     void resized() override;
     
     GridComponent grid;
-    BeamComponent beams[NUM_BEAMS];
+    BeamComponent beams[EbeamerAudioProcessor::numBeams];
     
 private:
     

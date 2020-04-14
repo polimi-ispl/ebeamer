@@ -217,7 +217,7 @@ void EbeamerAudioProcessor::getStateInformation (MemoryBlock& destData)
     // as intermediaries to make it easy to save and load complex data.
     std::ostringstream stringStreamTag;
     std::unique_ptr<XmlElement> xml (new XmlElement ("eBeamer"));
-    for (uint8 beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx){
+    for (uint8 beamIdx = 0; beamIdx < numBeams; ++beamIdx){
         stringStreamTag.str(std::string());
         stringStreamTag << "steerBeam" << (beamIdx+1);
         xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(steeringBeamParam[beamIdx]));
@@ -258,7 +258,7 @@ void EbeamerAudioProcessor::setStateInformation (const void* data, int sizeInByt
     std::unique_ptr<XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
     if (xmlState.get() != nullptr){
         if (xmlState->hasTagName ("eBeamer")){
-            for (uint8 beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx){
+            for (uint8 beamIdx = 0; beamIdx < numBeams; ++beamIdx){
                 stringStreamTag.str(std::string());
                 stringStreamTag << "steerBeam" << (beamIdx+1);
                 *(steeringBeamParam[beamIdx]) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 0.0);
@@ -335,7 +335,7 @@ void EbeamerAudioProcessor::initializeParameters() {
     {
         std::ostringstream ssTag;
         std::ostringstream ssName;
-        for (auto beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx){
+        for (auto beamIdx = 0; beamIdx < numBeams; ++beamIdx){
             ssTag.str(std::string());
             ssName.str(std::string());
             ssTag << "steerBeam" << (beamIdx+1);
