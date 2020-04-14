@@ -56,11 +56,6 @@ void Beamformer::setBeamParameters(int beamIdx, const BeamParameters& beamParams
 
 void Beamformer::processBlock(const AudioBuffer<float> &inBuffer){
     
-    /** Simple passthrough */
-    //    for (auto beamIdx = 0; beamIdx < numBeams; beamIdx++){
-    //        beamBuffer.copyFrom(beamIdx, 0, inBuffer, beamIdx, 0, inBuffer.getNumSamples());
-    //    }
-    
     /** Compute inputs FFT */
     inputBuffer.setTimeSeries(inBuffer);
     inputBuffer.prepareForConvolution();
