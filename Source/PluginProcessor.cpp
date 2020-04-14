@@ -111,6 +111,17 @@ void EbeamerAudioProcessor::prepareToPlay (double sampleRate, int maximumExpecte
     
 }
 
+void EbeamerAudioProcessor::releaseResources()
+{
+    /** Clear beam buffer */
+    beamBuffer.setSize(numBeams, 0);
+    
+    /** Clear the HPF */
+    iirHPFfilters.clear();
+    
+    /** Clear the Beamformer */
+    beamformer->releaseResources();
+}
 
 void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& midiMessages)
 {
@@ -214,14 +225,6 @@ void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
     
 }
 
-void EbeamerAudioProcessor::releaseResources()
-{
-    /** Clear the HPF */
-    iirHPFfilters.clear();
-    
-    /** Clear the Beamformer */
-    beamformer->releaseResources();
-}
 
 //==============================================================================
 AudioProcessorEditor* EbeamerAudioProcessor::createEditor()
