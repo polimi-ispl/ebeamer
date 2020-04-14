@@ -12,6 +12,13 @@ class EbeamerAudioProcessor  : public AudioProcessor
 {
 public:
     //==============================================================================
+    /** Number of beams */
+    static const int numBeams = 2;
+    
+    /** Number of directions of arrival computed and displayed */
+    static const int numDoas = 25;
+    
+    //==============================================================================
     EbeamerAudioProcessor();
     ~EbeamerAudioProcessor();
     
@@ -39,10 +46,6 @@ public:
     //==============================================================================
     void getStateInformation (MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
-    
-    //==============================================================================
-    /** Number of beams */
-    static const int numBeams = 2;
     
     //==============================================================================
     // VST parameters
@@ -78,25 +81,41 @@ private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EbeamerAudioProcessor)
     
+    //==============================================================================
     /* Initialize parameters accessible through DAW automation */
     void initializeParameters();
     
     //==============================================================================
+    
+    /** Number of active input channels */
+    juce::uint32 numActiveInputChannels = 0;
+    /** Number of active output channels */
+    juce::uint32 numActiveOutputChannels = 0;
+    
+    //==============================================================================
+    /** Time Constant for input gain variations */
+    const float gainTimeConst = 0.1;
+    /** Input gain, common to all microphones */
+    dsp::Gain<float> micGain;
+    /** Beam gain for each beam */
+    dsp::Gain<float> beamGain[numBeams];
+    
+    //==============================================================================
+    /** Previous HPF cut frequency */
+    float prevHpfFreq = 0;
+    /** Coefficients of the IIR HPF */
+    IIRCoefficients iirCoeffHPF;
+    /** IIR HPF */
+    std::vector<std::unique_ptr<IIRFilter>> iirHPFfilters;
+    
+    //==============================================================================
+    /** The active beamformer */
+    std::unique_ptr<Beamformer> beamformer;
+
+    //==============================================================================
     // Meters
     std::unique_ptr<MeterDecay> inputMeterDecay;
     std::unique_ptr<MeterDecay> beamMeterDecay;
-    
-    //==============================================================================
-    // HPF filters
-    float prevHpfFreq = 0;
-    IIRCoefficients iirCoeffHPF;
-    std::vector<std::unique_ptr<IIRFilter>> iirHPFfilters;
-
-    //==============================================================================
-    // Gains
-    /** Time Constant for input gain variations */
-    const float inputGainTimeConst = 0.1;
-    dsp::Gain<float> micGain, beamGain[numBeams];
     
     //==============================================================================
     // MimoProcessor
@@ -106,14 +125,8 @@ private:
     
     //==============================================================================
     // Beams buffers
-    AudioBuffer<float> beamsBuffer;
+    AudioBuffer<float> beamBuffer;
     
-    //==============================================================================
-    
-    /** Number of active input channels */
-    juce::uint32 numActiveInputChannels = 0;
-    /** Number of active output channels */
-    const juce::uint32 numActiveOutputChannels = numBeams;
     
     
 };

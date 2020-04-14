@@ -32,7 +32,7 @@ public:
      @param numBeams: number of beams the beamformer has to compute
      @param numDoas: number of directions of arrival to compute the energy
      */
-    Beamformer(AudioProcessor& p, int numBeams, int numDoas);
+    Beamformer(const AudioProcessor& p, int numBeams, int numDoas);
     /** Destructor. */
     ~Beamformer();
     
@@ -42,7 +42,7 @@ public:
      This method allocates the needed buffers and performs the necessary pre-calculations that are dependent
      on sample rate, buffer size and channel configurations.
      */
-    void prepareToPlay(double sampleRate, int maximumExpectedSamplesPerBlock);
+    void prepareToPlay(double sampleRate, int maximumExpectedSamplesPerBlock, int numActiveInputChannels);
     
     /** Process a new block of samples.
      
@@ -74,5 +74,17 @@ private:
     
     /** Reference to the AudioProcessor instance */
     const AudioProcessor& processor;
+    
+    /** Number of beams */
+    int numBeams;
+    
+    /** Number of directions of arrival */
+    int numDoas;
+    
+    /** Beams' outputs buffer */
+    AudioBuffer<float> beamBuffer;
+    
+    /** Start sample to copy beamBuffer into outBuffer in @getBeams */
+    int beamBufferStartSample = 0;
     
 };

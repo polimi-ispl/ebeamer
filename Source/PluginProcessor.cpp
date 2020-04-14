@@ -1,6 +1,10 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+/* Allocate static members to use them in the constructor */
+const int EbeamerAudioProcessor::numBeams;
+const int EbeamerAudioProcessor::numDoas;
+
 //==============================================================================
 EbeamerAudioProcessor::EbeamerAudioProcessor()
 : AudioProcessor (BusesProperties() //The default bus layout accommodates for 4 buses of 16 channels each.
@@ -11,8 +15,12 @@ EbeamerAudioProcessor::EbeamerAudioProcessor()
                   .withOutput ("Output", AudioChannelSet::stereo(), true)
                   )
 {
-    /* Initialize here everything that doesn't depend on sample rate, buffer size, bus configuration */
+    /** Initialize here everything that doesn't depend on sample rate, buffer size, bus configuration */
     initializeParameters();
+    
+    /** Initialize the beamformer */
+    beamformer = std::make_unique<Beamformer>(*this,numBeams,numDoas);
+
 }
 
 //==============================================================================
@@ -46,11 +54,14 @@ void EbeamerAudioProcessor::prepareToPlay (double sampleRate, int maximumExpecte
     /** Number of active input channels */
     numActiveInputChannels = getTotalNumInputChannels();
     
+    /** Number of active output channels */
+    numActiveOutputChannels = jmin(numBeams,getTotalNumOutputChannels());
+    
     /** Initialize the input gain */
     micGain.reset();
     micGain.prepare({sampleRate, static_cast<uint32>(maximumExpectedSamplesPerBlock),numActiveInputChannels});
     micGain.setGainDecibels(micGainParam->get());
-    micGain.setRampDurationSeconds(inputGainTimeConst);
+    micGain.setRampDurationSeconds(gainTimeConst);
     
     /** Initialize the High Pass Filters */
     iirHPFfilters.clear();
@@ -61,6 +72,12 @@ void EbeamerAudioProcessor::prepareToPlay (double sampleRate, int maximumExpecte
         iirHPFfilter = std::make_unique<IIRFilter>();
         iirHPFfilter->setCoefficients(iirCoeffHPF);
     }
+    
+    /** Initialize the beamformer */
+    beamformer->prepareToPlay(sampleRate, maximumExpectedSamplesPerBlock, numActiveInputChannels);
+    
+    /** Initialize beams' buffer  */
+    beamBuffer.setSize(numBeams, maximumExpectedSamplesPerBlock);
     
     //    int numInputChannels = getTotalNumInputChannels();
     //
@@ -121,6 +138,40 @@ void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
         iirHPFfilters[inChannel]->processSamples(buffer.getWritePointer(inChannel), buffer.getNumSamples());
     }
     
+    /** Set beams parameters */
+    for (auto beamIdx = 0;beamIdx< numBeams; beamIdx++){
+        BeamParameters beamParams = {steeringBeamParam[beamIdx]->get(),widthBeamParam[beamIdx]->get()};
+        beamformer->setBeamParameters(beamIdx, beamParams);
+    }
+    
+    /** Call the beamformer  */
+    beamformer->processBlock(buffer);
+    
+    /** Retrieve beamformer outputs */
+    beamformer->getBeams(beamBuffer);
+    
+    /** Apply beams gain */
+    for (auto beamIdx = 0; beamIdx < numBeams; ++beamIdx){
+        beamGain[beamIdx].setGainDecibels(levelBeamParam[beamIdx]->get());
+        auto block = dsp::AudioBlock<float>(beamBuffer).getSubsetChannelBlock(beamIdx, 1).getSubBlock(0, buffer.getNumSamples());
+        auto contextToUse = dsp::ProcessContextReplacing<float> (block);
+        beamGain[beamIdx].process(contextToUse);
+    }
+    
+    /** Clear buffer */
+    buffer.clear();
+    
+    /** Sum beams in output channels */
+    for (int outChannel = 0; outChannel < numActiveOutputChannels; ++outChannel){
+        /** Sum the contributes from each beam */
+        for (int beamIdx = 0; beamIdx < numBeams; ++beamIdx){
+            if (muteBeamParam[beamIdx]->get() == false){
+                auto channelBeamGain = panToLinearGain(panBeamParam[beamIdx],outChannel==0);
+                buffer.addFrom(outChannel, 0, beamBuffer, beamIdx, 0, buffer.getNumSamples(), channelBeamGain);
+            }
+        }
+    }
+    
     //    // Mic meter
     //    inputMeterDecay->push(buffer);
     //    {
@@ -152,19 +203,6 @@ void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
     //        }
     //    }
     //
-    //    // Beam gain
-    //    {
-    //        for (auto beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx)
-    //        {
-    //            auto block = dsp::AudioBlock<float>(beamsBuffer);
-    //            beamGain[beamIdx].setGainDecibels(levelBeam[beamIdx]->get());
-    //            {
-    //                auto beamBlock = block.getSubsetChannelBlock(beamIdx, 1).getSubBlock(0, samplesPerBlock);
-    //                auto contextToUse = dsp::ProcessContextReplacing<float> (beamBlock);
-    //                beamGain[beamIdx].process(contextToUse);
-    //            }
-    //        }
-    //    }
     //
     //    // Beam meters
     //    beamMeterDecay->push(beamsBuffer);
@@ -173,29 +211,16 @@ void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
     //        beamMeters = beamMeterDecay->get();
     //    }
     //
-    //    // Sum beams in output channels
-    //    for (int outChannel = 0; outChannel < OUT_CHANNELS; ++outChannel)
-    //    {
-    //        // Clean output buffer
-    //        buffer.clear(outChannel,0,samplesPerBlock);
-    //        // Sum the contributes from each beam
-    //        for (int beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx){
-    //            if (muteBeam[beamIdx]->get() == false){
-    //                float channelBeamGain = panToLinearGain(panBeam[beamIdx],outChannel==0);
-    //                // Add to buffer
-    //                buffer.addFrom(outChannel, 0, beamsBuffer, beamIdx, 0, samplesPerBlock, channelBeamGain);
-    //            }
-    //        }
-    //    }
-    //    for (int outChannel = OUT_CHANNELS; outChannel < buffer.getNumChannels(); ++outChannel){
-    //        buffer.clear(outChannel,0,samplesPerBlock);
-    //    }
     
 }
 
 void EbeamerAudioProcessor::releaseResources()
 {
+    /** Clear the HPF */
     iirHPFfilters.clear();
+    
+    /** Clear the Beamformer */
+    beamformer->releaseResources();
 }
 
 //==============================================================================
