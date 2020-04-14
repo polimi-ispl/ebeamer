@@ -14,6 +14,10 @@
       <FILE id="hAi9Of" name="firIR.h" compile="0" resource="0" file="Source/Binary/firIR.h"/>
     </GROUP>
     <GROUP id="{52771D1D-3211-6CF7-CE70-5C5684F5D0E1}" name="Source">
+      <GROUP id="{9C700E64-16FC-5C2F-54C5-EEBA5745C5EB}" name="beam">
+        <FILE id="xAGzr3" name="Beamformer.cpp" compile="1" resource="0" file="Source/Beamformer.cpp"/>
+        <FILE id="XiY410" name="Beamformer.h" compile="0" resource="0" file="Source/Beamformer.h"/>
+      </GROUP>
       <GROUP id="{AC0EAE82-70E6-47BD-23DD-295BD02717C2}" name="gui">
         <FILE id="wmu0lC" name="DOAthread.cpp" compile="1" resource="0" file="Source/DOAthread.cpp"/>
         <FILE id="qrd71c" name="DOAthread.h" compile="0" resource="0" file="Source/DOAthread.h"/>

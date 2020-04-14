@@ -47,7 +47,7 @@ class JucebeamAudioProcessorEditor  : public AudioProcessorEditor,
 {
 public:
 
-    JucebeamAudioProcessorEditor (JucebeamAudioProcessor&);
+    JucebeamAudioProcessorEditor (EbeamerAudioProcessor&);
     ~JucebeamAudioProcessorEditor();
 
     //==============================================================================
@@ -55,9 +55,8 @@ public:
     void resized() override;
 
 private:
-    // This reference is provided as a quick way for your editor to
-    // access the processor object that created it.
-    JucebeamAudioProcessor& processor;
+    
+    EbeamerAudioProcessor& processor;
     std::shared_ptr<DOAthread> DOAt;
 
     // Project specific

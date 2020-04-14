@@ -12,7 +12,7 @@ class DOAthread     : public Thread
 {
 public:
 
-    DOAthread(JucebeamAudioProcessor& p);
+    DOAthread(EbeamerAudioProcessor& p);
     ~DOAthread();
     
     void run() override;
@@ -26,7 +26,7 @@ public:
     
 private:
     
-    JucebeamAudioProcessor& processor;
+    EbeamerAudioProcessor& processor;
     
     AudioBuffer<float> directionalSignal;
     FIR::AudioBufferFFT inputsFFT;

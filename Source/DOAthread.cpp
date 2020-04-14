@@ -2,7 +2,7 @@
 
 //==============================================================================
 
-DOAthread::DOAthread(JucebeamAudioProcessor& p)
+DOAthread::DOAthread(EbeamerAudioProcessor& p)
         : Thread("DOA"),  processor(p)
 {
     
