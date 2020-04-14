@@ -9,10 +9,6 @@
               bundleIdentifier="it.polimi.deib.ispl.ebeamer" companyWebsite="http://ispl.deib.polimi.it/"
               aaxIdentifier="it.polimi.deib.ispl.ebeamer" pluginAUExportPrefix="ebeamerAU">
   <MAINGROUP id="X7PQw9" name="eBeamer">
-    <GROUP id="{518A4CE0-60DE-E43A-9B5F-0BA3454FC937}" name="Binary">
-      <FILE id="qBbjmE" name="firIR.cpp" compile="1" resource="0" file="Source/Binary/firIR.cpp"/>
-      <FILE id="hAi9Of" name="firIR.h" compile="0" resource="0" file="Source/Binary/firIR.h"/>
-    </GROUP>
     <GROUP id="{52771D1D-3211-6CF7-CE70-5C5684F5D0E1}" name="Source">
       <GROUP id="{9C700E64-16FC-5C2F-54C5-EEBA5745C5EB}" name="beam">
         <FILE id="xAGzr3" name="Beamformer.cpp" compile="1" resource="0" file="Source/Beamformer.cpp"/>
@@ -31,9 +27,6 @@
               file="Source/AudioComponents.h"/>
       </GROUP>
       <GROUP id="{E9D0D3F7-D6D8-F478-824A-818882ADDC02}" name="lib">
-        <FILE id="VeVCOr" name="MimoProcessor.cpp" compile="1" resource="0"
-              file="Source/MimoProcessor.cpp"/>
-        <FILE id="wrf4Va" name="MimoProcessor.h" compile="0" resource="0" file="Source/MimoProcessor.h"/>
         <FILE id="RYq6o2" name="AudioParts.cpp" compile="1" resource="0" file="Source/AudioParts.cpp"/>
         <FILE id="gSP93w" name="AudioParts.h" compile="0" resource="0" file="Source/AudioParts.h"/>
         <FILE id="RUNOuV" name="FIR.cpp" compile="1" resource="0" file="Source/FIR.cpp"/>

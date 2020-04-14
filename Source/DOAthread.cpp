@@ -7,10 +7,10 @@ DOAthread::DOAthread(EbeamerAudioProcessor& p)
 {
     
     directionIdxs.clear();
-    for (auto idx = 0; idx < processor.getMimoProcessor()->getNumSteeringFir(); ++idx)
-    {
-        directionIdxs.push_back(idx);
-    }
+//    for (auto idx = 0; idx < processor.getMimoProcessor()->getNumSteeringFir(); ++idx)
+//    {
+//        directionIdxs.push_back(idx);
+//    }
     
     energy.clear();
     energy.resize(directionIdxs.size());
@@ -43,7 +43,7 @@ void DOAthread::run()
     while(!threadShouldExit())
     {
      
-        directionalSignal.setSize(1, processor.getMimoProcessor()->fft->getSize());
+//        directionalSignal.setSize(1, processor.getMimoProcessor()->fft->getSize());
         
         while (!threadShouldExit() && newEnergyAvailable)
         {
@@ -69,12 +69,12 @@ void DOAthread::run()
         
         for (auto dirIdx = 0; dirIdx < directionIdxs.size(); ++dirIdx)
         {
-            processor.getMimoProcessor()->newBlock(directionalSignal);
-            int steeringIdx = directionIdxs[dirIdx];
-            for (auto inChannel = 0; inChannel < inputsFFT.getNumChannels(); ++inChannel)
-            {
-                processor.getMimoProcessor()->processBlock(inputsFFT,inChannel,directionalSignal,0,steeringIdx,-1);
-            }
+//            processor.getMimoProcessor()->newBlock(directionalSignal);
+//            int steeringIdx = directionIdxs[dirIdx];
+//            for (auto inChannel = 0; inChannel < inputsFFT.getNumChannels(); ++inChannel)
+//            {
+//                processor.getMimoProcessor()->processBlock(inputsFFT,inChannel,directionalSignal,0,steeringIdx,-1);
+//            }
             
             iirHPFfilter->processSamples(directionalSignal.getWritePointer(0), directionalSignal.getNumSamples());
             iirLPFfilter->processSamples(directionalSignal.getWritePointer(0), directionalSignal.getNumSamples());

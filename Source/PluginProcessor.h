@@ -2,7 +2,6 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "AudioParts.h"
-#include "MimoProcessor.h"
 #include "Beamformer.h"
 
 //==============================================================================
@@ -73,9 +72,6 @@ public:
     SpinLock inputMetersLock;
     SpinLock beamMetersLock;
     
-    //==============================================================================
-    // vMimoProcessor
-    const std::shared_ptr<MimoProcessor> getMimoProcessor(){return mimoProcessor;};
 
 private:
     //==============================================================================
@@ -118,15 +114,8 @@ private:
     std::unique_ptr<MeterDecay> beamMeterDecay;
     
     //==============================================================================
-    // MimoProcessor
-    std::shared_ptr<MimoProcessor> mimoProcessor;
-    size_t numSteeringDirections;
-    size_t numBeamwidthChoices;
-    
-    //==============================================================================
     // Beams buffers
     AudioBuffer<float> beamBuffer;
-    
     
     
 };

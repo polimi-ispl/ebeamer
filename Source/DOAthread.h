@@ -4,7 +4,6 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "PluginProcessor.h"
 #include "FIR.h"
-#include "MimoProcessor.h"
 
 //==============================================================================
 

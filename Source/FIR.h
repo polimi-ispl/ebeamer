@@ -13,9 +13,6 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 
 namespace FIR{
-    // Convolution operations
-    void readFIR(std::vector<AudioBuffer<float>>& firTimeSeries, const char* array,const int len);
-    
     class AudioBufferFFT: public AudioBuffer<float>{
         
     private:
@@ -34,6 +31,7 @@ namespace FIR{
         AudioBufferFFT(int numChannels,std::shared_ptr<dsp::FFT>&);
         AudioBufferFFT(const AudioBuffer<float>&,std::shared_ptr<dsp::FFT>&);
         
+        void reset();
         void setTimeSeries(const AudioBuffer<float>&);
         void getTimeSeries(AudioBuffer<float>&);
         void addTimeSeries(AudioBuffer<float>&);
@@ -44,10 +42,7 @@ namespace FIR{
         
         void prepareForConvolution();
         bool isReadyForConvolution() const {return readyForConvolution;};
-        
-        
-    };
 
-    
+    };
 }
 

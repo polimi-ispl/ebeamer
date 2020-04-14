@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
+#include "FIR.h"
 
 /** Beam parameters data structure for a linear 1D array */
 typedef struct{
@@ -27,6 +28,9 @@ typedef struct{
 class Beamformer{
     
 public:
+    
+    /** FIR filters length */
+    static const int firLen = 648; //~75 Hz @ 48kHz
     
     /** Initialize the Beamformer with a set of static parameters.
      @param numBeams: number of beams the beamformer has to compute
@@ -81,10 +85,22 @@ private:
     /** Number of directions of arrival */
     int numDoas;
     
+    /** Maximum integer delay */
+    static const int maxDelay = 270; //~2m @ 48kHz
+    
+    /** Shared FFT pointer */
+    std::shared_ptr<juce::dsp::FFT> fft;
+    
+    /** FIR filters for each beam */
+    std::vector<FIR::AudioBufferFFT> fir;
+    
+    /** Inputs' buffer */
+    FIR::AudioBufferFFT inputBuffer;
+    
+    /** Convolution buffer */
+    FIR::AudioBufferFFT convolutionBuffer;
+    
     /** Beams' outputs buffer */
     AudioBuffer<float> beamBuffer;
-    
-    /** Start sample to copy beamBuffer into outBuffer in @getBeams */
-    int beamBufferStartSample = 0;
     
 };

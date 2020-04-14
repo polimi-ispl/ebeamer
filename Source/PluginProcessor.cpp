@@ -79,30 +79,14 @@ void EbeamerAudioProcessor::prepareToPlay (double sampleRate, int maximumExpecte
     /** Initialize beams' buffer  */
     beamBuffer.setSize(numBeams, maximumExpectedSamplesPerBlock);
     
-    //    int numInputChannels = getTotalNumInputChannels();
-    //
-    //    // Initialize vMimoProcessor
-    //    samplesPerBlock = samplesPerBlock_;
-    //    mimoProcessor = std::make_unique<MimoProcessor>(samplesPerBlock);
-    //    numSteeringDirections = mimoProcessor->getNumSteeringFir();
-    //    numBeamwidthChoices = mimoProcessor->getNumBeamwidthFir();
-    //    beamsBuffer = AudioBuffer<float>(NUM_BEAMS,mimoProcessor->fft->getSize());
-    //    {
-    //        GenericScopedLock<SpinLock> lock(fftInputLock);
-    //        inputsFFT = FIR::AudioBufferFFT(numInputChannels,mimoProcessor->fft);
-    //    }
+    /** Initialize beam level gains */
+    for (auto beamIdx = 0; beamIdx < numBeams; ++beamIdx){
+        beamGain[beamIdx].reset();
+        beamGain[beamIdx].prepare({sampleRate, static_cast<uint32>(maximumExpectedSamplesPerBlock),1});
+        beamGain[beamIdx].setGainDecibels(levelBeamParam[beamIdx]->get());
+        beamGain[beamIdx].setRampDurationSeconds(gainTimeConst);
+    }
     
-    //
-    //    spec.numChannels = 1;
-    //    for (auto beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx){
-    //        beamGain[beamIdx].reset();
-    //        beamGain[beamIdx].prepare(spec);
-    //        beamGain[beamIdx].setGainDecibels(0);
-    //        beamGain[beamIdx].setRampDurationSeconds(0.1);
-    //    }
-    //
-    
-    //
     //    // Meters
     //    inputMeterDecay = std::make_unique<MeterDecay>(sampleRate,METERS_DECAY,samplesPerBlock,numInputChannels);
     //    inputMeters.resize(numInputChannels);
