@@ -12,6 +12,7 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "FIR.h"
+#include "DAS.h"
 
 /** Beam parameters data structure for a linear 1D array */
 typedef struct{
@@ -28,9 +29,6 @@ typedef struct{
 class Beamformer{
     
 public:
-    
-    /** FIR filters length */
-    static const int firLen = 648; //~75 Hz @ 48kHz
     
     /** Initialize the Beamformer with a set of static parameters.
      @param numBeams: number of beams the beamformer has to compute
@@ -76,6 +74,9 @@ private:
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Beamformer);
     
+    /** Sound speed [m/s] */
+    const float soundspeed = 343;
+    
     /** Reference to the AudioProcessor instance */
     const AudioProcessor& processor;
     
@@ -85,14 +86,19 @@ private:
     /** Number of directions of arrival */
     int numDoas;
     
-    /** Maximum integer delay */
-    static const int maxDelay = 270; //~2m @ 48kHz
+    /** Beamforming algorithm */
+    //TODO: Write abstract class for a generic beamforming algorithm
+    std::unique_ptr<DAS::FarfieldLMA> alg;
+    
+    /** FIR filters length. Diepends on the algorithm */
+    int firLen;
     
     /** Shared FFT pointer */
     std::shared_ptr<juce::dsp::FFT> fft;
     
     /** FIR filters for each beam */
-    std::vector<FIR::AudioBufferFFT> fir;
+    std::vector<AudioBuffer<float>> firIR;
+    std::vector<FIR::AudioBufferFFT> firFFT;
     
     /** Inputs' buffer */
     FIR::AudioBufferFFT inputBuffer;
