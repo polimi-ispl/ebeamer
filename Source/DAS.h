@@ -34,7 +34,7 @@ public:
     FarfieldLMA(float micDist,int numMic,float fs,float soundspeed);
     
     /** Get the minimum FIR length for the given configuration [samples] */
-    int getFirLen() const;
+    int getFirLen() const override;
     
     /** Get FIR in time domain for a given direction of arrival
      
@@ -42,7 +42,7 @@ public:
      @param params: beam parameters
      @param alpha: exponential interpolation coefficient. 1 means complete override (instant update), 0 means no override (complete preservation)
      */
-    void getFir(AudioBuffer<float>&fir,const BeamParameters& params,float alpha=1) const;
+    void getFir(AudioBuffer<float>&fir,const BeamParameters& params,float alpha=1) const override;
     
 private:
     

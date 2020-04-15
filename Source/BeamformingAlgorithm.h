@@ -24,10 +24,7 @@ typedef struct{
 
 
 
-/** Virtual class extended by all beamforming algorithms
- 
- This class is used do setup a LMA and compute the FIR impulse response
- */
+/** Virtual class extended by all beamforming algorithms */
 class BeamformingAlgorithm{
     
 public:
