@@ -11,18 +11,7 @@
 #pragma once
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "SigProc.h"
-
-/** Beam parameters data structure for a linear 1D array */
-typedef struct{
-    /** DIrection of arrival of the beam.
-     Range: -1 (source closer to first microphone) to +1 (source closer to last microphone)
-     */
-    float doa;
-    /** Width of the beam.
-     Range: 0 (the most focused) to 1 (the least focused)
-     */
-    float width;
-} BeamParameters;
+#include "BeamformingAlgorithm.h"
 
 
 namespace DAS{
@@ -31,7 +20,7 @@ namespace DAS{
  
  This class is used do setup a LMA and compute the FIR impulse response
  */
-class FarfieldLMA{
+class FarfieldLMA : public BeamformingAlgorithm{
     
 public:
     

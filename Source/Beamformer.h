@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
+#include "BeamformingAlgorithm.h"
 #include "FIR.h"
 #include "DAS.h"
 
@@ -75,8 +76,7 @@ private:
     int numDoas;
     
     /** Beamforming algorithm */
-    //TODO: Write abstract class for a generic beamforming algorithm
-    std::unique_ptr<DAS::FarfieldLMA> alg;
+    std::unique_ptr<BeamformingAlgorithm> alg;
     
     /** FIR filters length. Diepends on the algorithm */
     int firLen;
