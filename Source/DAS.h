@@ -12,6 +12,19 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "SigProc.h"
 
+/** Beam parameters data structure for a linear 1D array */
+typedef struct{
+    /** DIrection of arrival of the beam.
+     Range: -1 (source closer to first microphone) to +1 (source closer to last microphone)
+     */
+    float doa;
+    /** Width of the beam.
+     Range: 0 (the most focused) to 1 (the least focused)
+     */
+    float width;
+} BeamParameters;
+
+
 namespace DAS{
 
 /** Farfield Linear Microphone Array Delay and Sum beamformer
@@ -37,12 +50,10 @@ public:
     /** Get FIR in time domain for a given direction of arrival
      
      @param fir: an AudioBuffer object with numChannels >= number of microphones and numSamples >= firLen
-     @param doa: Direction of Arrival in range [-1,+1].
-                -1 means the source is closer to microphone in the first channel
-                +1 means the source is closer to microphone in thel last channel
+     @param params: beam parameters
      @param alpha: exponential interpolation coefficient. 1 means complete override (instant update), 0 means no override (complete preservation)
      */
-    void getFir(AudioBuffer<float>&fir,float doa,float alpha=1) const;
+    void getFir(AudioBuffer<float>&fir,const BeamParameters& params,float alpha=1) const;
     
 private:
     

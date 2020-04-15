@@ -37,10 +37,10 @@ int FarfieldLMA::getFirLen() const{
     return firLen;
 }
 
-void FarfieldLMA::getFir(AudioBuffer<float>&fir,float doa,float alpha) const{
+void FarfieldLMA::getFir(AudioBuffer<float>&fir,const BeamParameters& params,float alpha) const{
     
     /** Angle in radians (0 front, pi/2 source closer to last channel, -pi/2 source closer to first channel */
-    const float angleRad = (doa+1)*pi/2;
+    const float angleRad = (params.doa+1)*pi/2;
     /** Delay between adjacent microphones [s] */
     const float delta = cos(angleRad)*micDist/soundspeed;
     /** Compute delays for each microphone [s] */
@@ -49,6 +49,20 @@ void FarfieldLMA::getFir(AudioBuffer<float>&fir,float doa,float alpha) const{
     micDelays.array() += - micDelays.minCoeff() + commonDelay/fs;
     /** Compute the fractional delays in frequency domain */
     CpxMtx irFFT = (-j2pi*freqAxes*micDelays.transpose()).array().exp();
+    
+    
+    /** Compute how many microphones are muted at each end */
+    const int inactiveMicAtBorder = roundToInt((numMic/2-1)*params.width);
+    /** Generate the mask of active microphones */
+    Vec micGains = Vec::Ones(numMic);
+    micGains.head(inactiveMicAtBorder).array() = 0;
+    micGains.tail(inactiveMicAtBorder).array() = 0;
+    /** Normalize the power */
+    micGains.array() /= micGains.sum();
+    
+    /** Apply the gain */
+    irFFT = irFFT.cwiseProduct(micGains.transpose().replicate(freqAxes.size(), 1));
+    
     /** Convert  from requency to time domain and add to destination*/
     for (auto micIdx=0;micIdx<numMic;micIdx++){
         freqToTime(fir,micIdx,irFFT.col(micIdx),fft.get(),win,alpha);

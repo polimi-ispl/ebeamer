@@ -14,18 +14,6 @@
 #include "FIR.h"
 #include "DAS.h"
 
-/** Beam parameters data structure for a linear 1D array */
-typedef struct{
-    /** DIrection of arrival of the beam.
-     Range: -1 (left) to +1 (right), looking at the array from the back
-     */
-    float doa;
-    /** Width of the beam.
-     Range: 0 (the most focused) to 1 (the least focused)
-     */
-    float width;
-} BeamParameters;
-
 class Beamformer{
     
 public:

@@ -54,7 +54,7 @@ void Beamformer::prepareToPlay(double sampleRate, int maximumExpectedSamplesPerB
 }
 
 void Beamformer::setBeamParameters(int beamIdx, const BeamParameters& beamParams){
-    alg->getFir(firIR[beamIdx], beamParams.doa);
+    alg->getFir(firIR[beamIdx], beamParams);
     firFFT[beamIdx].setTimeSeries(firIR[beamIdx]);
     firFFT[beamIdx].prepareForConvolution();
 }
