@@ -522,6 +522,8 @@
       <GROUP id="{9C700E64-16FC-5C2F-54C5-EEBA5745C5EB}" name="beam">
         <FILE id="xAGzr3" name="Beamformer.cpp" compile="1" resource="0" file="Source/Beamformer.cpp"/>
         <FILE id="XiY410" name="Beamformer.h" compile="0" resource="0" file="Source/Beamformer.h"/>
+        <FILE id="zYYb6u" name="DAS.cpp" compile="1" resource="0" file="Source/DAS.cpp"/>
+        <FILE id="IkwOB6" name="DAS.h" compile="0" resource="0" file="Source/DAS.h"/>
       </GROUP>
       <GROUP id="{AC0EAE82-70E6-47BD-23DD-295BD02717C2}" name="gui">
         <FILE id="wmu0lC" name="DOAthread.cpp" compile="1" resource="0" file="Source/DOAthread.cpp"/>
