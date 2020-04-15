@@ -24,10 +24,38 @@ Beamformer::~Beamformer(){
     
 }
 
-void Beamformer::prepareToPlay(double sampleRate, int maximumExpectedSamplesPerBlock, int numActiveInputChannels){
+MicConfig Beamformer::getMicConfig() const{
+    return micConfig;
+}
+
+void Beamformer::setMicConfig(MicConfig micConfig_){
+    if (micConfig_ != micConfig){
+        micConfig=micConfig_;
+        initAlg();
+    }
+}
+
+void Beamformer::initAlg(){
     
-    //TODO: add beamformer algorithm and configuration selection
-    alg = std::make_unique<DAS::FarfieldLMA>(0.03,numActiveInputChannels,sampleRate,soundspeed);
+    /** Determine configuration parameters */
+    int numMic;
+    switch (micConfig){
+        case LMA_1ESTICK:
+            numMic = 16;
+            break;
+        case LMA_2ESTICK:
+            numMic = 32;
+            break;
+        case LMA_3ESTICK:
+            numMic = 48;
+            break;
+        case LMA_4ESTICK:
+            numMic = 64;
+            break;
+    }
+    /** Distance between microphones in eSticks*/
+    const float micDist = 0.03;
+    alg = std::make_unique<DAS::FarfieldLMA>(micDist,numMic,sampleRate,soundspeed);
     
     firLen = alg->getFirLen();
     
@@ -53,8 +81,17 @@ void Beamformer::prepareToPlay(double sampleRate, int maximumExpectedSamplesPerB
     beamBuffer.clear();
 }
 
+void Beamformer::prepareToPlay(double sampleRate_, int maximumExpectedSamplesPerBlock_, int numActiveInputChannels_){
+    
+    sampleRate = sampleRate_;
+    maximumExpectedSamplesPerBlock = maximumExpectedSamplesPerBlock_;
+    numActiveInputChannels = numActiveInputChannels_;
+    
+    initAlg();
+}
+
 void Beamformer::setBeamParameters(int beamIdx, const BeamParameters& beamParams){
-    alg->getFir(firIR[beamIdx], beamParams);
+    alg->getFir(firIR[beamIdx], beamParams,alpha);
     firFFT[beamIdx].setTimeSeries(firIR[beamIdx]);
     firFFT[beamIdx].prepareForConvolution();
 }
@@ -84,7 +121,6 @@ void Beamformer::getBeams(AudioBuffer<float>& outBuffer){
         /** Copy beamBuffer to outBuffer */
         outBuffer.copyFrom(beamIdx, 0, beamBuffer, beamIdx, 0, numSplsOut);
         /** Shift beamBuffer */
-        //beamBuffer.copyFrom(beamIdx, 0, beamBuffer, beamIdx, numSplsOut, numSplsShift);
         FloatVectorOperations::copy(beamBuffer.getWritePointer(beamIdx), beamBuffer.getReadPointer(beamIdx)+numSplsOut, numSplsShift);
         beamBuffer.clear(beamIdx, numSplsShift, beamBuffer.getNumSamples()-numSplsShift);
     }
