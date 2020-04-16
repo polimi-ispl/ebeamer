@@ -101,7 +101,7 @@ private:
     /** Coefficients of the IIR HPF */
     IIRCoefficients iirCoeffHPF;
     /** IIR HPF */
-    std::vector<std::unique_ptr<IIRFilter>> iirHPFfilters;
+    std::vector<IIRFilter> iirHPFfilters;
     
     //==============================================================================
     /** The active beamformer */

@@ -68,13 +68,8 @@ void EbeamerAudioProcessor::prepareToPlay (double sampleRate_, int maximumExpect
     
     /** Initialize the High Pass Filters */
     iirHPFfilters.clear();
-    iirCoeffHPF = IIRCoefficients::makeHighPass(getSampleRate(), hpfFreqParam->get());
-    
     iirHPFfilters.resize(numActiveInputChannels);
-    for (auto& iirHPFfilter : iirHPFfilters){
-        iirHPFfilter = std::make_unique<IIRFilter>();
-        iirHPFfilter->setCoefficients(iirCoeffHPF);
-    }
+    prevHpfFreq = 0;
     
     /** Initialize the beamformer */
     beamformer->prepareToPlay(sampleRate, maximumExpectedSamplesPerBlock, numActiveInputChannels);
@@ -119,7 +114,7 @@ void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
 {
     
     /** If resources are not allocated this is an out-of-order request */
-    if (~resourcesAllocated){
+    if (!resourcesAllocated){
         prepareToPlay(sampleRate, maximumExpectedSamplesPerBlock);
     }
     
@@ -142,30 +137,30 @@ void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
     
     /** Renew IIR coefficient if cut frequency changed */
     if(prevHpfFreq != hpfFreqParam->get()){
-        iirCoeffHPF = IIRCoefficients::makeHighPass(getSampleRate(), hpfFreqParam->get());
+        iirCoeffHPF = IIRCoefficients::makeHighPass(sampleRate, hpfFreqParam->get());
         prevHpfFreq = hpfFreqParam->get();
         for (auto& iirHPFfilter : iirHPFfilters){
-            iirHPFfilter->setCoefficients(iirCoeffHPF);
+            iirHPFfilter.setCoefficients(iirCoeffHPF);
         }
     }
-    
+
     /**Apply HPF directly on input buffer  */
     for (auto inChannel = 0; inChannel < numActiveInputChannels; ++inChannel){
-        iirHPFfilters[inChannel]->processSamples(buffer.getWritePointer(inChannel), buffer.getNumSamples());
+        iirHPFfilters[inChannel].processSamples(buffer.getWritePointer(inChannel), buffer.getNumSamples());
     }
-    
+
     /** Set beams parameters */
     for (auto beamIdx = 0;beamIdx< numBeams; beamIdx++){
         BeamParameters beamParams = {steeringBeamParam[beamIdx]->get(),widthBeamParam[beamIdx]->get()};
         beamformer->setBeamParameters(beamIdx, beamParams);
     }
-    
+
     /** Call the beamformer  */
     beamformer->processBlock(buffer);
-    
+
     /** Retrieve beamformer outputs */
     beamformer->getBeams(beamBuffer);
-    
+
     /** Apply beams mute and volume */
     for (auto beamIdx = 0; beamIdx < numBeams; ++beamIdx){
         if (muteBeamParam[beamIdx]->get() == false){
@@ -177,17 +172,17 @@ void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
         auto contextToUse = dsp::ProcessContextReplacing<float> (block);
         beamGain[beamIdx].process(contextToUse);
     }
-    
+
     /** Measure beam output volume */
     beamMeterDecay->push(beamBuffer);
     {
         GenericScopedLock<SpinLock> lock(beamMetersLock);
         beamMeters = beamMeterDecay->get();
     }
-    
+
     /** Clear buffer */
     buffer.clear();
-    
+
     /** Sum beams in output channels */
     for (int outChannel = 0; outChannel < numActiveOutputChannels; ++outChannel){
         /** Sum the contributes from each beam */

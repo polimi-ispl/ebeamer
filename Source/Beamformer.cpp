@@ -100,6 +100,10 @@ void Beamformer::prepareToPlay(double sampleRate_, int maximumExpectedSamplesPer
 void Beamformer::setBeamParameters(int beamIdx, const BeamParameters& beamParams){
     if ((lastBeamParams[beamIdx].doa != beamParams.doa) || (lastBeamParams[beamIdx].width != beamParams.width)){
         alg->getFir(firIR[beamIdx], beamParams,alpha);
+        //TODO: errors
+//        firIR[beamIdx].clear();
+//        for (auto chIdx=0;chIdx<firIR[beamIdx].getNumChannels();chIdx++)
+//            firIR[beamIdx].setSample(chIdx, 0, 1./16);
         firFFT[beamIdx].setTimeSeries(firIR[beamIdx]);
         firFFT[beamIdx].prepareForConvolution();
         lastBeamParams[beamIdx] = beamParams;
@@ -126,7 +130,8 @@ void Beamformer::processBlock(const AudioBuffer<float> &inBuffer){
 void Beamformer::getBeams(AudioBuffer<float>& outBuffer){
     jassert(outBuffer.getNumChannels() == numBeams);
     auto numSplsOut = outBuffer.getNumSamples();
-    auto numSplsShift = beamBuffer.getNumSamples() - outBuffer.getNumSamples();
+    auto numSplsShift = beamBuffer.getNumSamples() - numSplsOut;
+    AudioBuffer<float> tmp(1,numSplsShift);
     for (auto beamIdx = 0; beamIdx < numBeams; beamIdx++){
         /** Copy beamBuffer to outBuffer */
         outBuffer.copyFrom(beamIdx, 0, beamBuffer, beamIdx, 0, numSplsOut);
