@@ -34,6 +34,7 @@ void freqToTime(AudioBuffer<float>& time, const int timeCh, const CpxVec& freq, 
     alpha = jlimit(0.f,1.f,alpha);
     
     AudioBuffer<float> tmp(1,fft->getSize()*2);
+    tmp.clear();
 
     FloatVectorOperations::copy(tmp.getWritePointer(0),
                                 (float *) (freq.data()),

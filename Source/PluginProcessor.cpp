@@ -20,7 +20,7 @@ EbeamerAudioProcessor::EbeamerAudioProcessor()
     
     /** Initialize the beamformer */
     beamformer = std::make_unique<Beamformer>(*this,numBeams,numDoas);
-
+    
 }
 
 //==============================================================================
@@ -48,8 +48,11 @@ bool EbeamerAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) 
 }
 
 //==============================================================================
-void EbeamerAudioProcessor::prepareToPlay (double sampleRate, int maximumExpectedSamplesPerBlock)
+void EbeamerAudioProcessor::prepareToPlay (double sampleRate_, int maximumExpectedSamplesPerBlock_)
 {
+    
+    sampleRate = sampleRate_;
+    maximumExpectedSamplesPerBlock = maximumExpectedSamplesPerBlock_;
     
     /** Number of active input channels */
     numActiveInputChannels = getTotalNumInputChannels();
@@ -87,16 +90,21 @@ void EbeamerAudioProcessor::prepareToPlay (double sampleRate, int maximumExpecte
         beamGain[beamIdx].setRampDurationSeconds(gainTimeConst);
     }
     
-    //    // Meters
-    //    inputMeterDecay = std::make_unique<MeterDecay>(sampleRate,METERS_DECAY,samplesPerBlock,numInputChannels);
-    //    inputMeters.resize(numInputChannels);
-    //    beamMeterDecay = std::make_unique<MeterDecay>(sampleRate,METERS_DECAY,samplesPerBlock,NUM_BEAMS);
-    //    beamMeters.resize(NUM_BEAMS);
+    /** initialize meters */
+    inputMeterDecay = std::make_unique<MeterDecay>(sampleRate,metersDecay,maximumExpectedSamplesPerBlock,numActiveInputChannels);
+    inputMeters.resize(numActiveInputChannels);
+    beamMeterDecay = std::make_unique<MeterDecay>(sampleRate,metersDecay,maximumExpectedSamplesPerBlock,numBeams);
+    beamMeters.resize(numBeams);
+    
+    resourcesAllocated = true;
     
 }
 
 void EbeamerAudioProcessor::releaseResources()
 {
+    
+    resourcesAllocated = false;
+
     /** Clear beam buffer */
     beamBuffer.setSize(numBeams, 0);
     
@@ -109,6 +117,12 @@ void EbeamerAudioProcessor::releaseResources()
 
 void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& midiMessages)
 {
+    
+    /** If resources are not allocated this is an out-of-order request */
+    if (~resourcesAllocated){
+        prepareToPlay(sampleRate, maximumExpectedSamplesPerBlock);
+    }
+    
     ScopedNoDenormals noDenormals;
     
     /**Apply input gain directly on input buffer  */
@@ -117,6 +131,13 @@ void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
         auto block = juce::dsp::AudioBlock<float>(buffer).getSubsetChannelBlock(0, numActiveInputChannels);
         auto context = juce::dsp::ProcessContextReplacing<float> (block);
         micGain.process(context);
+    }
+    
+    // Mic meter
+    inputMeterDecay->push(buffer);
+    {
+        GenericScopedLock<SpinLock> lock(inputMetersLock);
+        inputMeters = inputMeterDecay->get();
     }
     
     /** Renew IIR coefficient if cut frequency changed */
@@ -145,12 +166,23 @@ void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
     /** Retrieve beamformer outputs */
     beamformer->getBeams(beamBuffer);
     
-    /** Apply beams gain */
+    /** Apply beams mute and volume */
     for (auto beamIdx = 0; beamIdx < numBeams; ++beamIdx){
-        beamGain[beamIdx].setGainDecibels(levelBeamParam[beamIdx]->get());
+        if (muteBeamParam[beamIdx]->get() == false){
+            beamGain[beamIdx].setGainDecibels(levelBeamParam[beamIdx]->get());
+        }else{
+            beamGain[beamIdx].setGainLinear(0);
+        }
         auto block = dsp::AudioBlock<float>(beamBuffer).getSubsetChannelBlock(beamIdx, 1).getSubBlock(0, buffer.getNumSamples());
         auto contextToUse = dsp::ProcessContextReplacing<float> (block);
         beamGain[beamIdx].process(contextToUse);
+    }
+    
+    /** Measure beam output volume */
+    beamMeterDecay->push(beamBuffer);
+    {
+        GenericScopedLock<SpinLock> lock(beamMetersLock);
+        beamMeters = beamMeterDecay->get();
     }
     
     /** Clear buffer */
@@ -160,52 +192,10 @@ void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
     for (int outChannel = 0; outChannel < numActiveOutputChannels; ++outChannel){
         /** Sum the contributes from each beam */
         for (int beamIdx = 0; beamIdx < numBeams; ++beamIdx){
-            if (muteBeamParam[beamIdx]->get() == false){
-                auto channelBeamGain = panToLinearGain(panBeamParam[beamIdx],outChannel==0);
-                buffer.addFrom(outChannel, 0, beamBuffer, beamIdx, 0, buffer.getNumSamples(), channelBeamGain);
-            }
+            auto channelBeamGain = panToLinearGain(panBeamParam[beamIdx],outChannel==0);
+            buffer.addFrom(outChannel, 0, beamBuffer, beamIdx, 0, buffer.getNumSamples(), channelBeamGain);
         }
     }
-    
-    //    // Mic meter
-    //    inputMeterDecay->push(buffer);
-    //    {
-    //        GenericScopedLock<SpinLock> lock(inputMetersLock);
-    //        inputMeters = inputMeterDecay->get();
-    //    }
-    //
-    //    // Compute and store fft for all input channels, so that DOA thread can operate
-    //    {
-    //        GenericScopedLock<SpinLock> lock(fftInputLock);
-    //        inputsFFT.setTimeSeries(buffer);
-    //        inputsFFT.prepareForConvolution();
-    //        newFftInputDataAvailable = true;
-    //    }
-    //
-    //    // Per input-channel processing
-    //    mimoProcessor->newBlock(beamsBuffer);
-    //    for (int inChannel = 0; inChannel < totalNumInputChannels; ++inChannel)
-    //    {
-    //        // Beam dependent processing
-    //        for (int beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx)
-    //        {
-    //            // Determine steering index
-    //            int steeringIdx = roundToInt(((steeringBeam[beamIdx]->get() + 1)/2.)*(numSteeringDirections-1));
-    //            // Determine beam width index
-    //            int beamWidthIdx = roundToInt(widthBeam[beamIdx]->get()*(numBeamwidthChoices-1));
-    //
-    //            mimoProcessor->processBlock(inputsFFT,inChannel,beamsBuffer,beamIdx,steeringIdx,beamWidthIdx);
-    //        }
-    //    }
-    //
-    //
-    //    // Beam meters
-    //    beamMeterDecay->push(beamsBuffer);
-    //    {
-    //        GenericScopedLock<SpinLock> lock(beamMetersLock);
-    //        beamMeters = beamMeterDecay->get();
-    //    }
-    //
     
 }
 
@@ -213,12 +203,11 @@ void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
 //==============================================================================
 AudioProcessorEditor* EbeamerAudioProcessor::createEditor()
 {
-    //    return new JucebeamAudioProcessorEditor (*this);
+    return new JucebeamAudioProcessorEditor (*this);
 }
 bool EbeamerAudioProcessor::hasEditor() const
 {
-    //    return true;
-    return false;
+    return true;
 }
 
 //==============================================================================

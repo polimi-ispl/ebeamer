@@ -82,7 +82,6 @@ private:
     void initializeParameters();
     
     //==============================================================================
-    
     /** Number of active input channels */
     juce::uint32 numActiveInputChannels = 0;
     /** Number of active output channels */
@@ -112,10 +111,23 @@ private:
     // Meters
     std::unique_ptr<MeterDecay> inputMeterDecay;
     std::unique_ptr<MeterDecay> beamMeterDecay;
+    /** Decay of  meters [s] */
+    const float metersDecay = 0.5;
     
     //==============================================================================
     // Beams buffers
     AudioBuffer<float> beamBuffer;
     
+    /** Resources for funtime are allocated.
+     
+     This flag is used to compensate for out-of-order calls to prepareToPlay, processBlock and releaseResources
+     */
+    bool resourcesAllocated = false;
+    
+    /** Sample rate [Hz] */
+    float sampleRate = 48000;
+    
+    /** Maximum number of samples per block */
+    int maximumExpectedSamplesPerBlock = 4096;
     
 };

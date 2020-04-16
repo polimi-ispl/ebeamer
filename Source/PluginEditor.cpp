@@ -185,7 +185,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (EbeamerAudioProcesso
     addAndMakeVisible(gainLabel);
     
     // Start DOA Thread
-    DOAt->startThread();
+    //DOAt->startThread();
     
 }
 

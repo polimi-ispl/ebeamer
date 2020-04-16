@@ -122,11 +122,14 @@ private:
     AudioBuffer<float> beamBuffer;
     
     /** FIR coefficients update alpha */
-    const float alpha = 0.1;
+    const float alpha = 0.5;
     
     /** Microphones configuration */
     MicConfig micConfig = LMA_1ESTICK;
     
     /** Initialize the beamforming algorithm */
     void initAlg();
+    
+    /** Last beam parameters */
+    std::vector<BeamParameters> lastBeamParams;
 };

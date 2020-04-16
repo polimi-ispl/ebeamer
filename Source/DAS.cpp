@@ -39,6 +39,8 @@ int FarfieldLMA::getFirLen() const{
 
 void FarfieldLMA::getFir(AudioBuffer<float>&fir,const BeamParameters& params,float alpha) const{
     
+    jassert(fir.getNumChannels() == numMic);
+    
     /** Angle in radians (0 front, pi/2 source closer to last channel, -pi/2 source closer to first channel */
     const float angleRad = (params.doa+1)*pi/2;
     /** Delay between adjacent microphones [s] */
@@ -64,7 +66,7 @@ void FarfieldLMA::getFir(AudioBuffer<float>&fir,const BeamParameters& params,flo
     irFFT = irFFT.cwiseProduct(micGains.transpose().replicate(freqAxes.size(), 1));
     
     /** Convert  from requency to time domain and add to destination*/
-    for (auto micIdx=0;micIdx<numMic;micIdx++){
+    for (auto micIdx=0;micIdx<jmin(numMic,fir.getNumChannels());micIdx++){
         freqToTime(fir,micIdx,irFFT.col(micIdx),fft.get(),win,alpha);
     }
     
