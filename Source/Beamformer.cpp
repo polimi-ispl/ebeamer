@@ -88,6 +88,9 @@ void Beamformer::initAlg(){
     /** Allocate DOA beam */
     doaBeam.setSize(1, convolutionBuffer.getNumSamples()/2);
     
+    /** Initialize DOA BPF */
+    doaBandPassFilter.setCoefficients(IIRCoefficients::makeBandPass(sampleRate, doaBandPassFrequency,doaBandPassQ));
+    
     /** Compute FIR for DOA estimation */
     AudioBuffer<float> tmpFir(numActiveInputChannels,firLen);
     BeamParameters tmpBeamParams{0,0};
@@ -132,7 +135,6 @@ void Beamformer::processBlock(const AudioBuffer<float> &inBuffer){
     }
     
     /** Compute DOA levels */
-    //TODO: BandPass filter for DOA (make template of IIR bandpass in FFT ready for conv and multiply by input buffer)
     {
         GenericScopedLock<SpinLock> lock(doaLock);
         if (!newDoaLevelsAvailable){
@@ -143,6 +145,8 @@ void Beamformer::processBlock(const AudioBuffer<float> &inBuffer){
                     convolutionBuffer.convolve(0, inputBuffer, inCh, doaFirFFT[dirIdx], inCh);
                     convolutionBuffer.addTimeSeries(0, doaBeam, 0);
                 }
+                doaBandPassFilter.reset();
+                doaBandPassFilter.processSamples(doaBeam.getWritePointer(0), doaBeam.getNumSamples());
                 auto range = FloatVectorOperations::findMinAndMax(doaBeam.getReadPointer(0), doaBeam.getNumSamples());
                 auto maxAbs = jmax(abs(range.getStart()),abs(range.getEnd()));
                 auto maxAbsDb = Decibels::gainToDecibels(maxAbs);

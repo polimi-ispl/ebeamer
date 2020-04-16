@@ -145,4 +145,8 @@ private:
     /** DOA beam */
     AudioBuffer<float> doaBeam;
     
+    /** DOA band pass filter */
+    IIRFilter doaBandPassFilter;
+    const float doaBandPassFrequency = 1500;
+    const float doaBandPassQ = 1;
 };
