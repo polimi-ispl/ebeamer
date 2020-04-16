@@ -17,7 +17,6 @@ Beamformer::Beamformer(const AudioProcessor& p, int numBeams_, int numDoas_):pro
     
     firIR.resize(numBeams);
     firFFT.resize(numBeams);
-    lastBeamParams.resize(numBeams,{10,10});
     
 }
 
@@ -72,10 +71,7 @@ void Beamformer::initAlg(){
         f = FIR::AudioBufferFFT(numActiveInputChannels,fft);
         f.clear();
     }
-    
-    /** Reset beam parameters */
-    lastBeamParams.clear();
-    lastBeamParams.resize(numBeams,{10,10});
+
     
     /** Allocate input buffers */
     inputBuffer = FIR::AudioBufferFFT(numActiveInputChannels, fft);
@@ -98,16 +94,9 @@ void Beamformer::prepareToPlay(double sampleRate_, int maximumExpectedSamplesPer
 }
 
 void Beamformer::setBeamParameters(int beamIdx, const BeamParameters& beamParams){
-    if ((lastBeamParams[beamIdx].doa != beamParams.doa) || (lastBeamParams[beamIdx].width != beamParams.width)){
-        alg->getFir(firIR[beamIdx], beamParams,alpha);
-        //TODO: errors
-//        firIR[beamIdx].clear();
-//        for (auto chIdx=0;chIdx<firIR[beamIdx].getNumChannels();chIdx++)
-//            firIR[beamIdx].setSample(chIdx, 0, 1./16);
-        firFFT[beamIdx].setTimeSeries(firIR[beamIdx]);
-        firFFT[beamIdx].prepareForConvolution();
-        lastBeamParams[beamIdx] = beamParams;
-    }
+    alg->getFir(firIR[beamIdx], beamParams,alpha);
+    firFFT[beamIdx].setTimeSeries(firIR[beamIdx]);
+    firFFT[beamIdx].prepareForConvolution();
 }
 
 void Beamformer::processBlock(const AudioBuffer<float> &inBuffer){
@@ -150,11 +139,7 @@ void Beamformer::releaseResources(){
     for (auto &f : firFFT){
         f.setSize(0, 0);
     }
-    
-    /** Reset beam parameters */
-    lastBeamParams.clear();
-    lastBeamParams.resize(numBeams,{10,10});
-    
+
     /** Release input buffer */
     inputBuffer.setSize(0, 0);
     
