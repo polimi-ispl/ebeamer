@@ -61,7 +61,7 @@ public:
      To be called inside AudioProcessor::processBlock, after Beamformer::processBlock
      */
     void getBeams(AudioBuffer<float>& outBuffer);
-    
+       
     /** Set the parameters for a specific beam  */
     void setBeamParameters(int beamIdx, const BeamParameters& beamParams);
     
@@ -129,5 +129,20 @@ private:
     
     /** Initialize the beamforming algorithm */
     void initAlg();
-
+    
+    /** DOA levels [dB] */
+    std::vector<float> doaLevels;
+    
+    /** Flag indicating if new DOA levels are available */
+    bool newDoaLevelsAvailable = false;
+    
+    /** DOA Lock */
+    SpinLock doaLock;
+    
+    /** FIR filters for DOA estimation */
+    std::vector<FIR::AudioBufferFFT> doaFirFFT;
+    
+    /** DOA beam */
+    AudioBuffer<float> doaBeam;
+    
 };

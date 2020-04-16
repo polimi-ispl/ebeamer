@@ -309,6 +309,12 @@ std::vector<float> EbeamerAudioProcessor::getInputMeters(){
 }
 
 //==============================================================================
+// Beamformer
+std::unique_ptr<Beamformer>& EbeamerAudioProcessor::getBeamformer(){
+    return beamformer;
+}
+
+//==============================================================================
 // Helper functions
 void EbeamerAudioProcessor::initializeParameters() {
     

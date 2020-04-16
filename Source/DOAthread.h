@@ -27,16 +27,9 @@ private:
     
     EbeamerAudioProcessor& processor;
     
-    AudioBuffer<float> directionalSignal;
-    FIR::AudioBufferFFT inputsFFT;
-    std::vector<int> directionIdxs;
-    
     double inertia = 0.85;
 	double gain = 0;
     const double maxGain = 60, minGain = 0;
-    
-    IIRCoefficients iirCoeffHPF, iirCoeffLPF;
-    std::unique_ptr<IIRFilter> iirHPFfilter, iirLPFfilter;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DOAthread);
     

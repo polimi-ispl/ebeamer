@@ -72,6 +72,9 @@ public:
     SpinLock inputMetersLock;
     SpinLock beamMetersLock;
     
+    //==============================================================================
+    // Beamformer
+    std::unique_ptr<Beamformer>& getBeamformer();
 
 private:
     //==============================================================================

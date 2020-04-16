@@ -34,8 +34,8 @@ namespace FIR{
         void reset();
         void setTimeSeries(const AudioBuffer<float>&);
         void getTimeSeries(AudioBuffer<float>&);
-        void addTimeSeries(AudioBuffer<float>&);
         void getTimeSeries(int sourceCh, AudioBuffer<float>& dest,int destCh);
+        void addTimeSeries(AudioBuffer<float>&);
         void addTimeSeries(int sourceCh, AudioBuffer<float>& dest,int destCh);
         
         void convolve(int outputChannel, const AudioBufferFFT& in_, int inChannel, AudioBufferFFT& filter_, int filterChannel );

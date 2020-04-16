@@ -39,7 +39,7 @@ int FarfieldLMA::getFirLen() const{
 
 void FarfieldLMA::getFir(AudioBuffer<float>&fir,const BeamParameters& params,float alpha) const{
     
-    jassert(fir.getNumChannels() == numMic);
+    jassert(fir.getNumChannels() >= numMic);
     
     /** Angle in radians (0 front, pi/2 source closer to last channel, -pi/2 source closer to first channel */
     const float angleRad = (params.doa+1)*pi/2;

@@ -18,6 +18,9 @@ Beamformer::Beamformer(const AudioProcessor& p, int numBeams_, int numDoas_):pro
     firIR.resize(numBeams);
     firFFT.resize(numBeams);
     
+    doaLevels.resize(numDoas,0);
+    doaFirFFT.resize(numDoas);
+
 }
 
 Beamformer::~Beamformer(){
@@ -72,7 +75,6 @@ void Beamformer::initAlg(){
         f.clear();
     }
 
-    
     /** Allocate input buffers */
     inputBuffer = FIR::AudioBufferFFT(numActiveInputChannels, fft);
     
@@ -82,6 +84,21 @@ void Beamformer::initAlg(){
     /** Allocate beam output buffer */
     beamBuffer.setSize(numBeams, convolutionBuffer.getNumSamples()/2);
     beamBuffer.clear();
+    
+    /** Allocate DOA beam */
+    doaBeam.setSize(1, convolutionBuffer.getNumSamples()/2);
+    
+    /** Compute FIR for DOA estimation */
+    AudioBuffer<float> tmpFir(numActiveInputChannels,firLen);
+    BeamParameters tmpBeamParams{0,0};
+    for (auto dirIdx = 0;dirIdx < numDoas;dirIdx++){
+        tmpBeamParams.doa = -1+(2./(numDoas-1)*dirIdx);
+        alg->getFir(tmpFir, tmpBeamParams,1);
+        doaFirFFT[dirIdx] = FIR::AudioBufferFFT(numActiveInputChannels,fft);
+        doaFirFFT[dirIdx].setTimeSeries(tmpFir);
+        doaFirFFT[dirIdx].prepareForConvolution();
+    }
+    
 }
 
 void Beamformer::prepareToPlay(double sampleRate_, int maximumExpectedSamplesPerBlock_, int numActiveInputChannels_){
@@ -114,6 +131,28 @@ void Beamformer::processBlock(const AudioBuffer<float> &inBuffer){
         }
     }
     
+    /** Compute DOA levels */
+    //TODO: BandPass filter for DOA (make template of IIR bandpass in FFT ready for conv and multiply by input buffer)
+    {
+        GenericScopedLock<SpinLock> lock(doaLock);
+        if (!newDoaLevelsAvailable){
+            for (auto dirIdx = 0; dirIdx < numDoas; dirIdx++){
+                doaBeam.clear();
+                for (auto inCh=0;inCh<inputBuffer.getNumChannels();inCh++){
+                    /** Convolve inputs and DOA FIR */
+                    convolutionBuffer.convolve(0, inputBuffer, inCh, doaFirFFT[dirIdx], inCh);
+                    convolutionBuffer.addTimeSeries(0, doaBeam, 0);
+                }
+                auto range = FloatVectorOperations::findMinAndMax(doaBeam.getReadPointer(0), doaBeam.getNumSamples());
+                auto maxAbs = jmax(abs(range.getStart()),abs(range.getEnd()));
+                auto maxAbsDb = Decibels::gainToDecibels(maxAbs);
+                doaLevels[dirIdx] = maxAbsDb;
+            }
+            
+            newDoaLevelsAvailable = true;
+        }
+    }
+    
 }
 
 void Beamformer::getBeams(AudioBuffer<float>& outBuffer){
@@ -130,6 +169,15 @@ void Beamformer::getBeams(AudioBuffer<float>& outBuffer){
     }
 }
 
+void Beamformer::getDoaEnergy(std::vector<float>& outDoaLevels){
+    jassert(outDoaLevels.size() == doaLevels.size());
+    GenericScopedLock<SpinLock> lock(doaLock);
+    if (newDoaLevelsAvailable){
+        outDoaLevels = doaLevels;
+        newDoaLevelsAvailable = false;
+    }
+}
+
 void Beamformer::releaseResources(){
     
     /** Release FIR filters */
@@ -137,6 +185,9 @@ void Beamformer::releaseResources(){
         f.setSize(0, 0);
     }
     for (auto &f : firFFT){
+        f.setSize(0, 0);
+    }
+    for (auto &f : doaFirFFT){
         f.setSize(0, 0);
     }
 
@@ -148,4 +199,10 @@ void Beamformer::releaseResources(){
     
     /** Release beam buffer */
     beamBuffer.setSize(0, 0);
+    
+    /** Reset DOA levels */
+    doaLevels.clear();
+    newDoaLevelsAvailable = false;
+    
+    
 }
