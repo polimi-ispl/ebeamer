@@ -19,7 +19,7 @@ EbeamerAudioProcessor::EbeamerAudioProcessor()
     initializeParameters();
     
     /** Initialize the beamformer */
-    beamformer = std::make_unique<Beamformer>(*this,numBeams,numDoas);
+    beamformer = std::make_unique<Beamformer>(numBeams,numDoas);
     
 }
 

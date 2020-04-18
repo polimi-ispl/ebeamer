@@ -32,7 +32,7 @@ public:
      @param numBeams: number of beams the beamformer has to compute
      @param numDoas: number of directions of arrival to compute the energy
      */
-    Beamformer(const AudioProcessor& p, int numBeams, int numDoas);
+    Beamformer(int numBeams, int numDoas);
     /** Destructor. */
     ~Beamformer();
     
@@ -89,9 +89,6 @@ private:
     
     /** Number of active inputs */
     int numActiveInputChannels = 1;
-    
-    /** Reference to the AudioProcessor instance */
-    const AudioProcessor& processor;
     
     /** Number of beams */
     int numBeams;

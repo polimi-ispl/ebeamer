@@ -10,7 +10,7 @@
 
 #include "Beamformer.h"
 
-Beamformer::Beamformer(const AudioProcessor& p, int numBeams_, int numDoas_):processor(p){
+Beamformer::Beamformer(int numBeams_, int numDoas_){
     
     numBeams = numBeams_;
     numDoas = numDoas_;
