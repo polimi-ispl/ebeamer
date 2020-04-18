@@ -147,7 +147,7 @@ private:
     /** Measured average load */
     float load = 0;
     /** Load update factor (the higher the faster the update) */
-    const float loadAlpha = 0.001;
+    const float loadAlpha = 0.005;
     /** Load lock */
     SpinLock loadLock;
 };
