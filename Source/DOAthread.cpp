@@ -4,7 +4,7 @@
 
 DOAthread::DOAthread(EbeamerAudioProcessor& p)
         : Thread("DOA"),  processor(p){
-    energy.resize(EbeamerAudioProcessor::numDoas);
+    energy.resize(EbeamerAudioProcessor::numDoas,-100);
 }
 
 DOAthread::~DOAthread(){

@@ -51,6 +51,8 @@ bool EbeamerAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) 
 void EbeamerAudioProcessor::prepareToPlay (double sampleRate_, int maximumExpectedSamplesPerBlock_)
 {
     
+    GenericScopedLock<SpinLock> lock(processingLock);
+    
     sampleRate = sampleRate_;
     maximumExpectedSamplesPerBlock = maximumExpectedSamplesPerBlock_;
     
@@ -97,6 +99,8 @@ void EbeamerAudioProcessor::prepareToPlay (double sampleRate_, int maximumExpect
 
 void EbeamerAudioProcessor::releaseResources()
 {
+ 
+    GenericScopedLock<SpinLock> lock(processingLock);
     
     resourcesAllocated = false;
 
@@ -113,9 +117,12 @@ void EbeamerAudioProcessor::releaseResources()
 void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& midiMessages)
 {
     
+    GenericScopedLock<SpinLock> lock(processingLock);
+    
     /** If resources are not allocated this is an out-of-order request */
     if (!resourcesAllocated){
-        prepareToPlay(sampleRate, maximumExpectedSamplesPerBlock);
+        jassertfalse;
+//        prepareToPlay(sampleRate, maximumExpectedSamplesPerBlock);
     }
     
     ScopedNoDenormals noDenormals;

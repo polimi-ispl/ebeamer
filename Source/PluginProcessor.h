@@ -133,4 +133,8 @@ private:
     /** Maximum number of samples per block */
     int maximumExpectedSamplesPerBlock = 4096;
     
+    //==============================================================================
+    /** Lock to prevent releaseResources being called when processBlock is running. AudioPluginHost does it. */
+    SpinLock processingLock;
+    
 };

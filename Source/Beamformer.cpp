@@ -18,7 +18,7 @@ Beamformer::Beamformer(const AudioProcessor& p, int numBeams_, int numDoas_):pro
     firIR.resize(numBeams);
     firFFT.resize(numBeams);
     
-    doaLevels.resize(numDoas,0);
+    doaLevels.resize(numDoas,-100);
     doaFirFFT.resize(numDoas);
 
 }
@@ -205,7 +205,9 @@ void Beamformer::releaseResources(){
     beamBuffer.setSize(0, 0);
     
     /** Reset DOA levels */
-    doaLevels.clear();
+    for (auto &lev : doaLevels){
+        lev = -100;
+    }
     newDoaLevelsAvailable = false;
     
     
