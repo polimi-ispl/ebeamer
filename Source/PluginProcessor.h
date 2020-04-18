@@ -75,6 +75,10 @@ public:
     //==============================================================================
     // Beamformer
     std::unique_ptr<Beamformer>& getBeamformer();
+    
+    //==============================================================================
+    /** Averagel load */
+    float getAverageLoad() const;
 
 private:
     //==============================================================================
@@ -114,6 +118,7 @@ private:
     // Meters
     std::unique_ptr<MeterDecay> inputMeterDecay;
     std::unique_ptr<MeterDecay> beamMeterDecay;
+    
     /** Decay of  meters [s] */
     const float metersDecay = 0.5;
     
@@ -121,7 +126,11 @@ private:
     // Beams buffers
     AudioBuffer<float> beamBuffer;
     
-    /** Resources for funtime are allocated.
+    //==============================================================================
+    /** Lock to prevent releaseResources being called when processBlock is running. AudioPluginHost does it. */
+    SpinLock processingLock;
+    
+    /** Resources for runtime are allocated.
      
      This flag is used to compensate for out-of-order calls to prepareToPlay, processBlock and releaseResources
      */
@@ -134,7 +143,11 @@ private:
     int maximumExpectedSamplesPerBlock = 4096;
     
     //==============================================================================
-    /** Lock to prevent releaseResources being called when processBlock is running. AudioPluginHost does it. */
-    SpinLock processingLock;
     
+    /** Measured average load */
+    float load = 0;
+    /** Load update factor (the higher the faster the update) */
+    const float loadAlpha = 0.001;
+    /** Load lock */
+    SpinLock loadLock;
 };

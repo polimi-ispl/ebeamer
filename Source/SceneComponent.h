@@ -21,7 +21,7 @@
 #define SCENE_WIDTH 460
 
 #ifdef PLANAR_MODE
-#define GUI_HEIGHT 800
+#define GUI_HEIGHT 830
 #define SCENE_HEIGHT 230
 #else
 #define GUI_HEIGHT 980

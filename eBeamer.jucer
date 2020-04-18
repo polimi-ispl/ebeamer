@@ -530,6 +530,8 @@
         <FILE id="jAuseV" name="SigProc.h" compile="0" resource="0" file="Source/SigProc.h"/>
       </GROUP>
       <GROUP id="{AC0EAE82-70E6-47BD-23DD-295BD02717C2}" name="gui">
+        <FILE id="YioHCd" name="CpuLoadComp.cpp" compile="1" resource="0" file="Source/CpuLoadComp.cpp"/>
+        <FILE id="c9KQHu" name="CpuLoadComp.h" compile="0" resource="0" file="Source/CpuLoadComp.h"/>
         <FILE id="wmu0lC" name="DOAthread.cpp" compile="1" resource="0" file="Source/DOAthread.cpp"/>
         <FILE id="qrd71c" name="DOAthread.h" compile="0" resource="0" file="Source/DOAthread.h"/>
         <FILE id="wmvu4j" name="SceneComponent.cpp" compile="1" resource="0"

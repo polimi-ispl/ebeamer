@@ -117,12 +117,13 @@ void EbeamerAudioProcessor::releaseResources()
 void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& midiMessages)
 {
     
+    const auto startTick = Time::getHighResolutionTicks();
+    
     GenericScopedLock<SpinLock> lock(processingLock);
     
     /** If resources are not allocated this is an out-of-order request */
     if (!resourcesAllocated){
         jassertfalse;
-//        prepareToPlay(sampleRate, maximumExpectedSamplesPerBlock);
     }
     
     ScopedNoDenormals noDenormals;
@@ -199,8 +200,21 @@ void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
         }
     }
     
+    /** Update load */
+    {
+        const float elapsedTime = Time::highResolutionTicksToSeconds(Time::getHighResolutionTicks() - startTick);
+        const float curLoad = elapsedTime / (maximumExpectedSamplesPerBlock/sampleRate);
+        GenericScopedLock<SpinLock> lock(loadLock);
+        load = (load*(1-loadAlpha))+(curLoad*loadAlpha);
+    }
+    
 }
 
+//==============================================================================
+float EbeamerAudioProcessor::getAverageLoad() const{
+    GenericScopedLock<SpinLock> lock(loadLock);
+    return load;
+}
 
 //==============================================================================
 AudioProcessorEditor* EbeamerAudioProcessor::createEditor()

@@ -4,6 +4,7 @@
 #include "DOAthread.h"
 #include "SceneComponent.h"
 #include "AudioComponents.h"
+#include "CpuLoadComp.h"
 
 #define GUI_WIDTH 540
 
@@ -33,6 +34,10 @@
 #define INPUT_LED_HEIGHT 5
 #define INPUT_GAIN_SLIDER_HEIGHT 40
 #define INPUT_GAIN_LABEL_WIDTH 50
+
+#define PREFORMANCE_MONITOR_HEIGHT 20
+#define CPULOAD_WIDTH 80
+#define LOAD_UPDATE_FREQ 10 //Hz
 
 #define INPUT_METER_UPDATE_FREQ 10 //Hz
 #define BEAM_METER_UPDATE_FREQ 10 //Hz
@@ -96,7 +101,11 @@ private:
     
     Label gainLabel;
     DecibelSlider gainSlider;
+    
+    //===============================================================
+    CpuLoadComp cpuLoad;
 
+    //===============================================================
     void setMuteButtonColor(uint8 beamIdx);
     
     // Appearance

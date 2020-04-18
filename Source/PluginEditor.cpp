@@ -2,7 +2,7 @@
 #include "PluginEditor.h"
 
 JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (EbeamerAudioProcessor& p)
-:  AudioProcessorEditor (&p), processor (p)
+:  AudioProcessorEditor (&p), processor (p), cpuLoad(p)
 {
     DOAt = std::make_shared<DOAthread>(p);
     scene.grid.setSource(DOAt);
@@ -184,6 +184,10 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (EbeamerAudioProcesso
     gainLabel.attachToComponent(&gainSlider, true);
     addAndMakeVisible(gainLabel);
     
+    //=====================================================
+    addAndMakeVisible(cpuLoad);
+    cpuLoad.startTimerHz(ENERGY_UPDATE_FREQ);
+    
     // Start DOA Thread
     DOAt->startThread();
     
@@ -273,6 +277,10 @@ void JucebeamAudioProcessorEditor::resized()
     inputMeter.setBounds(inputLedArea);
     
     gainSlider.setBounds(area.removeFromTop(INPUT_GAIN_SLIDER_HEIGHT).withTrimmedLeft(INPUT_GAIN_LABEL_WIDTH));
+    
+    //===============================================================
+    auto performanceMonitorArea = area.removeFromTop(PREFORMANCE_MONITOR_HEIGHT);
+    cpuLoad.setBounds(performanceMonitorArea.removeFromLeft(CPULOAD_WIDTH));    
 
 }
 
@@ -348,4 +356,3 @@ void JucebeamAudioProcessorEditor::sliderValueChanged(Slider *slider)
         *(processor.micGainParam) = slider->getValue();
     }
 }
-
