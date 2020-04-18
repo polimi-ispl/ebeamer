@@ -1,9 +1,9 @@
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
-#include "DOAthread.h"
 #include "SceneComponent.h"
 #include "AudioComponents.h"
+#include "CpuLoadComp.h"
 
 #define GUI_WIDTH 540
 
@@ -34,6 +34,10 @@
 #define INPUT_GAIN_SLIDER_HEIGHT 40
 #define INPUT_GAIN_LABEL_WIDTH 50
 
+#define PREFORMANCE_MONITOR_HEIGHT 20
+#define CPULOAD_WIDTH 80
+#define CPULOAD_UPDATE_FREQ 10 //Hz
+
 #define INPUT_METER_UPDATE_FREQ 10 //Hz
 #define BEAM_METER_UPDATE_FREQ 10 //Hz
 #define ENERGY_UPDATE_FREQ 10 //Hz
@@ -47,7 +51,7 @@ class JucebeamAudioProcessorEditor  : public AudioProcessorEditor,
 {
 public:
 
-    JucebeamAudioProcessorEditor (JucebeamAudioProcessor&);
+    JucebeamAudioProcessorEditor (EbeamerAudioProcessor&);
     ~JucebeamAudioProcessorEditor();
 
     //==============================================================================
@@ -55,10 +59,8 @@ public:
     void resized() override;
 
 private:
-    // This reference is provided as a quick way for your editor to
-    // access the processor object that created it.
-    JucebeamAudioProcessor& processor;
-    std::shared_ptr<DOAthread> DOAt;
+    
+    EbeamerAudioProcessor& processor;
 
     // Project specific
 
@@ -97,7 +99,12 @@ private:
     
     Label gainLabel;
     DecibelSlider gainSlider;
+    
+    //===============================================================
+    /** CPU load component */
+    CpuLoadComp cpuLoad;
 
+    //===============================================================
     void setMuteButtonColor(uint8 beamIdx);
     
     // Appearance

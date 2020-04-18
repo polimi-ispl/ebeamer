@@ -2,45 +2,36 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "AudioParts.h"
-#include "MimoProcessor.h"
-#define NUM_BEAMS 2
-#define OUT_CHANNELS 2
-#define METERS_DECAY 0.15 //s
-
+#include "Beamformer.h"
 
 //==============================================================================
 
-class JucebeamAudioProcessor  : public AudioProcessor
+
+class EbeamerAudioProcessor  : public AudioProcessor
 {
 public:
-
-//==============================================================================
-    JucebeamAudioProcessor();
-    ~JucebeamAudioProcessor();
-
     //==============================================================================
-    void prepareToPlay (double sampleRate, int samplesPerBlock) override;
-    void releaseResources() override;
-
-   #ifndef JucePlugin_PreferredChannelConfigurations
-    bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
-   #endif
-
-    void processBlock (AudioBuffer<float>&, MidiBuffer&) override;
-
+    /** Number of beams */
+    static const int numBeams = 2;
+    
+    /** Number of directions of arrival computed and displayed */
+    static const int numDoas = 25;
+    
     //==============================================================================
-    AudioProcessorEditor* createEditor() override;
-    bool hasEditor() const override;
-
-    //==============================================================================
+    EbeamerAudioProcessor();
+    ~EbeamerAudioProcessor();
+    
     const String getName() const override;
-
     bool acceptsMidi() const override;
     bool producesMidi() const override;
     bool isMidiEffect() const override;
     double getTailLengthSeconds() const override;
+    
+    bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
+    void prepareToPlay (double sampleRate, int maximumExpectedSamplesPerBlock) override;
+    void processBlock (AudioBuffer<float>&, MidiBuffer&) override;
+    void releaseResources() override;
 
-    //==============================================================================
     int getNumPrograms() override;
     int getCurrentProgram() override;
     void setCurrentProgram (int index) override;
@@ -48,19 +39,22 @@ public:
     void changeProgramName (int index, const String& newName) override;
 
     //==============================================================================
+    AudioProcessorEditor* createEditor() override;
+    bool hasEditor() const override;
+
+    //==============================================================================
     void getStateInformation (MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
     
-    
     //==============================================================================
     // VST parameters
-    AudioParameterFloat* steeringBeam[NUM_BEAMS];
-    AudioParameterFloat* widthBeam[NUM_BEAMS];
-    AudioParameterFloat* panBeam[NUM_BEAMS];
-    AudioParameterFloat* levelBeam[NUM_BEAMS];
-    AudioParameterBool*  muteBeam[NUM_BEAMS];
-    AudioParameterFloat* micGain;
-    AudioParameterFloat* hpfFreq;
+    AudioParameterFloat* steeringBeamParam[numBeams];
+    AudioParameterFloat* widthBeamParam[numBeams];
+    AudioParameterFloat* panBeamParam[numBeams];
+    AudioParameterFloat* levelBeamParam[numBeams];
+    AudioParameterBool*  muteBeamParam[numBeams];
+    AudioParameterFloat* micGainParam;
+    AudioParameterFloat* hpfFreqParam;
     
     //==============================================================================
     // Buffer to allow external access to input signals FFT
@@ -79,36 +73,81 @@ public:
     SpinLock beamMetersLock;
     
     //==============================================================================
-    // vMimoProcessor
-    const std::shared_ptr<MimoProcessor> getMimoProcessor(){return mimoProcessor;};
+    // Beamformer
+    std::unique_ptr<Beamformer>& getBeamformer();
+    
+    //==============================================================================
+    /** Averagel load */
+    float getAverageLoad() const;
 
 private:
     //==============================================================================
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JucebeamAudioProcessor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EbeamerAudioProcessor)
     
+    //==============================================================================
+    /* Initialize parameters accessible through DAW automation */
+    void initializeParameters();
+    
+    //==============================================================================
+    /** Number of active input channels */
+    juce::uint32 numActiveInputChannels = 0;
+    /** Number of active output channels */
+    juce::uint32 numActiveOutputChannels = 0;
+    
+    //==============================================================================
+    /** Time Constant for input gain variations */
+    const float gainTimeConst = 0.1;
+    /** Input gain, common to all microphones */
+    dsp::Gain<float> micGain;
+    /** Beam gain for each beam */
+    dsp::Gain<float> beamGain[numBeams];
+    
+    //==============================================================================
+    /** Previous HPF cut frequency */
+    float prevHpfFreq = 0;
+    /** Coefficients of the IIR HPF */
+    IIRCoefficients iirCoeffHPF;
+    /** IIR HPF */
+    std::vector<IIRFilter> iirHPFfilters;
+    
+    //==============================================================================
+    /** The active beamformer */
+    std::unique_ptr<Beamformer> beamformer;
+
     //==============================================================================
     // Meters
     std::unique_ptr<MeterDecay> inputMeterDecay;
     std::unique_ptr<MeterDecay> beamMeterDecay;
     
-    //==============================================================================
-    // HPF filters
-    float prevHpfFreq = 0;
-    IIRCoefficients iirCoeffHPF;
-    std::vector<std::unique_ptr<IIRFilter>> iirHPFfilters;
-
-    //==============================================================================
-    // Gains
-    dsp::Gain<float> commonGain, beamGain[NUM_BEAMS];
-    
-    //==============================================================================
-    // vMimoProcessor
-    std::shared_ptr<MimoProcessor> mimoProcessor;
-    size_t numSteeringDirections;
-    size_t numBeamwidthChoices;
-    int samplesPerBlock;
+    /** Decay of  meters [s] */
+    const float metersDecay = 0.2;
     
     //==============================================================================
     // Beams buffers
-    AudioBuffer<float> beamsBuffer;
+    AudioBuffer<float> beamBuffer;
+    
+    //==============================================================================
+    /** Lock to prevent releaseResources being called when processBlock is running. AudioPluginHost does it. */
+    SpinLock processingLock;
+    
+    /** Resources for runtime are allocated.
+     
+     This flag is used to compensate for out-of-order calls to prepareToPlay, processBlock and releaseResources
+     */
+    bool resourcesAllocated = false;
+    
+    /** Sample rate [Hz] */
+    float sampleRate = 48000;
+    
+    /** Maximum number of samples per block */
+    int maximumExpectedSamplesPerBlock = 4096;
+    
+    //==============================================================================
+    
+    /** Measured average load */
+    float load = 0;
+    /** Load update factor (the higher the faster the update) */
+    const float loadAlpha = 0.005;
+    /** Load lock */
+    SpinLock loadLock;
 };

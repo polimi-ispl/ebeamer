@@ -11,29 +11,20 @@
 
 #pragma once
 
-#define PLANAR_MODE
-
 #define PERSPECTIVE_RATIO 5
-
 #define TILE_ROW_COUNT 7
-#define TILE_COL_COUNT 25
 
 #define SCENE_WIDTH 460
 
-#ifdef PLANAR_MODE
-#define GUI_HEIGHT 800
+#define GUI_HEIGHT 830
 #define SCENE_HEIGHT 230
-#else
-#define GUI_HEIGHT 980
-#define SCENE_HEIGHT 460
-#endif
 
-#define GRID_REFRESH_TIMER 50
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "PluginProcessor.h"
 #include "AudioComponents.h"
-#include "DOAthread.h"
+#include "Beamformer.h"
+
 
 //==============================================================================
 
@@ -60,21 +51,26 @@ private:
 class GridComponent    : public Component, public Timer
 {
 public:
-    GridComponent();
+    GridComponent(const std::unique_ptr<Beamformer>& b);
     ~GridComponent();
     
     void resized() override;
     
-    void setSource(std::shared_ptr<DOAthread> d){doaThread = d;};
-    
 private:
     
-    TileComponent tiles[TILE_ROW_COUNT][TILE_COL_COUNT];
-    juce::Point<float> vertices[TILE_ROW_COUNT+1][TILE_COL_COUNT+1];
+    TileComponent tiles[TILE_ROW_COUNT][EbeamerAudioProcessor::numDoas];
+    juce::Point<float> vertices[TILE_ROW_COUNT+1][EbeamerAudioProcessor::numDoas+1];
     
-    std::shared_ptr<DOAthread> doaThread;
+    const std::unique_ptr<Beamformer>& beamformer;
     
     std::vector<float> th;
+    
+    std::vector<float> energy, energyPreGain;
+    float inertia = 0.85;
+    float gain = 0;
+    const float maxGain = 20, minGain = -20;
+    
+    const float gridUpdateFrequency = 10;
     
     void computeVertices();
     void timerCallback() override;
@@ -115,7 +111,7 @@ private:
 class SceneComponent    : public Component
 {
 public:
-    SceneComponent();
+    SceneComponent(const std::unique_ptr<Beamformer>& b);
     ~SceneComponent();
     
     void setBeamColors(const std::vector<Colour> &colours);
@@ -124,7 +120,7 @@ public:
     void resized() override;
     
     GridComponent grid;
-    BeamComponent beams[NUM_BEAMS];
+    BeamComponent beams[EbeamerAudioProcessor::numBeams];
     
 private:
     
