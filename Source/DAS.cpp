@@ -58,7 +58,7 @@ void FarfieldLMA::getFir(AudioBuffer<float>&fir,const BeamParameters& params,flo
     micGains.head(inactiveMicAtBorder).array() = 0;
     micGains.tail(inactiveMicAtBorder).array() = 0;
     /** Normalize the power */
-    micGains.array() /= micGains.sum();
+    micGains.array() *= referencePower/micGains.sum();
     
     /** Apply the gain */
     irFFT = irFFT.cwiseProduct(micGains.transpose().replicate(freqAxes.size(), 1));

@@ -73,6 +73,9 @@ private:
     /** Frequencies axes */
     Vec freqAxes;
     
+    /** Reference power for normalization */
+    const float referencePower = 3;
+    
 };
 
 }

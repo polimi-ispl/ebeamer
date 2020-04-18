@@ -120,7 +120,7 @@ private:
     std::unique_ptr<MeterDecay> beamMeterDecay;
     
     /** Decay of  meters [s] */
-    const float metersDecay = 0.5;
+    const float metersDecay = 0.2;
     
     //==============================================================================
     // Beams buffers

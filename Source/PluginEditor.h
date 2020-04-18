@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
-#include "DOAthread.h"
 #include "SceneComponent.h"
 #include "AudioComponents.h"
 #include "CpuLoadComp.h"
@@ -62,7 +61,6 @@ public:
 private:
     
     EbeamerAudioProcessor& processor;
-    std::shared_ptr<DOAthread> DOAt;
 
     // Project specific
 

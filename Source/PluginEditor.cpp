@@ -2,11 +2,8 @@
 #include "PluginEditor.h"
 
 JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (EbeamerAudioProcessor& p)
-:  AudioProcessorEditor (&p), processor (p), cpuLoad(p)
+:  AudioProcessorEditor (&p), processor (p), scene(p.getBeamformer()), cpuLoad(p)
 {
-    DOAt = std::make_shared<DOAthread>(p);
-    scene.grid.setSource(DOAt);
-    scene.grid.startTimerHz(ENERGY_UPDATE_FREQ);
 
     setSize (GUI_WIDTH, GUI_HEIGHT);
 
@@ -188,9 +185,6 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (EbeamerAudioProcesso
     /** Add CPU Load and start its timer */
     cpuLoad.startTimerHz(CPULOAD_UPDATE_FREQ);
     addAndMakeVisible(cpuLoad);
-    
-    // Start DOA Thread
-    DOAt->startThread();
     
 }
 

@@ -23,6 +23,57 @@ typedef enum {
     LMA_4ESTICK,
 } MicConfig;
 
+// ==============================================================================
+
+/** Pre-declare class */
+class Beamformer;
+
+/** Separate thread used to compute DOA */
+class BeamformerDoa: public Timer{
+public:
+
+    BeamformerDoa(Beamformer& b,int numDoas_,float sampleRate,int numActiveInputChannels, int firLen, std::shared_ptr<dsp::FFT> fft_);
+    ~BeamformerDoa();
+    
+    void timerCallback() override;
+
+private:
+    
+    /** Reference to the Beamformer */
+    Beamformer& beamformer;
+    
+    /** Number of directions of arrival */
+    int numDoas;
+    
+    /** FFT */
+    std::shared_ptr<dsp::FFT> fft;
+    
+    /** Inputs' buffer */
+    FIR::AudioBufferFFT inputBuffer;
+    
+    /** Convolution buffer */
+    FIR::AudioBufferFFT convolutionBuffer;
+    
+    /** FIR filters for DOA estimation */
+    std::vector<FIR::AudioBufferFFT> doaFirFFT;
+    
+    /** DOA beam */
+    AudioBuffer<float> doaBeam;
+    
+    /** DOA band pass filter */
+    IIRFilter doaBandPassFilter;
+    const float doaBandPassFrequency = 1500;
+    const float doaBandPassQ = 1;
+    
+    /** DOA levels [dB] */
+    std::vector<float> doaLevels;
+    
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BeamformerDoa);
+    
+};
+
+// ==============================================================================
+
 class Beamformer{
     
 public:
@@ -65,8 +116,22 @@ public:
     /** Set the parameters for a specific beam  */
     void setBeamParameters(int beamIdx, const BeamParameters& beamParams);
     
+    /** Get FIR in time domain for a given direction of arrival
+    
+    @param fir: an AudioBuffer object with numChannels >= number of microphones and numSamples >= firLen
+    @param params: beam parameters
+    @param alpha: exponential interpolation coefficient. 1 means complete override (instant update), 0 means no override (complete preservation)
+    */
+    void getFir(AudioBuffer<float>&fir,const BeamParameters& params,float alpha=1) const;
+    
     /** Copy the estimated energy contribution from the directions of arrival */
-    void getDoaEnergy(std::vector<float>& energy);
+    void getDoaEnergy(std::vector<float>& energy) const;
+    
+    /** Set the estimated energy contribution from the directions of arrival */
+    void setDoaEnergy(const std::vector<float>& energy);
+    
+    /** Get last input buffer */
+    void getInputBuffer(FIR::AudioBufferFFT& dst) const;
     
     /** Release not needed resources.
      
@@ -127,23 +192,21 @@ private:
     /** Initialize the beamforming algorithm */
     void initAlg();
     
+    /** inputBuffer lock */
+    SpinLock inputBufferLock;
+    
+    /** DOA thread */
+    std::unique_ptr<BeamformerDoa> doaThread;
+    
+    /**DOA update requency [Hz] */
+    const float doaUpdateFrequency = 10;
+    
+    
     /** DOA levels [dB] */
     std::vector<float> doaLevels;
-    
-    /** Flag indicating if new DOA levels are available */
-    bool newDoaLevelsAvailable = false;
     
     /** DOA Lock */
     SpinLock doaLock;
     
-    /** FIR filters for DOA estimation */
-    std::vector<FIR::AudioBufferFFT> doaFirFFT;
     
-    /** DOA beam */
-    AudioBuffer<float> doaBeam;
-    
-    /** DOA band pass filter */
-    IIRFilter doaBandPassFilter;
-    const float doaBandPassFrequency = 1500;
-    const float doaBandPassQ = 1;
 };
