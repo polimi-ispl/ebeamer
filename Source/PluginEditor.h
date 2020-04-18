@@ -37,7 +37,7 @@
 
 #define PREFORMANCE_MONITOR_HEIGHT 20
 #define CPULOAD_WIDTH 80
-#define LOAD_UPDATE_FREQ 10 //Hz
+#define CPULOAD_UPDATE_FREQ 10 //Hz
 
 #define INPUT_METER_UPDATE_FREQ 10 //Hz
 #define BEAM_METER_UPDATE_FREQ 10 //Hz
@@ -103,6 +103,7 @@ private:
     DecibelSlider gainSlider;
     
     //===============================================================
+    /** CPU load component */
     CpuLoadComp cpuLoad;
 
     //===============================================================

@@ -185,8 +185,9 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (EbeamerAudioProcesso
     addAndMakeVisible(gainLabel);
     
     //=====================================================
+    /** Add CPU Load and start its timer */
+    cpuLoad.startTimerHz(CPULOAD_UPDATE_FREQ);
     addAndMakeVisible(cpuLoad);
-    cpuLoad.startTimerHz(ENERGY_UPDATE_FREQ);
     
     // Start DOA Thread
     DOAt->startThread();
@@ -279,8 +280,10 @@ void JucebeamAudioProcessorEditor::resized()
     gainSlider.setBounds(area.removeFromTop(INPUT_GAIN_SLIDER_HEIGHT).withTrimmedLeft(INPUT_GAIN_LABEL_WIDTH));
     
     //===============================================================
+    /** Prepare area for the performance monitor */
     auto performanceMonitorArea = area.removeFromTop(PREFORMANCE_MONITOR_HEIGHT);
-    cpuLoad.setBounds(performanceMonitorArea.removeFromLeft(CPULOAD_WIDTH));    
+    /** Set area for CPU Load */
+    cpuLoad.setBounds(performanceMonitorArea.removeFromLeft(CPULOAD_WIDTH));
 
 }
 
