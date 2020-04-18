@@ -1,323 +1,139 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
-#include "Binary/firIR.h"
 
-static float panToLinearGain(const AudioParameterFloat* gain, const bool isLeftChannel) {
-    const float db_at0 = -4.5; //How many dB at each channel when pan is centered (0)
-    float gainParam = gain->get();
-    jassert(gainParam >= -1);
-    jassert(gainParam <= 1);
-    float alpha = std::pow(10.,(db_at0/20.));
-    if (isLeftChannel){
-        gainParam = -gainParam;
-    }
-    float y = (0.5-alpha)*std::pow(gainParam,2.)+0.5*gainParam+alpha;
-    return y;
+/* Allocate static members to use them in the constructor */
+const int EbeamerAudioProcessor::numBeams;
+const int EbeamerAudioProcessor::numDoas;
+
+//==============================================================================
+EbeamerAudioProcessor::EbeamerAudioProcessor()
+: AudioProcessor (BusesProperties() //The default bus layout accommodates for 4 buses of 16 channels each.
+                  .withInput  ("eStick#1",  AudioChannelSet::ambisonic(3), true)
+                  .withInput  ("eStick#2",  AudioChannelSet::ambisonic(3), true)
+                  .withInput  ("eStick#3",  AudioChannelSet::ambisonic(3), true)
+                  .withInput  ("eStick#4",  AudioChannelSet::ambisonic(3), true)
+                  .withOutput ("Output", AudioChannelSet::stereo(), true)
+                  )
+{
+    /** Initialize here everything that doesn't depend on sample rate, buffer size, bus configuration */
+    initializeParameters();
+    
+    /** Initialize the beamformer */
+    beamformer = std::make_unique<Beamformer>(numBeams,numDoas);
+    
 }
 
-static std::vector<std::vector<std::vector<float> > > readFIR(const char* array,const int len) {
-    MemoryInputStream inputStream(array, len,false);
-    uint32 numFilters;
-    inputStream.read(&numFilters, 4);
-    uint32 numChannels;
-    inputStream.read(&numChannels, 4);
-    uint32 filtersLen;
-    inputStream.read(&filtersLen, 4);
-    uint32 fs;
-    inputStream.read(&fs, 4);
-    
-    std::vector<std::vector<std::vector<float>>> fir(numFilters);
-    for (auto filterIdx = 0; filterIdx < numFilters; ++filterIdx){
-        fir[filterIdx].resize(numChannels);
-        for (auto channelIdx = 0; channelIdx < numChannels; ++channelIdx){
-            fir[filterIdx][channelIdx].resize(filtersLen);
-            for (auto coeffIdx = 0; coeffIdx < filtersLen; ++coeffIdx){
-                inputStream.read(&(fir[filterIdx][channelIdx][coeffIdx]),4);
-            }
+//==============================================================================
+bool EbeamerAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const{
+    // This plug-in supports up to 4 eSticks, for a total amount of 64 channels in input.
+    // VST3 allows for a maximum of 25 channels per bus.
+    // To make things simpler in terms of patching, each input bus counts for at most 16 channels.
+    // This configuration allows REAPER to be configured with a 64 channels track.
+    for (auto bus : layouts.inputBuses){
+        if ( bus.size() > 16 ){
+            return false;
         }
     }
-    return fir;
+    for (auto bus : layouts.outputBuses){
+        if ( bus.size() > 16 ){
+            // We have to allow the output bus to grow to the size of the input bus for compatibility with REAPER
+            return false;
+        }
+    }
+    if ((layouts.getMainInputChannels() < 2) or (layouts.getMainOutputChannels() < 2)){
+        // In any case don't allow less than 2 input and 2 output channels
+        return false;
+    }
+    return true;
 }
 
 //==============================================================================
-JucebeamAudioProcessor::JucebeamAudioProcessor()
-#ifndef JucePlugin_PreferredChannelConfigurations
-     : AudioProcessor (BusesProperties()
-                       .withInput  ("Input",  AudioChannelSet::ambisonic(3), true)
-                       /*.withInput  ("Input",  AudioChannelSet::stereo(), true)*/
-                       .withOutput ("Output", AudioChannelSet::stereo(), true)
-                       )
-#endif
+void EbeamerAudioProcessor::prepareToPlay (double sampleRate_, int maximumExpectedSamplesPerBlock_)
 {
     
+    GenericScopedLock<SpinLock> lock(processingLock);
     
-    // Initialize parameters
-    std::ostringstream stringStreamTag;
-    std::ostringstream stringStreamName;
-    for (uint8 beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx){
-        stringStreamTag.str(std::string());
-        stringStreamName.str(std::string());
-        stringStreamTag << "steerBeam" << (beamIdx+1);
-        stringStreamName << "Steering beam " << (beamIdx+1);
-        auto defaultDirection = beamIdx == 0 ?  -0.5 : 0.5;
-        addParameter(steeringBeam[beamIdx] = new AudioParameterFloat(stringStreamTag.str(),
-                                                               stringStreamName.str(),
-                                                               -1.0f,
-                                                               1.0f,
-                                                               defaultDirection));
-        stringStreamTag.str(std::string());
-        stringStreamName.str(std::string());
-        stringStreamTag << "widthBeam" << (beamIdx+1);
-        stringStreamName << "Width beam " << (beamIdx+1);
-        addParameter(widthBeam[beamIdx] = new AudioParameterFloat(stringStreamTag.str(),
-                                                                  stringStreamName.str(),
-                                                            0.0f,
-                                                            1.0f,
-                                                            0.3f));
-        stringStreamTag.str(std::string());
-        stringStreamName.str(std::string());
-        stringStreamTag << "panBeam" << (beamIdx+1);
-        stringStreamName << "Pan beam " << (beamIdx+1);
-        auto defaultPan = beamIdx == 0 ?  -0.5 : 0.5;
-        addParameter(panBeam[beamIdx] = new AudioParameterFloat(stringStreamTag.str(),
-                                                                stringStreamName.str(),
-                                                          -1.0f,
-                                                          1.0f,
-                                                          defaultPan));
-        stringStreamTag.str(std::string());
-        stringStreamName.str(std::string());
-        stringStreamTag << "levelBeam" << (beamIdx+1);
-        stringStreamName << "Level beam " << (beamIdx+1);
-        addParameter(levelBeam[beamIdx] = new AudioParameterFloat(stringStreamTag.str(),
-                                                                 stringStreamName.str(),
-                                                           -10.0f,
-                                                           10.0f,
-                                                           0.0f));
-        
-        stringStreamTag.str(std::string());
-        stringStreamName.str(std::string());
-        stringStreamTag << "muteBeam" << (beamIdx+1);
-        stringStreamName << "Mute beam " << (beamIdx+1);
-        addParameter(muteBeam[beamIdx] = new AudioParameterBool(stringStreamTag.str(),
-                                                                 stringStreamName.str(),
-                                                                 false));
-        
-    }
+    sampleRate = sampleRate_;
+    maximumExpectedSamplesPerBlock = maximumExpectedSamplesPerBlock_;
     
-    stringStreamTag.str(std::string());
-    stringStreamName.str(std::string());
-    stringStreamTag << "gainMic";
-    stringStreamName << "Gain mic";
-    addParameter(micGain = new AudioParameterFloat(stringStreamTag.str(),
-                                                              stringStreamName.str(),
-                                                              0.0f,
-                                                              40.0f,
-                                                              20.0f));
+    /** Number of active input channels */
+    numActiveInputChannels = getTotalNumInputChannels();
     
-    stringStreamTag.str(std::string());
-    stringStreamName.str(std::string());
-    stringStreamTag << "hpf";
-    stringStreamName << "HPF mic";
-    addParameter(hpfFreq = new AudioParameterFloat(stringStreamTag.str(),
-                                                   stringStreamName.str(),
-                                                   20.0f,
-                                                   500.0f,
-                                                   250.0f));
-}
-
-JucebeamAudioProcessor::~JucebeamAudioProcessor()
-{
-}
-
-//==============================================================================
-const String JucebeamAudioProcessor::getName() const
-{
-    return JucePlugin_Name;
-}
-
-bool JucebeamAudioProcessor::acceptsMidi() const
-{
-   #if JucePlugin_WantsMidiInput
-    return true;
-   #else
-    return false;
-   #endif
-}
-
-bool JucebeamAudioProcessor::producesMidi() const
-{
-   #if JucePlugin_ProducesMidiOutput
-    return true;
-   #else
-    return false;
-   #endif
-}
-
-bool JucebeamAudioProcessor::isMidiEffect() const
-{
-   #if JucePlugin_IsMidiEffect
-    return true;
-   #else
-    return false;
-   #endif
-}
-
-double JucebeamAudioProcessor::getTailLengthSeconds() const
-{
-    return 0.0;
-}
-
-int JucebeamAudioProcessor::getNumPrograms()
-{
-    return 1;   // NB: some hosts don't cope very well if you tell them there are 0 programs,
-                // so this should be at least 1, even if you're not really implementing programs.
-}
-
-int JucebeamAudioProcessor::getCurrentProgram()
-{
-    return 0;
-}
-
-void JucebeamAudioProcessor::setCurrentProgram (int index)
-{
-}
-
-const String JucebeamAudioProcessor::getProgramName (int index)
-{
-    return {};
-}
-
-void JucebeamAudioProcessor::changeProgramName (int index, const String& newName)
-{
-}
-
-#ifndef JucePlugin_PreferredChannelConfigurations
-bool JucebeamAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const{
+    /** Number of active output channels */
+    numActiveOutputChannels = jmin(numBeams,getTotalNumOutputChannels());
     
-    int numInputChannels = layouts.getNumChannels(true,0);
-    int numOutputChannels = layouts.getNumChannels(false, 0);
-    if( (numInputChannels >= 2) && (numInputChannels <= 16) && (numOutputChannels >= 2) && (numOutputChannels <= 16) ){
-        return true;
-    }
-    return false;
-}
-#endif
-
-//==============================================================================
-void JucebeamAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
-{
+    /** Initialize the input gain */
+    micGain.reset();
+    micGain.prepare({sampleRate, static_cast<uint32>(maximumExpectedSamplesPerBlock),numActiveInputChannels});
+    micGain.setGainDecibels(micGainParam->get());
+    micGain.setRampDurationSeconds(gainTimeConst);
     
-    auto numInputChannels = getTotalNumInputChannels();
-    auto numOutputChannels = getTotalNumOutputChannels();
+    /** Initialize the High Pass Filters */
+    iirHPFfilters.clear();
+    iirHPFfilters.resize(numActiveInputChannels);
+    prevHpfFreq = 0;
     
-    size_t fftOrder = roundToInt (std::log2 (FIR_LEN + samplesPerBlock - 1));
+    /** Initialize the beamformer */
+    beamformer->prepareToPlay(sampleRate, maximumExpectedSamplesPerBlock, numActiveInputChannels);
     
-    // Initialize FFT
-    fft = std::make_unique<dsp::FFT>(fftOrder);
+    /** Initialize beams' buffer  */
+    beamBuffer.setSize(numBeams, maximumExpectedSamplesPerBlock);
     
-    // Initialize firFFTs (already prepared for convolution)
-#ifdef BEAMSTEERING_ALG_IDEAL
-    firSteeringFFT = prepareIR(readFIR(firIR::firDASideal_dat,firIR::firDASideal_datSize));
-#else
-    firFFT = prepareIR(readFIR(firIR::firDASmeasured_dat,firIR::firDASmeasured_datSize));
-#endif
-    /* With Joe we decided that the way we want the interface to behave is to have
-     the eStick facing the user, mic 1 on the left, thus we have to reverse the order of the filters.
-     */
-    std::reverse(firSteeringFFT.begin(), firSteeringFFT.end());
-    firBeamwidthFFT = prepareIR(readFIR(firIR::firBeamwidth_dat,firIR::firBeamwidth_datSize));
-    
-    // Allocate beams output buffers
-    beamsBuffer = AudioBuffer<float>(getTotalNumOutputChannels(),getFftSize());
-    beamsBuffer.clear();
-    
-    // Allocate single channel buffers
-    {
-        GenericScopedLock<SpinLock> lock(fftInputLock);
-        fftInput = AudioBuffer<float>(numInputChannels,2*getFftSize());
-        fftInput.clear();
-    }
-    
-    fftBuffer = AudioBuffer<float>(1,2*getFftSize());
-    fftBuffer.clear();
-    
-    fftOutput = AudioBuffer<float>(1,2*getFftSize());
-    fftOutput.clear();
-    
-    
-    // Initialize gain ramps
-    commonGain.reset();
-    dsp::ProcessSpec spec;
-    spec.maximumBlockSize = samplesPerBlock;
-    spec.sampleRate = sampleRate;
-    spec.numChannels = getTotalNumOutputChannels();
-    commonGain.prepare(spec);
-    commonGain.setGainDecibels(0);
-    commonGain.setRampDurationSeconds(0.1);
-    
-    spec.numChannels = 1;
-    for (auto beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx){
+    /** Initialize beam level gains */
+    for (auto beamIdx = 0; beamIdx < numBeams; ++beamIdx){
         beamGain[beamIdx].reset();
-        beamGain[beamIdx].prepare(spec);
-        beamGain[beamIdx].setGainDecibels(0);
-        beamGain[beamIdx].setRampDurationSeconds(0.1);
+        beamGain[beamIdx].prepare({sampleRate, static_cast<uint32>(maximumExpectedSamplesPerBlock),1});
+        beamGain[beamIdx].setGainDecibels(levelBeamParam[beamIdx]->get());
+        beamGain[beamIdx].setRampDurationSeconds(gainTimeConst);
     }
     
-    // Initialize HPF
-    iirHPFfilters.clear();
-    iirCoeffHPF = IIRCoefficients::makeHighPass(getSampleRate(), hpfFreq->get());
+    /** initialize meters */
+    inputMeterDecay = std::make_unique<MeterDecay>(sampleRate,metersDecay,maximumExpectedSamplesPerBlock,numActiveInputChannels);
+    inputMeters.resize(numActiveInputChannels);
+    beamMeterDecay = std::make_unique<MeterDecay>(sampleRate,metersDecay,maximumExpectedSamplesPerBlock,numBeams);
+    beamMeters.resize(numBeams);
     
-    iirHPFfilters.resize(numInputChannels);
-    for (auto idx = 0; idx < numInputChannels; ++idx)
-    {
-        iirHPFfilters[idx] = std::make_unique<IIRFilter>();
-        iirHPFfilters[idx]->setCoefficients(iirCoeffHPF);
-    }
-    
-    // Meters
-    inputMeterDecay = std::make_unique<MeterDecay>(sampleRate,METERS_DECAY,samplesPerBlock,numInputChannels);
-    inputMeters.resize(numInputChannels);
-    beamMeterDecay = std::make_unique<MeterDecay>(sampleRate,METERS_DECAY,samplesPerBlock,numOutputChannels);
-    beamMeters.resize(NUM_BEAMS);
-
-}
-
-void JucebeamAudioProcessor::releaseResources()
-{
-    // When playback stops, you can use this as an opportunity to free up any
-    // spare memory, etc.
-    iirHPFfilters.clear();
+    resourcesAllocated = true;
     
 }
 
-void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& midiMessages)
+void EbeamerAudioProcessor::releaseResources()
 {
+ 
+    GenericScopedLock<SpinLock> lock(processingLock);
+    
+    resourcesAllocated = false;
+
+    /** Clear beam buffer */
+    beamBuffer.setSize(numBeams, 0);
+    
+    /** Clear the HPF */
+    iirHPFfilters.clear();
+    
+    /** Clear the Beamformer */
+    beamformer->releaseResources();
+}
+
+void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& midiMessages)
+{
+    
+    const auto startTick = Time::getHighResolutionTicks();
+    
+    GenericScopedLock<SpinLock> lock(processingLock);
+    
+    /** If resources are not allocated this is an out-of-order request */
+    if (!resourcesAllocated){
+        jassertfalse;
+    }
+    
     ScopedNoDenormals noDenormals;
-    auto totalNumInputChannels  = getTotalNumInputChannels();
-    auto totalNumOutputChannels = getTotalNumOutputChannels();
     
-    int blockNumSamples = buffer.getNumSamples();
-    
-    // HPF filtering
-    if(prevHpfFreq != hpfFreq->get()){
-        iirCoeffHPF = IIRCoefficients::makeHighPass(getSampleRate(), hpfFreq->get());
-        prevHpfFreq = hpfFreq->get();
-        for (auto idx = 0; idx < totalNumInputChannels; ++idx)
-        {
-            iirHPFfilters[idx]->setCoefficients(iirCoeffHPF);
-        }
-    }
-    for (int inChannel = 0; inChannel < totalNumInputChannels; ++inChannel)
+    /**Apply input gain directly on input buffer  */
+    micGain.setGainDecibels(micGainParam->get());
     {
-        iirHPFfilters[inChannel]->processSamples(buffer.getWritePointer(inChannel), blockNumSamples);
-    }
-    
-    // Mic Gain
-    commonGain.setGainDecibels(micGain->get());
-    {
-        auto block = juce::dsp::AudioBlock<float> (buffer);
-        auto contextToUse = juce::dsp::ProcessContextReplacing<float> (block);
-        commonGain.process(contextToUse);
+        auto block = juce::dsp::AudioBlock<float>(buffer).getSubsetChannelBlock(0, numActiveInputChannels);
+        auto context = juce::dsp::ProcessContextReplacing<float> (block);
+        micGain.process(context);
     }
     
     // Mic meter
@@ -327,152 +143,131 @@ void JucebeamAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
         inputMeters = inputMeterDecay->get();
     }
     
-    // Compute and store fft for all input channels, so that DOA thread can operate
-    
-    {
-        GenericScopedLock<SpinLock> lock(fftInputLock);
-        fftInput.clear();
-        for (int inChannel = 0; inChannel < totalNumInputChannels; ++inChannel)
-        {
-            fftInput.copyFrom(inChannel, 0, buffer, inChannel, 0, blockNumSamples);
-            fft -> performRealOnlyForwardTransform(fftInput.getWritePointer(inChannel));
-            prepareForConvolution(fftInput.getWritePointer(inChannel),getFftSize());
-        }
-        newFftInputDataAvailable = true;
-    }
-    
-    // Per input-channel processing
-    for (int inChannel = 0; inChannel < totalNumInputChannels; ++inChannel)
-    {
-        
-        // Beam dependent processing
-        for (int beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx)
-        {
-            fftBuffer.copyFrom(0, 0, fftInput, inChannel, 0, fftInput.getNumSamples());
-            
-            // Determine steering index
-            int steeringIdx = roundToInt(((steeringBeam[beamIdx]->get() + 1)/2.)*(firSteeringFFT.size()-1));
-            
-            // Determine beam width index
-            int beamWidthIdx = roundToInt(widthBeam[beamIdx]->get()*(firBeamwidthFFT.size()-1));
-            
-            // Beam width processing
-            fftOutput.clear();
-            convolutionProcessingAndAccumulate(fftBuffer.getReadPointer(0),firBeamwidthFFT[beamWidthIdx][inChannel].data(),fftOutput.getWritePointer(0),getFftSize());
-            
-            // Beam steering processing
-            fftBuffer.copyFrom(0, 0, fftOutput, 0, 0, fftOutput.getNumSamples());
-            fftOutput.clear();
-            convolutionProcessingAndAccumulate(fftBuffer.getReadPointer(0),firSteeringFFT[steeringIdx][inChannel].data(),fftOutput.getWritePointer(0),getFftSize());
-            
-            // FIR post processing
-            updateSymmetricFrequencyDomainData(fftOutput.getWritePointer(0),getFftSize());
-            
-            // Inverse FFT
-            fft -> performRealOnlyInverseTransform(fftOutput.getWritePointer(0));
-            
-            // OLA
-            beamsBuffer.addFrom(beamIdx, 0, fftOutput.getReadPointer(0), getFftSize());
-                
+    /** Renew IIR coefficient if cut frequency changed */
+    if(prevHpfFreq != hpfFreqParam->get()){
+        iirCoeffHPF = IIRCoefficients::makeHighPass(sampleRate, hpfFreqParam->get());
+        prevHpfFreq = hpfFreqParam->get();
+        for (auto& iirHPFfilter : iirHPFfilters){
+            iirHPFfilter.setCoefficients(iirCoeffHPF);
         }
     }
-    
-    // Beam gain
-    {
-        for (auto beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx)
-        {
-            auto block = dsp::AudioBlock<float> (beamsBuffer);
-            beamGain[beamIdx].setGainDecibels(levelBeam[beamIdx]->get());
-            {
-                auto beamBlock = block.getSubsetChannelBlock(beamIdx, 1).getSubBlock(0, blockNumSamples);
-                auto contextToUse = dsp::ProcessContextReplacing<float> (beamBlock);
-                beamGain[beamIdx].process(contextToUse);
-            }
-        }
+
+    /**Apply HPF directly on input buffer  */
+    for (auto inChannel = 0; inChannel < numActiveInputChannels; ++inChannel){
+        iirHPFfilters[inChannel].processSamples(buffer.getWritePointer(inChannel), buffer.getNumSamples());
     }
-    
-    beamMeterDecay->push(beamsBuffer);
-    
+
+    /** Set beams parameters */
+    for (auto beamIdx = 0;beamIdx< numBeams; beamIdx++){
+        BeamParameters beamParams = {steeringBeamParam[beamIdx]->get(),widthBeamParam[beamIdx]->get()};
+        beamformer->setBeamParameters(beamIdx, beamParams);
+    }
+
+    /** Call the beamformer  */
+    beamformer->processBlock(buffer);
+
+    /** Retrieve beamformer outputs */
+    beamformer->getBeams(beamBuffer);
+
+    /** Apply beams mute and volume */
+    for (auto beamIdx = 0; beamIdx < numBeams; ++beamIdx){
+        if (muteBeamParam[beamIdx]->get() == false){
+            beamGain[beamIdx].setGainDecibels(levelBeamParam[beamIdx]->get());
+        }else{
+            beamGain[beamIdx].setGainLinear(0);
+        }
+        auto block = dsp::AudioBlock<float>(beamBuffer).getSubsetChannelBlock(beamIdx, 1).getSubBlock(0, buffer.getNumSamples());
+        auto contextToUse = dsp::ProcessContextReplacing<float> (block);
+        beamGain[beamIdx].process(contextToUse);
+    }
+
+    /** Measure beam output volume */
+    beamMeterDecay->push(beamBuffer);
     {
         GenericScopedLock<SpinLock> lock(beamMetersLock);
         beamMeters = beamMeterDecay->get();
     }
-    
-    // Sum beams in output channels
-    for (int outChannel = 0; outChannel < totalNumOutputChannels; ++outChannel)
-    {
-        // Clean output buffer
-        buffer.clear(outChannel,0,blockNumSamples);
-        // Sum the contributes from each beam
-        for (int beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx){
-            if (muteBeam[beamIdx]->get() == false){
-                float channelBeamGain = panToLinearGain(panBeam[beamIdx],outChannel==0);
-                // Add to buffer
-                buffer.addFrom(outChannel, 0, beamsBuffer, beamIdx, 0, blockNumSamples, channelBeamGain);
-            }
+
+    /** Clear buffer */
+    buffer.clear();
+
+    /** Sum beams in output channels */
+    for (int outChannel = 0; outChannel < numActiveOutputChannels; ++outChannel){
+        /** Sum the contributes from each beam */
+        for (int beamIdx = 0; beamIdx < numBeams; ++beamIdx){
+            auto channelBeamGain = panToLinearGain(panBeamParam[beamIdx],outChannel==0);
+            buffer.addFrom(outChannel, 0, beamBuffer, beamIdx, 0, buffer.getNumSamples(), channelBeamGain);
         }
     }
     
-    // Shift beam OLA buffer
-    for (int beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx){
-        FloatVectorOperations::copy(beamsBuffer.getWritePointer(beamIdx), &(beamsBuffer.getReadPointer(beamIdx)[blockNumSamples]), beamsBuffer.getNumSamples()-blockNumSamples);
-        beamsBuffer.clear(beamIdx, beamsBuffer.getNumSamples()-blockNumSamples, blockNumSamples);
+    /** Update load */
+    {
+        const float elapsedTime = Time::highResolutionTicksToSeconds(Time::getHighResolutionTicks() - startTick);
+        const float curLoad = elapsedTime / (maximumExpectedSamplesPerBlock/sampleRate);
+        GenericScopedLock<SpinLock> lock(loadLock);
+        load = (load*(1-loadAlpha))+(curLoad*loadAlpha);
     }
+    
 }
 
 //==============================================================================
-bool JucebeamAudioProcessor::hasEditor() const
-{
-    return true; // (change this to false if you choose to not supply an editor)
+float EbeamerAudioProcessor::getAverageLoad() const{
+    GenericScopedLock<SpinLock> lock(loadLock);
+    return load;
 }
 
-AudioProcessorEditor* JucebeamAudioProcessor::createEditor()
+//==============================================================================
+AudioProcessorEditor* EbeamerAudioProcessor::createEditor()
 {
     return new JucebeamAudioProcessorEditor (*this);
 }
+bool EbeamerAudioProcessor::hasEditor() const
+{
+    return true;
+}
 
 //==============================================================================
-void JucebeamAudioProcessor::getStateInformation (MemoryBlock& destData)
+void EbeamerAudioProcessor::getStateInformation (MemoryBlock& destData)
 {
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
     std::ostringstream stringStreamTag;
     std::unique_ptr<XmlElement> xml (new XmlElement ("eBeamer"));
-    for (uint8 beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx){
+    for (uint8 beamIdx = 0; beamIdx < numBeams; ++beamIdx){
         stringStreamTag.str(std::string());
         stringStreamTag << "steerBeam" << (beamIdx+1);
-        xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(steeringBeam[beamIdx]));
+        xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(steeringBeamParam[beamIdx]));
         
         stringStreamTag.str(std::string());
         stringStreamTag << "widthBeam" << (beamIdx+1);
-        xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(widthBeam[beamIdx]));
+        xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(widthBeamParam[beamIdx]));
         
         stringStreamTag.str(std::string());
         stringStreamTag << "panBeam" << (beamIdx+1);
-        xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(panBeam[beamIdx]));
+        xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(panBeamParam[beamIdx]));
         
         stringStreamTag.str(std::string());
         stringStreamTag << "levelBeam" << (beamIdx+1);
-        xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(levelBeam[beamIdx]));
-
+        xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(levelBeamParam[beamIdx]));
+        
         stringStreamTag.str(std::string());
         stringStreamTag << "muteBeam" << (beamIdx+1);
-        xml->setAttribute(Identifier(stringStreamTag.str()), (bool) *(muteBeam[beamIdx]));
+        xml->setAttribute(Identifier(stringStreamTag.str()), (bool) *(muteBeamParam[beamIdx]));
         
     }
     stringStreamTag.str(std::string());
     stringStreamTag << "hpfFreq";
-    xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(hpfFreq));
+    xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(hpfFreqParam));
     
     stringStreamTag.str(std::string());
     stringStreamTag << "gainMic";
-    xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(micGain));
+    xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(micGainParam));
     
     copyXmlToBinary (*xml, destData);
 }
 
-void JucebeamAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
+void EbeamerAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
@@ -480,35 +275,35 @@ void JucebeamAudioProcessor::setStateInformation (const void* data, int sizeInBy
     std::unique_ptr<XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
     if (xmlState.get() != nullptr){
         if (xmlState->hasTagName ("eBeamer")){
-            for (uint8 beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx){
+            for (uint8 beamIdx = 0; beamIdx < numBeams; ++beamIdx){
                 stringStreamTag.str(std::string());
                 stringStreamTag << "steerBeam" << (beamIdx+1);
-                *(steeringBeam[beamIdx]) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 0.0);
+                *(steeringBeamParam[beamIdx]) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 0.0);
                 
                 stringStreamTag.str(std::string());
                 stringStreamTag << "widthBeam" << (beamIdx+1);
-                *(widthBeam[beamIdx]) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 0.0);
+                *(widthBeamParam[beamIdx]) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 0.0);
                 
                 stringStreamTag.str(std::string());
                 stringStreamTag << "panBeam" << (beamIdx+1);
-                *(panBeam[beamIdx]) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 0.0);
+                *(panBeamParam[beamIdx]) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 0.0);
                 
                 stringStreamTag.str(std::string());
                 stringStreamTag << "levelBeam" << (beamIdx+1);
-                *(levelBeam[beamIdx]) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 0.0);
+                *(levelBeamParam[beamIdx]) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 0.0);
                 
                 stringStreamTag.str(std::string());
                 stringStreamTag << "muteBeam" << (beamIdx+1);
-                *(muteBeam[beamIdx]) = xmlState->getBoolAttribute(Identifier(stringStreamTag.str()), false);
+                *(muteBeamParam[beamIdx]) = xmlState->getBoolAttribute(Identifier(stringStreamTag.str()), false);
                 
             }
             stringStreamTag.str(std::string());
             stringStreamTag << "hpfFreq";
-            *(hpfFreq) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 250.0);
+            *(hpfFreqParam) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 250.0);
             
             stringStreamTag.str(std::string());
             stringStreamTag << "gainMic";
-            *(micGain) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 20.0);
+            *(micGainParam) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 20.0);
         }
     }
 }
@@ -518,93 +313,172 @@ void JucebeamAudioProcessor::setStateInformation (const void* data, int sizeInBy
 // This creates new instances of the plugin..
 AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
-    return new JucebeamAudioProcessor();
-}
-
-//=======================================================
-std::vector<std::vector<std::vector<float>>> JucebeamAudioProcessor::prepareIR(const std::vector<std::vector<std::vector<float>>> fir)
-{
-    std::vector<std::vector<std::vector<float>>> firFFT(fir.size());
-    for (size_t angleIdx = 0; angleIdx < fir.size(); ++angleIdx)
-    {
-        std::vector<std::vector<float>> firFFTAngle(fir[angleIdx].size());
-        for (size_t micIdx = 0; micIdx < fir[angleIdx].size(); ++micIdx)
-        {
-            std::vector<float> firFFTAngleMic(2*getFftSize());
-            FloatVectorOperations::clear(firFFTAngleMic.data(), 2*getFftSize());
-            FloatVectorOperations::copy(firFFTAngleMic.data(), fir[angleIdx][micIdx].data() , static_cast<int>(fir[angleIdx][micIdx].size()));
-            fft -> performRealOnlyForwardTransform(firFFTAngleMic.data());
-            prepareForConvolution(firFFTAngleMic.data(),getFftSize());
-            firFFTAngle [micIdx] = firFFTAngleMic;
-        }
-        firFFT[angleIdx] = firFFTAngle;
-    }
-    
-    return firFFT;
-}
-
-//========== copied from juce_Convolution.cpp ============
-
-/** After each FFT, this function is called to allow convolution to be performed with only 4 SIMD functions calls. */
-void JucebeamAudioProcessor::prepareForConvolution (float *samples, int fftSize) noexcept
-{
-    auto FFTSizeDiv2 = fftSize / 2;
-    
-    for (size_t i = 0; i < FFTSizeDiv2; i++)
-        samples[i] = samples[2 * i];
-    
-    samples[FFTSizeDiv2] = 0;
-    
-    for (size_t i = 1; i < FFTSizeDiv2; i++)
-        samples[i + FFTSizeDiv2] = -samples[2 * (fftSize - i) + 1];
-}
-
-/** Does the convolution operation itself only on half of the frequency domain samples. */
-void JucebeamAudioProcessor::convolutionProcessingAndAccumulate (const float *input, const float *impulse, float *output, int fftSize)
-{
-    auto FFTSizeDiv2 = fftSize / 2;
-    
-    FloatVectorOperations::addWithMultiply      (output, input, impulse, static_cast<int> (FFTSizeDiv2));
-    FloatVectorOperations::subtractWithMultiply (output, &(input[FFTSizeDiv2]), &(impulse[FFTSizeDiv2]), static_cast<int> (FFTSizeDiv2));
-    
-    FloatVectorOperations::addWithMultiply      (&(output[FFTSizeDiv2]), input, &(impulse[FFTSizeDiv2]), static_cast<int> (FFTSizeDiv2));
-    FloatVectorOperations::addWithMultiply      (&(output[FFTSizeDiv2]), &(input[FFTSizeDiv2]), impulse, static_cast<int> (FFTSizeDiv2));
-    
-    output[fftSize] += input[fftSize] * impulse[fftSize];
-}
-
-/** Undo the re-organization of samples from the function prepareForConvolution.
- Then, takes the conjugate of the frequency domain first half of samples, to fill the
- second half, so that the inverse transform will return real samples in the time domain.
- */
-void JucebeamAudioProcessor::updateSymmetricFrequencyDomainData (float* samples, int fftSize) noexcept
-{
-    auto FFTSizeDiv2 = fftSize / 2;
-    
-    for (size_t i = 1; i < FFTSizeDiv2; i++)
-    {
-        samples[2 * (fftSize - i)] = samples[i];
-        samples[2 * (fftSize - i) + 1] = -samples[FFTSizeDiv2 + i];
-    }
-    
-    samples[1] = 0.f;
-    
-    for (size_t i = 1; i < FFTSizeDiv2; i++)
-    {
-        samples[2 * i] = samples[2 * (fftSize - i)];
-        samples[2 * i + 1] = -samples[2 * (fftSize - i) + 1];
-    }
+    return new EbeamerAudioProcessor();
 }
 
 //==============================================================================
 // Meters
 
-float JucebeamAudioProcessor::getBeamMeter(int channel){
+float EbeamerAudioProcessor::getBeamMeter(int channel){
     GenericScopedLock<SpinLock> lock(beamMetersLock);
     return beamMeters[channel];
 }
 
-std::vector<float> JucebeamAudioProcessor::getInputMeters(){
+std::vector<float> EbeamerAudioProcessor::getInputMeters(){
     GenericScopedLock<SpinLock> lock(inputMetersLock);
     return inputMeters;
+}
+
+//==============================================================================
+// Beamformer
+std::unique_ptr<Beamformer>& EbeamerAudioProcessor::getBeamformer(){
+    return beamformer;
+}
+
+//==============================================================================
+// Helper functions
+void EbeamerAudioProcessor::initializeParameters() {
+    
+    // Values in dB
+    addParameter(micGainParam = new AudioParameterFloat("gainMic", //tag
+                                                        "Mic gain", //name
+                                                        0.0f, //min
+                                                        40.0f, //max
+                                                        20.0f //default
+                                                        ));
+    
+    // Values in Hz
+    addParameter(hpfFreqParam = new AudioParameterFloat("hpf", //tag
+                                                        "HPF",
+                                                        20.0f, //min
+                                                        500.0f, //max
+                                                        250.0f //default
+                                                        ));
+    
+    {
+        std::ostringstream ssTag;
+        std::ostringstream ssName;
+        for (auto beamIdx = 0; beamIdx < numBeams; ++beamIdx){
+            ssTag.str(std::string());
+            ssName.str(std::string());
+            ssTag << "steerBeam" << (beamIdx+1);
+            ssName << "Steering beam " << (beamIdx+1);
+            auto defaultDirection = beamIdx == 0 ?  -0.5 : 0.5;
+            addParameter(steeringBeamParam[beamIdx] = new AudioParameterFloat(ssTag.str(), //tag
+                                                                              ssName.str(), //name
+                                                                              -1.0f, //min
+                                                                              1.0f, //max
+                                                                              defaultDirection //default
+                                                                              ));
+            ssTag.str(std::string());
+            ssName.str(std::string());
+            ssTag << "widthBeam" << (beamIdx+1);
+            ssName << "Width beam " << (beamIdx+1);
+            addParameter(widthBeamParam[beamIdx] = new AudioParameterFloat(ssTag.str(), //tag
+                                                                           ssName.str(), //name
+                                                                           0.0f, //min
+                                                                           1.0f,//max
+                                                                           0.3f//default
+                                                                           ));
+            ssTag.str(std::string());
+            ssName.str(std::string());
+            ssTag << "panBeam" << (beamIdx+1);
+            ssName << "Pan beam " << (beamIdx+1);
+            auto defaultPan = beamIdx == 0 ?  -0.5 : 0.5;
+            addParameter(panBeamParam[beamIdx] = new AudioParameterFloat(ssTag.str(), //tag
+                                                                         ssName.str(), //name
+                                                                         -1.0f, //min
+                                                                         1.0f, //max
+                                                                         defaultPan //default
+                                                                         ));
+            ssTag.str(std::string());
+            ssName.str(std::string());
+            ssTag << "levelBeam" << (beamIdx+1);
+            ssName << "Level beam " << (beamIdx+1);
+            addParameter(levelBeamParam[beamIdx] = new AudioParameterFloat(ssTag.str(), //tag
+                                                                           ssName.str(),
+                                                                           -10.0f, //min
+                                                                           10.0f, //max
+                                                                           0.0f //default
+                                                                           ));
+            
+            ssTag.str(std::string());
+            ssName.str(std::string());
+            ssTag << "muteBeam" << (beamIdx+1);
+            ssName << "Mute beam " << (beamIdx+1);
+            addParameter(muteBeamParam[beamIdx] = new AudioParameterBool(ssTag.str(), //tag
+                                                                         ssName.str(), //name
+                                                                         false //default
+                                                                         ));
+            
+        }
+    }
+    
+}
+
+//==============================================================================
+// Unchanged JUCE default functions
+EbeamerAudioProcessor::~EbeamerAudioProcessor()
+{
+}
+
+const String EbeamerAudioProcessor::getName() const
+{
+    return JucePlugin_Name;
+}
+
+bool EbeamerAudioProcessor::acceptsMidi() const
+{
+#if JucePlugin_WantsMidiInput
+    return true;
+#else
+    return false;
+#endif
+}
+
+bool EbeamerAudioProcessor::producesMidi() const
+{
+#if JucePlugin_ProducesMidiOutput
+    return true;
+#else
+    return false;
+#endif
+}
+
+bool EbeamerAudioProcessor::isMidiEffect() const
+{
+#if JucePlugin_IsMidiEffect
+    return true;
+#else
+    return false;
+#endif
+}
+
+double EbeamerAudioProcessor::getTailLengthSeconds() const
+{
+    return 0.0;
+}
+
+int EbeamerAudioProcessor::getNumPrograms()
+{
+    return 1;   // NB: some hosts don't cope very well if you tell them there are 0 programs,
+    // so this should be at least 1, even if you're not really implementing programs.
+}
+
+int EbeamerAudioProcessor::getCurrentProgram()
+{
+    return 0;
+}
+
+void EbeamerAudioProcessor::setCurrentProgram (int index)
+{
+}
+
+const String EbeamerAudioProcessor::getProgramName (int index)
+{
+    return {};
+}
+
+void EbeamerAudioProcessor::changeProgramName (int index, const String& newName)
+{
 }
