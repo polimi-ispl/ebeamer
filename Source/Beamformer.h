@@ -184,7 +184,7 @@ private:
     AudioBuffer<float> beamBuffer;
     
     /** FIR coefficients update alpha */
-    const float alpha = 0.05;
+    const float alpha = 0.02;
     
     /** Microphones configuration */
     MicConfig micConfig = LMA_1ESTICK;
