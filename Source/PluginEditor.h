@@ -57,8 +57,12 @@ class JucebeamAudioProcessorEditor  : public AudioProcessorEditor,
                                       public ComboBox::Listener
 {
 public:
+    
+    typedef AudioProcessorValueTreeState::SliderAttachment SliderAttachment;
+    typedef AudioProcessorValueTreeState::ButtonAttachment ButtonAttachment;
+    typedef AudioProcessorValueTreeState::ComboBoxAttachment ComboBoxAttachment;
 
-    JucebeamAudioProcessorEditor (EbeamerAudioProcessor&);
+    JucebeamAudioProcessorEditor (EbeamerAudioProcessor&,AudioProcessorValueTreeState& v);
     ~JucebeamAudioProcessorEditor();
 
     //==============================================================================
@@ -66,63 +70,75 @@ public:
     void resized() override;
 
 private:
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JucebeamAudioProcessorEditor);
     
     EbeamerAudioProcessor& processor;
+    AudioProcessorValueTreeState& valueTreeState;
 
-    // Project specific
-
+    //==============================================================================
     SceneComponent scene;
     
-    Label labelBeam1;
-    Label labelBeam2;
-
-    Slider steeringBeam1Slider;
-    Slider steeringBeam2Slider;
-
+    //==============================================================================
     Label steerLabel;
+    Label steeringBeam1Label, steeringBeam2Label;
+    Slider steeringBeam1Slider, steeringBeam2Slider;
+    std::unique_ptr<SliderAttachment> steeringBeam1SliderAttachment, steeringBeam2SliderAttachment;
 
+    //==============================================================================
     Label widthLabel;
-    Slider widthBeam1Knob;
-    Slider widthBeam2Knob;
-
+    Slider widthBeam1Knob, widthBeam2Knob;
+    std::unique_ptr<SliderAttachment> widthBeam1KnobAttachment, widthBeam2KnobAttachment;
+    
+    //==============================================================================
     Label panLabel;
-    PanSlider panBeam1Knob;
-    PanSlider panBeam2Knob;
+    PanSlider panBeam1Knob, panBeam2Knob;
+    std::unique_ptr<SliderAttachment> panBeam1KnobAttachment, panBeam2KnobAttachment;
 
+    //==============================================================================
     Label levelLabel;
-    DecibelSlider levelBeam1Knob;
-    DecibelSlider levelBeam2Knob;
+    DecibelSlider levelBeam1Knob, levelBeam2Knob;
+    std::unique_ptr<SliderAttachment> levelBeam1KnobAttachment, levelBeam2KnobAttachment;
 
+    //==============================================================================
     Label muteLabel;
-    TextButton beam1MuteButton;
-    TextButton beam2MuteButton;
+    TextButton beam1MuteButton, beam2MuteButton;
+    std::unique_ptr<ButtonAttachment> beam1MuteButtonAttachment, beam2MuteButtonAttachment;
     
+    //==============================================================================
     MultiChannelLedBar inputMeter;
-    SingleChannelLedBar beam1Meter;
-    SingleChannelLedBar beam2Meter;
+    SingleChannelLedBar beam1Meter, beam2Meter;
     
+    //==============================================================================
     Label hpfLabel;
     FrequencySlider hpfSlider;
+    std::unique_ptr<SliderAttachment> hpfSliderAttachment;
     
+    //==============================================================================
     Label gainLabel;
     DecibelSlider gainSlider;
+    std::unique_ptr<SliderAttachment> gainSliderAttachment;
     
-    //===============================================================
+    //==============================================================================
     /** CPU load component */
     CpuLoadComp cpuLoad;
     
+    //==============================================================================
     /** Swap side toggle component */
     Label frontToggleLabel;
     ToggleButton frontToggle;
+    std::unique_ptr<ButtonAttachment> frontToggleAttachment;
     
+    //==============================================================================
     /** Configuration selection combo */
-    ComboBox configCombo;
-    Label configComboLabel;
 
-    //===============================================================
+    Label configComboLabel;
+    ComboBox configCombo;
+    std::unique_ptr<ComboBoxAttachment> configComboLabelAttachment;
+
+    //==============================================================================
     void setMuteButtonColor(uint8 beamIdx);
     
-    // Appearance
+    //==============================================================================
     const std::vector<Colour> beamColours = {Colours::orangered,Colours::royalblue};
     
     // Callbacks
@@ -131,5 +147,4 @@ private:
     void buttonStateChanged(Button *button) override;
     void comboBoxChanged(ComboBox *combo) override;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JucebeamAudioProcessorEditor);
 };

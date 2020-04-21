@@ -48,15 +48,15 @@ public:
     
     //==============================================================================
     // VST parameters
-    AudioParameterFloat* steeringBeamParam[numBeams];
-    AudioParameterFloat* widthBeamParam[numBeams];
-    AudioParameterFloat* panBeamParam[numBeams];
-    AudioParameterFloat* levelBeamParam[numBeams];
-    AudioParameterBool*  muteBeamParam[numBeams];
-    AudioParameterFloat* micGainParam;
-    AudioParameterFloat* hpfFreqParam;
-    AudioParameterBool*  frontFacingParam;
-    AudioParameterChoice* configParam;
+    Value steeringBeamParam[numBeams];
+    Value widthBeamParam[numBeams];
+    Value panBeamParam[numBeams];
+    Value levelBeamParam[numBeams];
+    Value muteBeamParam[numBeams];
+    Value micGainParam;
+    Value hpfFreqParam;
+    Value frontFacingParam;
+    Value configParam;
     
     //==============================================================================
     // Buffer to allow external access to input signals FFT
@@ -90,10 +90,6 @@ public:
 private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EbeamerAudioProcessor)
-    
-    //==============================================================================
-    /* Initialize parameters accessible through DAW automation */
-    void initializeParameters();
     
     //==============================================================================
     /** Number of active input channels */
@@ -157,4 +153,14 @@ private:
     const float loadAlpha = 0.005;
     /** Load lock */
     SpinLock loadLock;
+    
+    //==============================================================================
+    /** Undo manager for parameters */
+    UndoManager undo;
+    
+    /** Processor parameters tree */
+    AudioProcessorValueTreeState parameters;
+    
+    
+    
 };

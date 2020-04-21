@@ -34,7 +34,7 @@ void TileComponent::paint(Graphics& g)
     path.lineTo(corners[0][1]);
     path.closeSubPath();
     
-    if (*(processor->frontFacingParam)){
+    if (processor->frontFacingParam.getValue()){
         path.applyTransform(AffineTransform::rotation(MathConstants<float>::pi,SCENE_WIDTH/2,SCENE_HEIGHT/2));
     }
     
@@ -217,7 +217,7 @@ void BeamComponent::paint(Graphics& g){
     path.applyTransform(AffineTransform::rotation( (MathConstants<float>::pi/2) * position));
     path.applyTransform(AffineTransform::translation(SCENE_WIDTH/2, SCENE_WIDTH/2));
     
-    if (*(processor->frontFacingParam)){
+    if (processor->frontFacingParam.getValue()){
         //path.applyTransform(AffineTransform::rotation(MathConstants<float>::pi,SCENE_WIDTH/2,SCENE_HEIGHT/2));
         path.applyTransform(AffineTransform::verticalFlip(SCENE_HEIGHT));
     }

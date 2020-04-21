@@ -54,15 +54,14 @@ std::vector<float> MeterDecay::get()
     return values;
 }
 
-float panToLinearGain(const AudioParameterFloat* gain, const bool isLeftChannel) {
+float panToLinearGain(float gain, bool isLeftChannel) {
     const float db_at0 = -4.5; //How many dB at each channel when pan is centered (0)
-    float gainParam = gain->get();
-    jassert(gainParam >= -1);
-    jassert(gainParam <= 1);
+    jassert(gain >= -1);
+    jassert(gain <= 1);
     float alpha = std::pow(10.,(db_at0/20.));
     if (isLeftChannel){
-        gainParam = -gainParam;
+        gain = -gain;
     }
-    float y = (0.5-alpha)*std::pow(gainParam,2.)+0.5*gainParam+alpha;
+    float y = (0.5-alpha)*std::pow(gain,2.)+0.5*gain+alpha;
     return y;
 }
