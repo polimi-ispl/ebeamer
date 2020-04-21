@@ -94,7 +94,7 @@ public:
     void paint(Graphics&) override;
     void resized() override;
     
-    void setProcessor(const EbeamerAudioProcessor * p);
+    void setProcessor(const EbeamerAudioProcessor * p, int beamId_);
     
     void move(float);
     void scale(float);
@@ -107,6 +107,13 @@ private:
     float position;
     float width;
     bool status;
+    
+    int beamId;
+    
+    std::atomic<float>* frontFacingParam;
+    std::atomic<float>* muteParam;
+    std::atomic<float>* widthParam;
+    std::atomic<float>* steerParam;
     
     const EbeamerAudioProcessor * processor;
     

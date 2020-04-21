@@ -210,3 +210,7 @@ Colour SingleChannelLedBar::thToColour(float th, bool active)
             return Colours::darkgreen;
     }
 }
+
+MuteButton::MuteButton(){
+    setClickingTogglesState (true);
+}

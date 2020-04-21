@@ -7,7 +7,8 @@
 //==============================================================================
 
 
-class EbeamerAudioProcessor  : public AudioProcessor
+class EbeamerAudioProcessor  : public AudioProcessor,
+                               public AudioProcessorValueTreeState::Listener
 {
 public:
     //==============================================================================
@@ -47,25 +48,6 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     
     //==============================================================================
-    // VST parameters
-    AudioParameterFloat* steeringBeamParam[numBeams];
-    AudioParameterFloat* widthBeamParam[numBeams];
-    AudioParameterFloat* panBeamParam[numBeams];
-    AudioParameterFloat* levelBeamParam[numBeams];
-    AudioParameterBool*  muteBeamParam[numBeams];
-    AudioParameterFloat* micGainParam;
-    AudioParameterFloat* hpfFreqParam;
-    AudioParameterBool*  frontFacingParam;
-    AudioParameterChoice* configParam;
-    
-    //==============================================================================
-    // Buffer to allow external access to input signals FFT
-    FIR::AudioBufferFFT inputsFFT;
-    bool newFftInputDataAvailable = false;
-    SpinLock fftInputLock;
-    
-    
-    //==============================================================================
     // Meters
     float getBeamMeter(int channel);
     std::vector<float> getInputMeters();
@@ -76,7 +58,6 @@ public:
     
     //==============================================================================
     // Beamformer
-    std::unique_ptr<Beamformer>& getBeamformer();
     const std::unique_ptr<Beamformer>& getBeamformer() const;
     
     //==============================================================================
@@ -84,16 +65,11 @@ public:
     float getAverageLoad() const;
     
     //==============================================================================
-    /** Set a new microphone configuration */
-    void setMicConfig(const MicConfig& mc);
+    const AudioProcessorValueTreeState& getParams() const;
 
 private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EbeamerAudioProcessor)
-    
-    //==============================================================================
-    /* Initialize parameters accessible through DAW automation */
-    void initializeParameters();
     
     //==============================================================================
     /** Number of active input channels */
@@ -150,6 +126,10 @@ private:
     int maximumExpectedSamplesPerBlock = 4096;
     
     //==============================================================================
+    /** Set a new microphone configuration */
+    void setMicConfig(const MicConfig& mc);
+    
+    //==============================================================================
     
     /** Measured average load */
     float load = 0;
@@ -157,4 +137,26 @@ private:
     const float loadAlpha = 0.005;
     /** Load lock */
     SpinLock loadLock;
+    
+    //==============================================================================
+    /** Undo manager for parameters */
+    UndoManager undo;
+    
+    /** Processor parameters tree */
+    AudioProcessorValueTreeState parameters;
+    
+    //==============================================================================
+    // VST parameters
+    std::atomic<float>* steeringBeamParam[numBeams];
+    std::atomic<float>* widthBeamParam[numBeams];
+    std::atomic<float>* panBeamParam[numBeams];
+    std::atomic<float>* levelBeamParam[numBeams];
+    std::atomic<float>* muteBeamParam[numBeams];
+    std::atomic<float>* micGainParam;
+    std::atomic<float>* hpfFreqParam;
+    std::atomic<float>* frontFacingParam;
+    std::atomic<float>* configParam;
+    
+    void parameterChanged (const String &parameterID, float newValue) override;
+    
 };
