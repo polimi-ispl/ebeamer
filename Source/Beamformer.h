@@ -32,7 +32,12 @@ class Beamformer;
 class BeamformerDoa: public Timer{
 public:
 
-    BeamformerDoa(Beamformer& b,int numDoas_,float sampleRate,int numActiveInputChannels, int firLen, std::shared_ptr<dsp::FFT> fft_);
+    BeamformerDoa(Beamformer& b,
+                  int numDoas_,
+                  float sampleRate_,
+                  int numActiveInputChannels,
+                  int firLen,
+                  std::shared_ptr<dsp::FFT> fft_);
     ~BeamformerDoa();
     
     void timerCallback() override;
@@ -44,6 +49,9 @@ private:
     
     /** Number of directions of arrival */
     int numDoas;
+    
+    /** Sampling frequency [Hz] */
+    float sampleRate;
     
     /** FFT */
     std::shared_ptr<dsp::FFT> fft;
@@ -59,11 +67,6 @@ private:
     
     /** DOA beam */
     AudioBuffer<float> doaBeam;
-    
-    /** DOA band pass filter */
-    IIRFilter doaBandPassFilter;
-    const float doaBandPassFrequency = 1500;
-    const float doaBandPassQ = 1;
     
     /** DOA levels [dB] */
     std::vector<float> doaLevels;
@@ -130,8 +133,8 @@ public:
     /** Set the estimated energy contribution from the directions of arrival */
     void setDoaEnergy(const std::vector<float>& energy);
     
-    /** Get last input buffer */
-    void getInputBuffer(FIR::AudioBufferFFT& dst) const;
+    /** Get last doa filtered input buffer */
+    void getDoaInputBuffer(FIR::AudioBufferFFT& dst) const;
     
     /** Release not needed resources.
      
@@ -192,8 +195,7 @@ private:
     /** Initialize the beamforming algorithm */
     void initAlg();
     
-    /** inputBuffer lock */
-    SpinLock inputBufferLock;
+    
     
     /** DOA thread */
     std::unique_ptr<BeamformerDoa> doaThread;
@@ -201,9 +203,19 @@ private:
     /**DOA update requency [Hz] */
     const float doaUpdateFrequency = 10;
     
-    
     /** DOA levels [dB] */
     std::vector<float> doaLevels;
+    
+    /** DOA Band pass Filters */
+    std::vector<IIRFilter> doaBPFilters;
+    const float doaBPfreq = 2000;
+    const float doaBPQ = 1;
+    
+    /** inputBuffer lock */
+    SpinLock doaInputBufferLock;
+    
+    /** Input buffer with DOA-filtered input signal */
+    AudioBuffer<float> doaInputBuffer;
     
     /** DOA Lock */
     SpinLock doaLock;

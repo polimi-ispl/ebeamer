@@ -73,7 +73,7 @@ private:
     std::vector<float> energy, energyPreGain;
     float inertia = 0.85;
     float gain = 0;
-    const float maxGain = 20, minGain = -20;
+    const float maxGain = 60, minGain = -20;
     
     const float gridUpdateFrequency = 10;
     

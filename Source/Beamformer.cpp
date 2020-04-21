@@ -12,13 +12,14 @@
 
 BeamformerDoa::BeamformerDoa(Beamformer& b,
                                          int numDoas_,
-                                         float sampleRate,
+                                         float sampleRate_,
                                          int numActiveInputChannels,
                                          int firLen,
                                          std::shared_ptr<dsp::FFT> fft_):beamformer(b){
     
     numDoas = numDoas_;
     fft = fft_;
+    sampleRate = sampleRate_;
     
     /** Initialize levels and FIR */
     doaLevels.resize(numDoas,-100);
@@ -32,9 +33,6 @@ BeamformerDoa::BeamformerDoa(Beamformer& b,
     
     /** Allocate DOA beam */
     doaBeam.setSize(1, fft->getSize());
-    
-    /** Initialize DOA BPF */
-    doaBandPassFilter.setCoefficients(IIRCoefficients::makeBandPass(sampleRate, doaBandPassFrequency,doaBandPassQ));
     
     /** Compute FIR for DOA estimation */
     AudioBuffer<float> tmpFir(numActiveInputChannels,firLen);
@@ -53,7 +51,7 @@ BeamformerDoa::~BeamformerDoa(){
 
 void BeamformerDoa::timerCallback(){
     
-    beamformer.getInputBuffer(inputBuffer);
+    beamformer.getDoaInputBuffer(inputBuffer);
     
     /** Compute DOA levels */
     for (auto dirIdx = 0; dirIdx < numDoas; dirIdx++){
@@ -62,13 +60,12 @@ void BeamformerDoa::timerCallback(){
             /** Convolve inputs and DOA FIR */
             convolutionBuffer.convolve(0, inputBuffer, inCh, doaFirFFT[dirIdx], inCh);
             convolutionBuffer.addTimeSeries(0, doaBeam, 0);
-        }
-        doaBandPassFilter.reset();
-        doaBandPassFilter.processSamples(doaBeam.getWritePointer(0), doaBeam.getNumSamples());
-        auto range = FloatVectorOperations::findMinAndMax(doaBeam.getReadPointer(0), doaBeam.getNumSamples());
-        auto maxAbs = jmax(abs(range.getStart()),abs(range.getEnd()));
-        auto maxAbsDb = Decibels::gainToDecibels(maxAbs);
-        doaLevels[dirIdx] = maxAbsDb;
+        } 
+        
+        const Range<float> minMax = FloatVectorOperations::findMinAndMax(doaBeam.getReadPointer(0), doaBeam.getNumSamples());
+        const float dirEnergy = jmax(abs(minMax.getStart()),abs(minMax.getEnd()));
+        const float dirEnergyDb = Decibels::gainToDecibels(dirEnergy);
+        doaLevels[dirIdx] = dirEnergyDb;
     }
     
     beamformer.setDoaEnergy(doaLevels);
@@ -148,6 +145,18 @@ void Beamformer::initAlg(){
     beamBuffer.setSize(numBeams, convolutionBuffer.getNumSamples()/2);
     beamBuffer.clear();
     
+    /** Allocate DOA input buffer */
+    doaInputBuffer.setSize(numActiveInputChannels, maximumExpectedSamplesPerBlock);
+    doaInputBuffer.clear();
+    
+    /** Set DOA input Filter  */
+    doaBPFilters.clear();
+    doaBPFilters.resize(numActiveInputChannels);
+    IIRCoefficients doaIIRCoeff = IIRCoefficients::makeBandPass(sampleRate,doaBPfreq, doaBPQ);
+    for (auto &f : doaBPFilters){
+        f.setCoefficients(doaIIRCoeff);
+    }
+    
     /** Prepare and start DOA thread */
     doaThread = std::make_unique<BeamformerDoa>(*this,numDoas,sampleRate,numActiveInputChannels,firLen,fft);
     doaThread->startTimerHz(doaUpdateFrequency);
@@ -171,12 +180,16 @@ void Beamformer::setBeamParameters(int beamIdx, const BeamParameters& beamParams
 void Beamformer::processBlock(const AudioBuffer<float> &inBuffer){
     
     {
-        GenericScopedLock<SpinLock> lock(inputBufferLock);
-        
-        /** Compute inputs FFT */
-        inputBuffer.setTimeSeries(inBuffer);
-        inputBuffer.prepareForConvolution();
+        GenericScopedLock<SpinLock> lock(doaInputBufferLock);
+        for (auto chIdx = 0;chIdx <numActiveInputChannels;chIdx++){
+            doaInputBuffer.copyFrom(chIdx, 0, inBuffer, chIdx, 0, inBuffer.getNumSamples());
+            doaBPFilters[chIdx].processSamples(doaInputBuffer.getWritePointer(chIdx), inBuffer.getNumSamples());
+        }
     }
+    
+    /** Compute inputs FFT */
+    inputBuffer.setTimeSeries(inBuffer);
+    inputBuffer.prepareForConvolution();
     
     for (auto beamIdx=0;beamIdx<numBeams;beamIdx++){
         for (auto inCh=0;inCh<inputBuffer.getNumChannels();inCh++){
@@ -193,9 +206,10 @@ void Beamformer::getFir(AudioBuffer<float>&fir,const BeamParameters& params,floa
     alg->getFir(fir, params, alpha);
 }
 
-void Beamformer::getInputBuffer(FIR::AudioBufferFFT& dst) const{
-    GenericScopedLock<SpinLock> lock(inputBufferLock);
-    dst = inputBuffer;
+void Beamformer::getDoaInputBuffer(FIR::AudioBufferFFT& dst) const{
+    GenericScopedLock<SpinLock> lock(doaInputBufferLock);
+    dst.setTimeSeries(doaInputBuffer);
+    dst.prepareForConvolution();
 }
 
 void Beamformer::getBeams(AudioBuffer<float>& outBuffer){

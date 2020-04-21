@@ -136,12 +136,12 @@ void GridComponent::timerCallback(){
     auto maxLevel = rangeEnergy.getEnd() + gain;
     
     if (maxLevel > 0){
-        gain = jmax(-maxLevel-3,minGain);
+        gain = jmax(gain-maxLevel-3,minGain);
     }else if (maxLevel < -18){
-        gain = jmin(-6 -maxLevel,maxGain);
+        gain = jmin(gain-maxLevel,maxGain);
     }else if (maxLevel > -3){
         gain = jmax(gain-0.5f,minGain);
-    }else if (maxLevel < -3){
+    }else if (maxLevel < -9){
         gain = jmin(gain+0.5f,maxGain);
     }
     
