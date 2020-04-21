@@ -125,7 +125,9 @@ void MultiChannelLedBar::setSource(const std::vector<float> &newSource,SpinLock 
 {
     source = &newSource;
     lock = &newLock;
-    makeLayout();
+    if (source->size() > 0){
+        makeLayout();
+    }
 }
 
 

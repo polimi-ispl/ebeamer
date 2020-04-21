@@ -125,6 +125,7 @@ void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
     /** If resources are not allocated this is an out-of-order request */
     if (!resourcesAllocated){
         jassertfalse;
+        return;
     }
     
     ScopedNoDenormals noDenormals;
