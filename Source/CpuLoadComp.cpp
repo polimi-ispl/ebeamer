@@ -15,14 +15,14 @@
 CpuLoadComp::CpuLoadComp(const EbeamerAudioProcessor &p):processor(p)
 {
 
-    loadText.setFont(textHeight);
-    loadText.setText(String(int(processor.getAverageLoad()*100))+"%");
-    loadText.setReadOnly(true);
-    loadTextLabel.setFont(textHeight);
-    loadTextLabel.setText("CPU load", NotificationType::dontSendNotification);
-    loadTextLabel.setJustificationType(Justification::left);
-    loadTextLabel.attachToComponent(&loadText, true);
-    addAndMakeVisible(loadText);
+    text.setFont(textHeight);
+    text.setText(String(int(processor.getAverageLoad()*100))+"%");
+    text.setReadOnly(true);
+    label.setFont(textHeight);
+    label.setText("CPU load", NotificationType::dontSendNotification);
+    label.setJustificationType(Justification::left);
+    label.attachToComponent(&text, true);
+    addAndMakeVisible(text);
 }
 
 CpuLoadComp::~CpuLoadComp()
@@ -37,9 +37,9 @@ void CpuLoadComp::resized()
 {
     auto area = getLocalBounds();
     area.removeFromLeft(labelWidth);
-    loadText.setBounds(area);
+    text.setBounds(area);
 }
 
 void CpuLoadComp::timerCallback(){
-    loadText.setText(String(int(processor.getAverageLoad()*100))+"%");
+    text.setText(String(int(processor.getAverageLoad()*100))+"%");
 }
