@@ -13,86 +13,64 @@ AudioProcessorValueTreeState::ParameterLayout initializeParameters() {
     
     // Values in dB
     params.push_back(std::make_unique<AudioParameterChoice>("config", //tag
-                                                        "Configuration", //name
-                                                        micConfigLabels, //choices
-                                                        0 //default
-                                                        ));
+                                                            "Configuration", //name
+                                                            micConfigLabels, //choices
+                                                            0 //default
+                                                            ));
     
     params.push_back(std::make_unique<AudioParameterBool>("frontFacing", //tag
-                                                           "Front facing", //name
-                                                           false //default
-                                                           ));
+                                                          "Front facing", //name
+                                                          false //default
+                                                          ));
     
     params.push_back(std::make_unique<AudioParameterFloat>("gainMic", //tag
-                                                        "Mic gain", //name
-                                                        0.0f, //min
-                                                        40.0f, //max
-                                                        20.0f //default
-                                                        ));
+                                                           "Mic gain", //name
+                                                           0.0f, //min
+                                                           40.0f, //max
+                                                           20.0f //default
+                                                           ));
     
     // Values in Hz
     params.push_back(std::make_unique<AudioParameterFloat>("hpf", //tag
-                                                        "HPF",
-                                                        20.0f, //min
-                                                        500.0f, //max
-                                                        250.0f //default
-                                                        ));
+                                                           "HPF",
+                                                           20.0f, //min
+                                                           500.0f, //max
+                                                           250.0f //default
+                                                           ));
     
     {
-        std::ostringstream ssTag;
-        std::ostringstream ssName;
         for (auto beamIdx = 0; beamIdx < EbeamerAudioProcessor::numBeams; ++beamIdx){
-            ssTag.str(std::string());
-            ssName.str(std::string());
-            ssTag << "steerBeam" << (beamIdx+1);
-            ssName << "Steering beam " << (beamIdx+1);
             auto defaultDirection = beamIdx == 0 ?  -0.5 : 0.5;
-            params.push_back(std::make_unique<AudioParameterFloat>(ssTag.str(), //tag
-                                                                              ssName.str(), //name
-                                                                              -1.0f, //min
-                                                                              1.0f, //max
-                                                                              defaultDirection //default
-                                                                              ));
-            ssTag.str(std::string());
-            ssName.str(std::string());
-            ssTag << "widthBeam" << (beamIdx+1);
-            ssName << "Width beam " << (beamIdx+1);
-            params.push_back(std::make_unique<AudioParameterFloat>(ssTag.str(), //tag
-                                                                           ssName.str(), //name
-                                                                           0.0f, //min
-                                                                           1.0f,//max
-                                                                           0.3f//default
-                                                                           ));
-            ssTag.str(std::string());
-            ssName.str(std::string());
-            ssTag << "panBeam" << (beamIdx+1);
-            ssName << "Pan beam " << (beamIdx+1);
+            params.push_back(std::make_unique<AudioParameterFloat>("steerBeam"+String(beamIdx+1), //tag
+                                                                   "Steering beam"+String(beamIdx+1), //name
+                                                                   -1.0f, //min
+                                                                   1.0f, //max
+                                                                   defaultDirection //default
+                                                                   ));
+            params.push_back(std::make_unique<AudioParameterFloat>("widthBeam"+String(beamIdx+1), //tag
+                                                                   "Width beam"+String(beamIdx+1), //name
+                                                                   0.0f, //min
+                                                                   1.0f,//max
+                                                                   0.3f//default
+                                                                   ));
             auto defaultPan = beamIdx == 0 ?  -0.5 : 0.5;
-            params.push_back(std::make_unique<AudioParameterFloat>(ssTag.str(), //tag
-                                                                         ssName.str(), //name
-                                                                         -1.0f, //min
-                                                                         1.0f, //max
-                                                                         defaultPan //default
-                                                                         ));
-            ssTag.str(std::string());
-            ssName.str(std::string());
-            ssTag << "levelBeam" << (beamIdx+1);
-            ssName << "Level beam " << (beamIdx+1);
-            params.push_back(std::make_unique<AudioParameterFloat>(ssTag.str(), //tag
-                                                                           ssName.str(),
-                                                                           -10.0f, //min
-                                                                           10.0f, //max
-                                                                           0.0f //default
-                                                                           ));
+            params.push_back(std::make_unique<AudioParameterFloat>("panBeam"+String(beamIdx+1), //tag
+                                                                   "Pan beam"+String(beamIdx+1), //name
+                                                                   -1.0f, //min
+                                                                   1.0f, //max
+                                                                   defaultPan //default
+                                                                   ));
+            params.push_back(std::make_unique<AudioParameterFloat>("levelBeam"+String(beamIdx+1), //tag
+                                                                   "Level beam"+String(beamIdx+1), //name
+                                                                   -10.0f, //min
+                                                                   10.0f, //max
+                                                                   0.0f //default
+                                                                   ));
             
-            ssTag.str(std::string());
-            ssName.str(std::string());
-            ssTag << "muteBeam" << (beamIdx+1);
-            ssName << "Mute beam " << (beamIdx+1);
-            params.push_back(std::make_unique<AudioParameterBool>(ssTag.str(), //tag
-                                                                         ssName.str(), //name
-                                                                         false //default
-                                                                         ));
+            params.push_back(std::make_unique<AudioParameterBool>("muteBeam"+String(beamIdx+1), //tag
+                                                                  "Mute beam"+String(beamIdx+1), //name
+                                                                  false //default
+                                                                  ));
             
         }
     }
@@ -148,7 +126,7 @@ EbeamerAudioProcessor::EbeamerAudioProcessor()
         muteBeamParam[beamIdx] = parameters.getRawParameterValue(ssTag.str());
     }
     
-
+    
     /** Initialize the beamformer */
     beamformer = std::make_unique<Beamformer>(numBeams,numDoas);
     beamformer->setMicConfig(static_cast<MicConfig>((int)*configParam));
@@ -231,11 +209,11 @@ void EbeamerAudioProcessor::prepareToPlay (double sampleRate_, int maximumExpect
 
 void EbeamerAudioProcessor::releaseResources()
 {
- 
+    
     GenericScopedLock<SpinLock> lock(processingLock);
     
     resourcesAllocated = false;
-
+    
     /** Clear beam buffer */
     beamBuffer.setSize(numBeams, 0);
     
@@ -284,12 +262,12 @@ void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
             iirHPFfilter.setCoefficients(iirCoeffHPF);
         }
     }
-
+    
     /**Apply HPF directly on input buffer  */
     for (auto inChannel = 0; inChannel < numActiveInputChannels; ++inChannel){
         iirHPFfilters[inChannel].processSamples(buffer.getWritePointer(inChannel), buffer.getNumSamples());
     }
-
+    
     /** Set beams parameters */
     for (auto beamIdx = 0;beamIdx< numBeams; beamIdx++){
         float beamDoa = *steeringBeamParam[beamIdx];
@@ -297,13 +275,13 @@ void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
         BeamParameters beamParams = {beamDoa,*widthBeamParam[beamIdx]};
         beamformer->setBeamParameters(beamIdx, beamParams);
     }
-
+    
     /** Call the beamformer  */
     beamformer->processBlock(buffer);
-
+    
     /** Retrieve beamformer outputs */
     beamformer->getBeams(beamBuffer);
-
+    
     /** Apply beams mute and volume */
     for (auto beamIdx = 0; beamIdx < numBeams; ++beamIdx){
         if ((bool)*muteBeamParam[beamIdx] == false){
@@ -315,17 +293,17 @@ void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
         auto contextToUse = dsp::ProcessContextReplacing<float> (block);
         beamGain[beamIdx].process(contextToUse);
     }
-
+    
     /** Measure beam output volume */
     beamMeterDecay->push(beamBuffer);
     {
         GenericScopedLock<SpinLock> lock(beamMetersLock);
         beamMeters = beamMeterDecay->get();
     }
-
+    
     /** Clear buffer */
     buffer.clear();
-
+    
     /** Sum beams in output channels */
     for (int outChannel = 0; outChannel < numActiveOutputChannels; ++outChannel){
         /** Sum the contributes from each beam */
@@ -376,9 +354,9 @@ void EbeamerAudioProcessor::getStateInformation (MemoryBlock& destData){
 }
 
 void EbeamerAudioProcessor::setStateInformation (const void* data, int sizeInBytes){
-
+    
     std::unique_ptr<XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
-
+    
     if (xmlState.get() != nullptr)
         if (xmlState->hasTagName (parameters.state.getType()))
             parameters.replaceState (ValueTree::fromXml (*xmlState));
@@ -398,10 +376,6 @@ std::vector<float> EbeamerAudioProcessor::getInputMeters(){
 }
 
 //==============================================================================
-// Beamformer
-std::unique_ptr<Beamformer>& EbeamerAudioProcessor::getBeamformer(){
-    return beamformer;
-}
 const std::unique_ptr<Beamformer>& EbeamerAudioProcessor::getBeamformer() const{
     return beamformer;
 }

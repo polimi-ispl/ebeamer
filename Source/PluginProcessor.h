@@ -58,16 +58,11 @@ public:
     
     //==============================================================================
     // Beamformer
-    std::unique_ptr<Beamformer>& getBeamformer();
     const std::unique_ptr<Beamformer>& getBeamformer() const;
     
     //==============================================================================
     /** Averagel load */
     float getAverageLoad() const;
-    
-    //==============================================================================
-    /** Set a new microphone configuration */
-    void setMicConfig(const MicConfig& mc);
     
     //==============================================================================
     const AudioProcessorValueTreeState& getParams() const;
@@ -129,6 +124,10 @@ private:
     
     /** Maximum number of samples per block */
     int maximumExpectedSamplesPerBlock = 4096;
+    
+    //==============================================================================
+    /** Set a new microphone configuration */
+    void setMicConfig(const MicConfig& mc);
     
     //==============================================================================
     
