@@ -42,7 +42,7 @@ void FarfieldLMA::getFir(AudioBuffer<float>&fir,const BeamParameters& params,flo
     /** Angle in radians (0 front, pi/2 source closer to last channel, -pi/2 source closer to first channel */
     const float angleRad = (params.doa+1)*pi/2;
     /** Delay between adjacent microphones [s] */
-    const float delta = cos(angleRad)*micDist/soundspeed;
+    const float delta = -cos(angleRad)*micDist/soundspeed;
     /** Compute delays for each microphone [s] */
     Vec micDelays = delta*Vec::LinSpaced(numMic, 0, numMic-1);
     /** Compensate for minimum delay and apply common delay */

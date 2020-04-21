@@ -6,6 +6,80 @@ const int EbeamerAudioProcessor::numBeams;
 const int EbeamerAudioProcessor::numDoas;
 
 //==============================================================================
+// Helper functions
+AudioProcessorValueTreeState::ParameterLayout initializeParameters() {
+    
+    std::vector<std::unique_ptr<RangedAudioParameter>> params;
+    
+    // Values in dB
+    params.push_back(std::make_unique<AudioParameterChoice>("config", //tag
+                                                            "Configuration", //name
+                                                            micConfigLabels, //choices
+                                                            0 //default
+                                                            ));
+    
+    params.push_back(std::make_unique<AudioParameterBool>("frontFacing", //tag
+                                                          "Front facing", //name
+                                                          false //default
+                                                          ));
+    
+    params.push_back(std::make_unique<AudioParameterFloat>("gainMic", //tag
+                                                           "Mic gain", //name
+                                                           0.0f, //min
+                                                           40.0f, //max
+                                                           20.0f //default
+                                                           ));
+    
+    // Values in Hz
+    params.push_back(std::make_unique<AudioParameterFloat>("hpf", //tag
+                                                           "HPF",
+                                                           20.0f, //min
+                                                           500.0f, //max
+                                                           250.0f //default
+                                                           ));
+    
+    {
+        for (auto beamIdx = 0; beamIdx < EbeamerAudioProcessor::numBeams; ++beamIdx){
+            auto defaultDirection = beamIdx == 0 ?  -0.5 : 0.5;
+            params.push_back(std::make_unique<AudioParameterFloat>("steerBeam"+String(beamIdx+1), //tag
+                                                                   "Steering beam"+String(beamIdx+1), //name
+                                                                   -1.0f, //min
+                                                                   1.0f, //max
+                                                                   defaultDirection //default
+                                                                   ));
+            params.push_back(std::make_unique<AudioParameterFloat>("widthBeam"+String(beamIdx+1), //tag
+                                                                   "Width beam"+String(beamIdx+1), //name
+                                                                   0.0f, //min
+                                                                   1.0f,//max
+                                                                   0.3f//default
+                                                                   ));
+            auto defaultPan = beamIdx == 0 ?  -0.5 : 0.5;
+            params.push_back(std::make_unique<AudioParameterFloat>("panBeam"+String(beamIdx+1), //tag
+                                                                   "Pan beam"+String(beamIdx+1), //name
+                                                                   -1.0f, //min
+                                                                   1.0f, //max
+                                                                   defaultPan //default
+                                                                   ));
+            params.push_back(std::make_unique<AudioParameterFloat>("levelBeam"+String(beamIdx+1), //tag
+                                                                   "Level beam"+String(beamIdx+1), //name
+                                                                   -10.0f, //min
+                                                                   10.0f, //max
+                                                                   0.0f //default
+                                                                   ));
+            
+            params.push_back(std::make_unique<AudioParameterBool>("muteBeam"+String(beamIdx+1), //tag
+                                                                  "Mute beam"+String(beamIdx+1), //name
+                                                                  false //default
+                                                                  ));
+            
+        }
+    }
+    
+    return { params.begin(), params.end() };
+}
+
+
+//==============================================================================
 EbeamerAudioProcessor::EbeamerAudioProcessor()
 : AudioProcessor (BusesProperties() //The default bus layout accommodates for 4 buses of 16 channels each.
                   .withInput  ("eStick#1",  AudioChannelSet::ambisonic(3), true)
@@ -13,13 +87,49 @@ EbeamerAudioProcessor::EbeamerAudioProcessor()
                   .withInput  ("eStick#3",  AudioChannelSet::ambisonic(3), true)
                   .withInput  ("eStick#4",  AudioChannelSet::ambisonic(3), true)
                   .withOutput ("Output", AudioChannelSet::stereo(), true)
-                  )
+                  ),parameters(*this,&undo,Identifier("eBeamer"),initializeParameters())
 {
-    /** Initialize here everything that doesn't depend on sample rate, buffer size, bus configuration */
-    initializeParameters();
+    
+    /** Get parameters pointers */
+    configParam = parameters.getRawParameterValue("config");
+    parameters.addParameterListener("config", this);
+    frontFacingParam = parameters.getRawParameterValue("frontFacing");
+    hpfFreqParam = parameters.getRawParameterValue("hpf");
+    micGainParam = parameters.getRawParameterValue("gainMic");
+    
+    std::ostringstream ssTag;
+    std::ostringstream ssName;
+    for (auto beamIdx=0;beamIdx<numBeams;beamIdx++){
+        ssTag.str(std::string());
+        ssName.str(std::string());
+        ssTag << "steerBeam" << (beamIdx+1);
+        steeringBeamParam[beamIdx] = parameters.getRawParameterValue(ssTag.str());
+        
+        ssTag.str(std::string());
+        ssName.str(std::string());
+        ssTag << "widthBeam" << (beamIdx+1);
+        widthBeamParam[beamIdx] = parameters.getRawParameterValue(ssTag.str());
+        
+        ssTag.str(std::string());
+        ssName.str(std::string());
+        ssTag << "panBeam" << (beamIdx+1);
+        panBeamParam[beamIdx] = parameters.getRawParameterValue(ssTag.str());
+        
+        ssTag.str(std::string());
+        ssName.str(std::string());
+        ssTag << "levelBeam" << (beamIdx+1);
+        levelBeamParam[beamIdx] = parameters.getRawParameterValue(ssTag.str());
+        
+        ssTag.str(std::string());
+        ssName.str(std::string());
+        ssTag << "muteBeam" << (beamIdx+1);
+        muteBeamParam[beamIdx] = parameters.getRawParameterValue(ssTag.str());
+    }
+    
     
     /** Initialize the beamformer */
     beamformer = std::make_unique<Beamformer>(numBeams,numDoas);
+    beamformer->setMicConfig(static_cast<MicConfig>((int)*configParam));
     
 }
 
@@ -65,7 +175,7 @@ void EbeamerAudioProcessor::prepareToPlay (double sampleRate_, int maximumExpect
     /** Initialize the input gain */
     micGain.reset();
     micGain.prepare({sampleRate, static_cast<uint32>(maximumExpectedSamplesPerBlock),numActiveInputChannels});
-    micGain.setGainDecibels(micGainParam->get());
+    micGain.setGainDecibels(*micGainParam);
     micGain.setRampDurationSeconds(gainTimeConst);
     
     /** Initialize the High Pass Filters */
@@ -74,7 +184,7 @@ void EbeamerAudioProcessor::prepareToPlay (double sampleRate_, int maximumExpect
     prevHpfFreq = 0;
     
     /** Initialize the beamformer */
-    beamformer->prepareToPlay(sampleRate, maximumExpectedSamplesPerBlock, numActiveInputChannels);
+    beamformer->prepareToPlay(sampleRate, maximumExpectedSamplesPerBlock);
     
     /** Initialize beams' buffer  */
     beamBuffer.setSize(numBeams, maximumExpectedSamplesPerBlock);
@@ -83,7 +193,7 @@ void EbeamerAudioProcessor::prepareToPlay (double sampleRate_, int maximumExpect
     for (auto beamIdx = 0; beamIdx < numBeams; ++beamIdx){
         beamGain[beamIdx].reset();
         beamGain[beamIdx].prepare({sampleRate, static_cast<uint32>(maximumExpectedSamplesPerBlock),1});
-        beamGain[beamIdx].setGainDecibels(levelBeamParam[beamIdx]->get());
+        beamGain[beamIdx].setGainDecibels(*levelBeamParam[beamIdx]);
         beamGain[beamIdx].setRampDurationSeconds(gainTimeConst);
     }
     
@@ -99,11 +209,11 @@ void EbeamerAudioProcessor::prepareToPlay (double sampleRate_, int maximumExpect
 
 void EbeamerAudioProcessor::releaseResources()
 {
- 
+    
     GenericScopedLock<SpinLock> lock(processingLock);
     
     resourcesAllocated = false;
-
+    
     /** Clear beam buffer */
     beamBuffer.setSize(numBeams, 0);
     
@@ -124,12 +234,13 @@ void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
     /** If resources are not allocated this is an out-of-order request */
     if (!resourcesAllocated){
         jassertfalse;
+        return;
     }
     
     ScopedNoDenormals noDenormals;
     
     /**Apply input gain directly on input buffer  */
-    micGain.setGainDecibels(micGainParam->get());
+    micGain.setGainDecibels(*micGainParam);
     {
         auto block = juce::dsp::AudioBlock<float>(buffer).getSubsetChannelBlock(0, numActiveInputChannels);
         auto context = juce::dsp::ProcessContextReplacing<float> (block);
@@ -144,35 +255,37 @@ void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
     }
     
     /** Renew IIR coefficient if cut frequency changed */
-    if(prevHpfFreq != hpfFreqParam->get()){
-        iirCoeffHPF = IIRCoefficients::makeHighPass(sampleRate, hpfFreqParam->get());
-        prevHpfFreq = hpfFreqParam->get();
+    if(prevHpfFreq != (bool)*hpfFreqParam){
+        iirCoeffHPF = IIRCoefficients::makeHighPass(sampleRate, *hpfFreqParam);
+        prevHpfFreq = *hpfFreqParam;
         for (auto& iirHPFfilter : iirHPFfilters){
             iirHPFfilter.setCoefficients(iirCoeffHPF);
         }
     }
-
+    
     /**Apply HPF directly on input buffer  */
     for (auto inChannel = 0; inChannel < numActiveInputChannels; ++inChannel){
         iirHPFfilters[inChannel].processSamples(buffer.getWritePointer(inChannel), buffer.getNumSamples());
     }
-
+    
     /** Set beams parameters */
     for (auto beamIdx = 0;beamIdx< numBeams; beamIdx++){
-        BeamParameters beamParams = {steeringBeamParam[beamIdx]->get(),widthBeamParam[beamIdx]->get()};
+        float beamDoa = *steeringBeamParam[beamIdx];
+        beamDoa = *frontFacingParam ? -beamDoa : beamDoa;
+        BeamParameters beamParams = {beamDoa,*widthBeamParam[beamIdx]};
         beamformer->setBeamParameters(beamIdx, beamParams);
     }
-
+    
     /** Call the beamformer  */
     beamformer->processBlock(buffer);
-
+    
     /** Retrieve beamformer outputs */
     beamformer->getBeams(beamBuffer);
-
+    
     /** Apply beams mute and volume */
     for (auto beamIdx = 0; beamIdx < numBeams; ++beamIdx){
-        if (muteBeamParam[beamIdx]->get() == false){
-            beamGain[beamIdx].setGainDecibels(levelBeamParam[beamIdx]->get());
+        if ((bool)*muteBeamParam[beamIdx] == false){
+            beamGain[beamIdx].setGainDecibels(*levelBeamParam[beamIdx]);
         }else{
             beamGain[beamIdx].setGainLinear(0);
         }
@@ -180,22 +293,22 @@ void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
         auto contextToUse = dsp::ProcessContextReplacing<float> (block);
         beamGain[beamIdx].process(contextToUse);
     }
-
+    
     /** Measure beam output volume */
     beamMeterDecay->push(beamBuffer);
     {
         GenericScopedLock<SpinLock> lock(beamMetersLock);
         beamMeters = beamMeterDecay->get();
     }
-
+    
     /** Clear buffer */
     buffer.clear();
-
+    
     /** Sum beams in output channels */
     for (int outChannel = 0; outChannel < numActiveOutputChannels; ++outChannel){
         /** Sum the contributes from each beam */
         for (int beamIdx = 0; beamIdx < numBeams; ++beamIdx){
-            auto channelBeamGain = panToLinearGain(panBeamParam[beamIdx],outChannel==0);
+            auto channelBeamGain = panToLinearGain((float)*panBeamParam[beamIdx],outChannel==0);
             buffer.addFrom(outChannel, 0, beamBuffer, beamIdx, 0, buffer.getNumSamples(), channelBeamGain);
         }
     }
@@ -210,6 +323,23 @@ void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
     
 }
 
+const AudioProcessorValueTreeState& EbeamerAudioProcessor::getParams() const{
+    return parameters;
+}
+
+
+void EbeamerAudioProcessor::parameterChanged (const String &parameterID, float newValue){
+    if (parameterID == "config"){
+        setMicConfig(static_cast<MicConfig>((int)(newValue)));
+    }
+}
+
+//==============================================================================
+void EbeamerAudioProcessor::setMicConfig(const MicConfig& mc){
+    beamformer->setMicConfig(mc);
+    prepareToPlay(sampleRate, maximumExpectedSamplesPerBlock);
+}
+
 //==============================================================================
 float EbeamerAudioProcessor::getAverageLoad() const{
     GenericScopedLock<SpinLock> lock(loadLock);
@@ -217,103 +347,19 @@ float EbeamerAudioProcessor::getAverageLoad() const{
 }
 
 //==============================================================================
-AudioProcessorEditor* EbeamerAudioProcessor::createEditor()
-{
-    return new JucebeamAudioProcessorEditor (*this);
-}
-bool EbeamerAudioProcessor::hasEditor() const
-{
-    return true;
-}
-
-//==============================================================================
-void EbeamerAudioProcessor::getStateInformation (MemoryBlock& destData)
-{
-    // You should use this method to store your parameters in the memory block.
-    // You could do that either as raw data, or use the XML or ValueTree classes
-    // as intermediaries to make it easy to save and load complex data.
-    std::ostringstream stringStreamTag;
-    std::unique_ptr<XmlElement> xml (new XmlElement ("eBeamer"));
-    for (uint8 beamIdx = 0; beamIdx < numBeams; ++beamIdx){
-        stringStreamTag.str(std::string());
-        stringStreamTag << "steerBeam" << (beamIdx+1);
-        xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(steeringBeamParam[beamIdx]));
-        
-        stringStreamTag.str(std::string());
-        stringStreamTag << "widthBeam" << (beamIdx+1);
-        xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(widthBeamParam[beamIdx]));
-        
-        stringStreamTag.str(std::string());
-        stringStreamTag << "panBeam" << (beamIdx+1);
-        xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(panBeamParam[beamIdx]));
-        
-        stringStreamTag.str(std::string());
-        stringStreamTag << "levelBeam" << (beamIdx+1);
-        xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(levelBeamParam[beamIdx]));
-        
-        stringStreamTag.str(std::string());
-        stringStreamTag << "muteBeam" << (beamIdx+1);
-        xml->setAttribute(Identifier(stringStreamTag.str()), (bool) *(muteBeamParam[beamIdx]));
-        
-    }
-    stringStreamTag.str(std::string());
-    stringStreamTag << "hpfFreq";
-    xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(hpfFreqParam));
-    
-    stringStreamTag.str(std::string());
-    stringStreamTag << "gainMic";
-    xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(micGainParam));
-    
+void EbeamerAudioProcessor::getStateInformation (MemoryBlock& destData){
+    auto state = parameters.copyState();
+    std::unique_ptr<XmlElement> xml (state.createXml());
     copyXmlToBinary (*xml, destData);
 }
 
-void EbeamerAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
-{
-    // You should use this method to restore your parameters from this memory block,
-    // whose contents will have been created by the getStateInformation() call.
-    std::ostringstream stringStreamTag;
+void EbeamerAudioProcessor::setStateInformation (const void* data, int sizeInBytes){
+    
     std::unique_ptr<XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
-    if (xmlState.get() != nullptr){
-        if (xmlState->hasTagName ("eBeamer")){
-            for (uint8 beamIdx = 0; beamIdx < numBeams; ++beamIdx){
-                stringStreamTag.str(std::string());
-                stringStreamTag << "steerBeam" << (beamIdx+1);
-                *(steeringBeamParam[beamIdx]) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 0.0);
-                
-                stringStreamTag.str(std::string());
-                stringStreamTag << "widthBeam" << (beamIdx+1);
-                *(widthBeamParam[beamIdx]) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 0.0);
-                
-                stringStreamTag.str(std::string());
-                stringStreamTag << "panBeam" << (beamIdx+1);
-                *(panBeamParam[beamIdx]) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 0.0);
-                
-                stringStreamTag.str(std::string());
-                stringStreamTag << "levelBeam" << (beamIdx+1);
-                *(levelBeamParam[beamIdx]) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 0.0);
-                
-                stringStreamTag.str(std::string());
-                stringStreamTag << "muteBeam" << (beamIdx+1);
-                *(muteBeamParam[beamIdx]) = xmlState->getBoolAttribute(Identifier(stringStreamTag.str()), false);
-                
-            }
-            stringStreamTag.str(std::string());
-            stringStreamTag << "hpfFreq";
-            *(hpfFreqParam) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 250.0);
-            
-            stringStreamTag.str(std::string());
-            stringStreamTag << "gainMic";
-            *(micGainParam) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 20.0);
-        }
-    }
-}
-
-
-//==============================================================================
-// This creates new instances of the plugin..
-AudioProcessor* JUCE_CALLTYPE createPluginFilter()
-{
-    return new EbeamerAudioProcessor();
+    
+    if (xmlState.get() != nullptr)
+        if (xmlState->hasTagName (parameters.state.getType()))
+            parameters.replaceState (ValueTree::fromXml (*xmlState));
 }
 
 //==============================================================================
@@ -330,90 +376,8 @@ std::vector<float> EbeamerAudioProcessor::getInputMeters(){
 }
 
 //==============================================================================
-// Beamformer
-std::unique_ptr<Beamformer>& EbeamerAudioProcessor::getBeamformer(){
+const std::unique_ptr<Beamformer>& EbeamerAudioProcessor::getBeamformer() const{
     return beamformer;
-}
-
-//==============================================================================
-// Helper functions
-void EbeamerAudioProcessor::initializeParameters() {
-    
-    // Values in dB
-    addParameter(micGainParam = new AudioParameterFloat("gainMic", //tag
-                                                        "Mic gain", //name
-                                                        0.0f, //min
-                                                        40.0f, //max
-                                                        20.0f //default
-                                                        ));
-    
-    // Values in Hz
-    addParameter(hpfFreqParam = new AudioParameterFloat("hpf", //tag
-                                                        "HPF",
-                                                        20.0f, //min
-                                                        500.0f, //max
-                                                        250.0f //default
-                                                        ));
-    
-    {
-        std::ostringstream ssTag;
-        std::ostringstream ssName;
-        for (auto beamIdx = 0; beamIdx < numBeams; ++beamIdx){
-            ssTag.str(std::string());
-            ssName.str(std::string());
-            ssTag << "steerBeam" << (beamIdx+1);
-            ssName << "Steering beam " << (beamIdx+1);
-            auto defaultDirection = beamIdx == 0 ?  -0.5 : 0.5;
-            addParameter(steeringBeamParam[beamIdx] = new AudioParameterFloat(ssTag.str(), //tag
-                                                                              ssName.str(), //name
-                                                                              -1.0f, //min
-                                                                              1.0f, //max
-                                                                              defaultDirection //default
-                                                                              ));
-            ssTag.str(std::string());
-            ssName.str(std::string());
-            ssTag << "widthBeam" << (beamIdx+1);
-            ssName << "Width beam " << (beamIdx+1);
-            addParameter(widthBeamParam[beamIdx] = new AudioParameterFloat(ssTag.str(), //tag
-                                                                           ssName.str(), //name
-                                                                           0.0f, //min
-                                                                           1.0f,//max
-                                                                           0.3f//default
-                                                                           ));
-            ssTag.str(std::string());
-            ssName.str(std::string());
-            ssTag << "panBeam" << (beamIdx+1);
-            ssName << "Pan beam " << (beamIdx+1);
-            auto defaultPan = beamIdx == 0 ?  -0.5 : 0.5;
-            addParameter(panBeamParam[beamIdx] = new AudioParameterFloat(ssTag.str(), //tag
-                                                                         ssName.str(), //name
-                                                                         -1.0f, //min
-                                                                         1.0f, //max
-                                                                         defaultPan //default
-                                                                         ));
-            ssTag.str(std::string());
-            ssName.str(std::string());
-            ssTag << "levelBeam" << (beamIdx+1);
-            ssName << "Level beam " << (beamIdx+1);
-            addParameter(levelBeamParam[beamIdx] = new AudioParameterFloat(ssTag.str(), //tag
-                                                                           ssName.str(),
-                                                                           -10.0f, //min
-                                                                           10.0f, //max
-                                                                           0.0f //default
-                                                                           ));
-            
-            ssTag.str(std::string());
-            ssName.str(std::string());
-            ssTag << "muteBeam" << (beamIdx+1);
-            ssName << "Mute beam " << (beamIdx+1);
-            addParameter(muteBeamParam[beamIdx] = new AudioParameterBool(ssTag.str(), //tag
-                                                                         ssName.str(), //name
-                                                                         false //default
-                                                                         ));
-            
-        }
-    }
-    
 }
 
 //==============================================================================
@@ -481,4 +445,21 @@ const String EbeamerAudioProcessor::getProgramName (int index)
 
 void EbeamerAudioProcessor::changeProgramName (int index, const String& newName)
 {
+}
+
+//==============================================================================
+// This creates new instances of the plugin..
+AudioProcessor* JUCE_CALLTYPE createPluginFilter()
+{
+    return new EbeamerAudioProcessor();
+}
+
+//==============================================================================
+AudioProcessorEditor* EbeamerAudioProcessor::createEditor()
+{
+    return new JucebeamAudioProcessorEditor (*this,parameters);
+}
+bool EbeamerAudioProcessor::hasEditor() const
+{
+    return true;
 }

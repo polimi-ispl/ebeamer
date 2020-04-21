@@ -88,11 +88,11 @@ void AudioBufferFFT::setTimeSeries(const AudioBuffer<float> & in_){
     jassert(fft->getSize() >= in_.getNumSamples());
     
     clear();
-    for (int channelIdx = 0; channelIdx < getNumChannels(); ++channelIdx){
+    for (int channelIdx = 0; channelIdx < jmin(getNumChannels(),in_.getNumChannels()); ++channelIdx){
         copyFrom(channelIdx, 0, in_, channelIdx, 0, in_.getNumSamples());
     }
     // perform FFT
-    for (int channelIdx = 0; channelIdx < getNumChannels(); ++channelIdx){
+    for (int channelIdx = 0; channelIdx < jmin(getNumChannels(),in_.getNumChannels()); ++channelIdx){
         fft->performRealOnlyForwardTransform(getWritePointer(channelIdx));
     }
     

@@ -147,8 +147,8 @@ public:
     void resized() override;
 
     void setSource(const std::vector<float> &source,SpinLock &lock);
-    void setHorizontal(){isHorizontal = true;};
-    void setVertical(){isHorizontal = false;};
+    void setHorizontal(int numRows=1){isHorizontal = true;};
+    void setVertical(int numCols=1){isHorizontal = false;};
     
 
 private:
@@ -194,4 +194,12 @@ private:
     void timerCallback() override;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SingleChannelLedBar)
+};
+
+//==============================================================================
+class MuteButton: public TextButton {
+public:
+    
+    MuteButton();
+
 };

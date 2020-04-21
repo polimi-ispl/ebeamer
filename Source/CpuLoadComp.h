@@ -30,9 +30,9 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CpuLoadComp)
     
     /** Load indicator text */
-    TextEditor loadText;
+    TextEditor text;
     /** Label for load indicator text */
-    Label loadTextLabel;
+    Label label;
     /** Timer callback */
     void timerCallback() override;
     
