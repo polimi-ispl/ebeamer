@@ -48,13 +48,6 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     
     //==============================================================================
-    // Buffer to allow external access to input signals FFT
-    FIR::AudioBufferFFT inputsFFT;
-    bool newFftInputDataAvailable = false;
-    SpinLock fftInputLock;
-    
-    
-    //==============================================================================
     // Meters
     float getBeamMeter(int channel);
     std::vector<float> getInputMeters();
@@ -76,8 +69,8 @@ public:
     /** Set a new microphone configuration */
     void setMicConfig(const MicConfig& mc);
     
-    /** Front facing convention */
-    bool isFrontFacing() const;
+    //==============================================================================
+    const AudioProcessorValueTreeState& getParams() const;
 
 private:
     //==============================================================================

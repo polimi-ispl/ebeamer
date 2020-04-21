@@ -34,7 +34,7 @@ void TileComponent::paint(Graphics& g)
     path.lineTo(corners[0][1]);
     path.closeSubPath();
     
-    if (processor->isFrontFacing()){
+    if ((bool)*(processor->getParams().getRawParameterValue("frontFacing"))){
         path.applyTransform(AffineTransform::rotation(MathConstants<float>::pi,SCENE_WIDTH/2,SCENE_HEIGHT/2));
     }
     
@@ -194,20 +194,25 @@ void GridComponent::computeVertices()
 //==============================================================================
 
 BeamComponent::BeamComponent(){
-    position = 0;
 }
 
 BeamComponent::~BeamComponent(){
 }
 
-void BeamComponent::setProcessor(const EbeamerAudioProcessor * p){
+void BeamComponent::setProcessor(const EbeamerAudioProcessor * p, int beamId_){
+    beamId=beamId_;
     processor = p;
+    muteParam = processor->getParams().getRawParameterValue(String("muteBeam") + String(beamId));
+    widthParam = processor->getParams().getRawParameterValue(String("widthBeam") + String(beamId));
+    steerParam = processor->getParams().getRawParameterValue(String("steerBeam") + String(beamId));
+    frontFacingParam = processor->getParams().getRawParameterValue("frontFacing");
 }
-
-//==============================================================================
 
 void BeamComponent::paint(Graphics& g){
     Path path;
+    
+    width = (0.1 + 2.9*(*widthParam)) * SCENE_WIDTH/10;
+    position = *steerParam;
     
     path.startNewSubPath(0, 0);
     path.cubicTo( width, -SCENE_WIDTH/3,  width, -SCENE_WIDTH/2, 0, -SCENE_WIDTH/2);
@@ -217,12 +222,11 @@ void BeamComponent::paint(Graphics& g){
     path.applyTransform(AffineTransform::rotation( (MathConstants<float>::pi/2) * position));
     path.applyTransform(AffineTransform::translation(SCENE_WIDTH/2, SCENE_WIDTH/2));
     
-    if (processor->isFrontFacing()){
-        //path.applyTransform(AffineTransform::rotation(MathConstants<float>::pi,SCENE_WIDTH/2,SCENE_HEIGHT/2));
+    if ((bool)*frontFacingParam){
         path.applyTransform(AffineTransform::verticalFlip(SCENE_HEIGHT));
     }
     
-    if (status){
+    if (~(bool)*muteParam){
         g.setColour(baseColour.brighter());
         g.setOpacity(0.4);
         g.fillPath(path);
@@ -257,14 +261,8 @@ void BeamComponent::setStatus(bool s){
 
 SceneComponent::SceneComponent(const EbeamerAudioProcessor& p){
     
-    
-    beams[0].move(-0.5);
-    beams[0].scale(0.25);
-    beams[0].setProcessor(&p);
-    
-    beams[1].move(0.5);
-    beams[1].scale(0.5);
-    beams[1].setProcessor(&p);
+    beams[0].setProcessor(&p,1);
+    beams[1].setProcessor(&p,2);
     
     grid.setProcessor(&p);
     

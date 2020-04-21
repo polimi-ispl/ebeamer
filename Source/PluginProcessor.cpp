@@ -345,9 +345,10 @@ void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
     
 }
 
-bool EbeamerAudioProcessor::isFrontFacing() const{
-    return *frontFacingParam;
+const AudioProcessorValueTreeState& EbeamerAudioProcessor::getParams() const{
+    return parameters;
 }
+
 
 void EbeamerAudioProcessor::parameterChanged (const String &parameterID, float newValue){
     if (parameterID == "config"){
