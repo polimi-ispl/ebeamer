@@ -101,7 +101,7 @@ private:
 
     //==============================================================================
     Label muteLabel;
-    TextButton beam1MuteButton, beam2MuteButton;
+    TextButton muteBeam1Button, muteBeam2Button;
     std::unique_ptr<ButtonAttachment> beam1MuteButtonAttachment, beam2MuteButtonAttachment;
     
     //==============================================================================

@@ -101,16 +101,16 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (EbeamerAudioProcesso
     muteLabel.setJustificationType(Justification::centred);
     addAndMakeVisible(muteLabel);
 
-    beam1MuteButton.setButtonText("1");
+    muteBeam1Button.setButtonText("1");
     setMuteButtonColor(0);
-    addAndMakeVisible(beam1MuteButton);
+    addAndMakeVisible(muteBeam1Button);
 
-    beam2MuteButton.setButtonText("2");
+    muteBeam2Button.setButtonText("2");
     setMuteButtonColor(1);
-    addAndMakeVisible(beam2MuteButton);
+    addAndMakeVisible(muteBeam2Button);
     
-    beam1MuteButtonAttachment.reset(new ButtonAttachment (valueTreeState, "beam1Mute", beam1MuteButton));
-    beam2MuteButtonAttachment.reset(new ButtonAttachment (valueTreeState, "beam2Mute", beam2MuteButton));
+    beam1MuteButtonAttachment.reset(new ButtonAttachment (valueTreeState, "muteBeam1", muteBeam1Button));
+    beam2MuteButtonAttachment.reset(new ButtonAttachment (valueTreeState, "muteBeam2", muteBeam2Button));
 
     //==============================================================================
     
@@ -249,8 +249,8 @@ void JucebeamAudioProcessorEditor::resized()
     mutesArea.removeFromTop(MUTE_TOP_MARGIN);
     mutesArea.removeFromLeft(MUTE_LEFT_RIGHT_MARGIN);
     mutesArea.removeFromRight(MUTE_LEFT_RIGHT_MARGIN);
-    beam1MuteButton.setBounds(mutesArea.removeFromLeft(MUTE_WIDTH));
-    beam2MuteButton.setBounds(mutesArea.removeFromRight(MUTE_WIDTH));
+    muteBeam1Button.setBounds(mutesArea.removeFromLeft(MUTE_WIDTH));
+    muteBeam2Button.setBounds(mutesArea.removeFromRight(MUTE_WIDTH));
     muteLabel.setBounds(mutesArea);
 
     area.removeFromTop(INPUT_SECTION_TOP_MARGIN);
@@ -281,7 +281,7 @@ void JucebeamAudioProcessorEditor::resized()
 
 void JucebeamAudioProcessorEditor::setMuteButtonColor(uint8 beamIdx) {
     
-    TextButton* beamMuteButton = beamIdx == 0 ? &beam1MuteButton : &beam2MuteButton;
+    TextButton* beamMuteButton = beamIdx == 0 ? &muteBeam1Button : &muteBeam2Button;
     Colour colour = (bool)processor.muteBeamParam[beamIdx].getValue() == 0 ? Colours::darkslategrey : Colours::darkred;
     beamMuteButton->setColour (TextButton::buttonColourId, colour);
 
@@ -290,12 +290,12 @@ void JucebeamAudioProcessorEditor::setMuteButtonColor(uint8 beamIdx) {
 void JucebeamAudioProcessorEditor::buttonClicked(Button *button)
 {
 
-    if(button == &beam1MuteButton){
+    if(button == &muteBeam1Button){
         processor.muteBeamParam[0].setValue(1 - (bool)processor.muteBeamParam[0].getValue());
         setMuteButtonColor(0);
         scene.beams[0].setStatus((bool)processor.muteBeamParam[0].getValue()==0);
     }
-    else if(button == &beam2MuteButton){
+    else if(button == &muteBeam2Button){
         processor.muteBeamParam[1].setValue(1 - (bool)processor.muteBeamParam[1].getValue());
         setMuteButtonColor(1);
         scene.beams[1].setStatus((bool)processor.muteBeamParam[1].getValue()==0);
