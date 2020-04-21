@@ -147,8 +147,8 @@ public:
     void resized() override;
 
     void setSource(const std::vector<float> &source,SpinLock &lock);
-    void setHorizontal(){isHorizontal = true;};
-    void setVertical(){isHorizontal = false;};
+    void setHorizontal(int numRows=1){isHorizontal = true;};
+    void setVertical(int numCols=1){isHorizontal = false;};
     
 
 private:

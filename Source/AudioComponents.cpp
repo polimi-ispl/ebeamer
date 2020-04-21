@@ -56,12 +56,27 @@ void MultiChannelLedBar::resized(){
         return;
     }
     auto num = source->size();
-    Rectangle<float> area = getLocalBounds().toFloat();
-    float step = isHorizontal ? area.getWidth()/num : area.getHeight()/num;
-    for (auto ledIdx = 0; ledIdx < num; ++ledIdx)
-    {
-        Rectangle<float> ledArea = isHorizontal ? area.removeFromLeft(step) : area.removeFromTop(step);
-        leds[ledIdx]->setBounds(ledArea.toNearestInt());
+    Rectangle<int> area = getLocalBounds();
+    
+    int step = isHorizontal ? floor(area.getWidth()/num) : floor(area.getHeight()/num);
+    int otherDim = isHorizontal ? area.getHeight() : area.getWidth();
+    otherDim = jmin(otherDim,step-1);
+    
+    const auto areaCtr = area.getCentre();
+    
+    // Re-center the area
+    if (isHorizontal){
+        area.setWidth((int)(step*num));
+        area.setHeight(otherDim);
+    }else{
+        area.setHeight((int)(step*num));
+        area.setWidth(otherDim);
+    }
+    area.setCentre(areaCtr);
+    
+    for (auto ledIdx = 0; ledIdx < num; ++ledIdx){
+        Rectangle<int> ledArea = isHorizontal ? area.removeFromLeft(step) : area.removeFromTop(step);
+        leds[ledIdx]->setBounds(ledArea);
     }
     
 }
