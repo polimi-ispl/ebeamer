@@ -102,11 +102,9 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (EbeamerAudioProcesso
     addAndMakeVisible(muteLabel);
 
     muteBeam1Button.setButtonText("1");
-    setMuteButtonColor(0);
     addAndMakeVisible(muteBeam1Button);
 
     muteBeam2Button.setButtonText("2");
-    setMuteButtonColor(1);
     addAndMakeVisible(muteBeam2Button);
     
     beam1MuteButtonAttachment.reset(new ButtonAttachment (valueTreeState, "muteBeam1", muteBeam1Button));
@@ -279,87 +277,85 @@ void JucebeamAudioProcessorEditor::resized()
     configCombo.setBounds(performanceMonitorArea.removeFromLeft(CONFIG_COMBO_WIDTH));
 }
 
-void JucebeamAudioProcessorEditor::setMuteButtonColor(uint8 beamIdx) {
-    
-    TextButton* beamMuteButton = beamIdx == 0 ? &muteBeam1Button : &muteBeam2Button;
-    Colour colour = (bool)processor.muteBeamParam[beamIdx].getValue() == 0 ? Colours::darkslategrey : Colours::darkred;
-    beamMuteButton->setColour (TextButton::buttonColourId, colour);
-
-}
-
-void JucebeamAudioProcessorEditor::buttonClicked(Button *button)
-{
-
-    if(button == &muteBeam1Button){
-        processor.muteBeamParam[0].setValue(1 - (bool)processor.muteBeamParam[0].getValue());
-        setMuteButtonColor(0);
-        scene.beams[0].setStatus((bool)processor.muteBeamParam[0].getValue()==0);
-    }
-    else if(button == &muteBeam2Button){
-        processor.muteBeamParam[1].setValue(1 - (bool)processor.muteBeamParam[1].getValue());
-        setMuteButtonColor(1);
-        scene.beams[1].setStatus((bool)processor.muteBeamParam[1].getValue()==0);
-    }
-}
-
-void JucebeamAudioProcessorEditor::buttonStateChanged(Button *button){
-    if (button == &frontToggle){
-        (processor.frontFacingParam.getValue()) = frontToggle.getToggleState();
-        scene.repaint();
-    }
-}
-
-void JucebeamAudioProcessorEditor::sliderValueChanged(Slider *slider)
-{
-//    if (slider == &steeringBeam1Slider)
-//    {
-//        *(processor.steeringBeamParam[0]) = slider->getValue();
-//        scene.beams[0].move(slider->getValue());
+//void JucebeamAudioProcessorEditor::setMuteButtonColor(uint8 beamIdx) {
+//
+//    TextButton* beamMuteButton = beamIdx == 0 ? &muteBeam1Button : &muteBeam2Button;
+//    Colour colour = (bool)processor.muteBeamParam[beamIdx].getValue() == 0 ? Colours::darkslategrey : Colours::darkred;
+//    beamMuteButton->setColour (TextButton::buttonColourId, colour);
+//
+//}
+//
+//void JucebeamAudioProcessorEditor::buttonClicked(Button *button){
+//    if(button == &muteBeam1Button){
+//        const bool val = processor.muteBeamParam[0].getValue();
+//        printf("%d\n",val);
+////        processor.muteBeamParam[0].setValue(~val);
+////        scene.beams[0].setStatus((bool)processor.muteBeamParam[0].getValue()==0);
 //    }
-//    else if (slider == &steeringBeam2Slider)
-//    {
-//        *(processor.steeringBeamParam[1]) = slider->getValue();
-//        scene.beams[1].move(slider->getValue());
+//    else if(button == &muteBeam2Button){
+//        processor.muteBeamParam[1].setValue(!(bool)processor.muteBeamParam[1].getValue());
+////        scene.beams[1].setStatus((bool)processor.muteBeamParam[1].getValue()==0);
 //    }
-//    else if (slider == &widthBeam1Knob)
-//    {
-//        *(processor.widthBeamParam[0]) = slider->getValue();
-//        scene.beams[0].scale(slider->getValue());
+//}
+//
+//void JucebeamAudioProcessorEditor::buttonStateChanged(Button *button){
+//    if (button == &frontToggle){
+//        (processor.frontFacingParam.getValue()) = frontToggle.getToggleState();
+//        scene.repaint();
 //    }
-//    else if (slider == &widthBeam2Knob)
-//    {
-//        *(processor.widthBeamParam[1]) = slider->getValue();
-//        scene.beams[1].scale(slider->getValue());
+//}
+//
+//void JucebeamAudioProcessorEditor::sliderValueChanged(Slider *slider)
+//{
+////    if (slider == &steeringBeam1Slider)
+////    {
+////        *(processor.steeringBeamParam[0]) = slider->getValue();
+////        scene.beams[0].move(slider->getValue());
+////    }
+////    else if (slider == &steeringBeam2Slider)
+////    {
+////        *(processor.steeringBeamParam[1]) = slider->getValue();
+////        scene.beams[1].move(slider->getValue());
+////    }
+////    else if (slider == &widthBeam1Knob)
+////    {
+////        *(processor.widthBeamParam[0]) = slider->getValue();
+////        scene.beams[0].scale(slider->getValue());
+////    }
+////    else if (slider == &widthBeam2Knob)
+////    {
+////        *(processor.widthBeamParam[1]) = slider->getValue();
+////        scene.beams[1].scale(slider->getValue());
+////    }
+////    else if (slider == &panBeam1Knob)
+////    {
+////        *(processor.panBeamParam[0]) = slider->getValue();
+////    }
+////    else if (slider == &panBeam2Knob)
+////    {
+////        *(processor.panBeamParam[1]) = slider->getValue();
+////    }
+////    else if (slider == &levelBeam1Knob)
+////    {
+////        *(processor.levelBeamParam[0]) = slider->getValue();
+////    }
+////    else if (slider == &levelBeam2Knob)
+////    {
+////        *(processor.levelBeamParam[1]) = slider->getValue();
+////    }
+////    else if(slider == &hpfSlider)
+////    {
+////        *(processor.hpfFreqParam) = slider->getValue();
+////    }
+////    else if(slider == &gainSlider)
+////    {
+////        *(processor.micGainParam) = slider->getValue();
+////    }
+//}
+//
+//void JucebeamAudioProcessorEditor::comboBoxChanged(ComboBox *combo){
+//    if (combo == &configCombo){
+////        (*processor.configParam) = configCombo.getSelectedItemIndex();
+//        processor.setMicConfig(static_cast<MicConfig>(configCombo.getSelectedItemIndex()));
 //    }
-//    else if (slider == &panBeam1Knob)
-//    {
-//        *(processor.panBeamParam[0]) = slider->getValue();
-//    }
-//    else if (slider == &panBeam2Knob)
-//    {
-//        *(processor.panBeamParam[1]) = slider->getValue();
-//    }
-//    else if (slider == &levelBeam1Knob)
-//    {
-//        *(processor.levelBeamParam[0]) = slider->getValue();
-//    }
-//    else if (slider == &levelBeam2Knob)
-//    {
-//        *(processor.levelBeamParam[1]) = slider->getValue();
-//    }
-//    else if(slider == &hpfSlider)
-//    {
-//        *(processor.hpfFreqParam) = slider->getValue();
-//    }
-//    else if(slider == &gainSlider)
-//    {
-//        *(processor.micGainParam) = slider->getValue();
-//    }
-}
-
-void JucebeamAudioProcessorEditor::comboBoxChanged(ComboBox *combo){
-    if (combo == &configCombo){
-//        (*processor.configParam) = configCombo.getSelectedItemIndex();
-        processor.setMicConfig(static_cast<MicConfig>(configCombo.getSelectedItemIndex()));
-    }
-}
+//}

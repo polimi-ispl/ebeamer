@@ -51,10 +51,7 @@
 
 //==============================================================================
 
-class JucebeamAudioProcessorEditor  : public AudioProcessorEditor,
-                                      private ToggleButton::Listener,
-                                      private Slider::Listener,
-                                      public ComboBox::Listener
+class JucebeamAudioProcessorEditor  : public AudioProcessorEditor
 {
 public:
     
@@ -101,7 +98,7 @@ private:
 
     //==============================================================================
     Label muteLabel;
-    TextButton muteBeam1Button, muteBeam2Button;
+    MuteButton muteBeam1Button, muteBeam2Button;
     std::unique_ptr<ButtonAttachment> beam1MuteButtonAttachment, beam2MuteButtonAttachment;
     
     //==============================================================================
@@ -134,17 +131,8 @@ private:
     Label configComboLabel;
     ComboBox configCombo;
     std::unique_ptr<ComboBoxAttachment> configComboLabelAttachment;
-
-    //==============================================================================
-    void setMuteButtonColor(uint8 beamIdx);
     
     //==============================================================================
     const std::vector<Colour> beamColours = {Colours::orangered,Colours::royalblue};
-    
-    // Callbacks
-    void buttonClicked(Button *button) override;
-    void sliderValueChanged(Slider *slider) override;
-    void buttonStateChanged(Button *button) override;
-    void comboBoxChanged(ComboBox *combo) override;
 
 };
