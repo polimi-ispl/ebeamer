@@ -23,6 +23,13 @@ typedef enum {
     LMA_4ESTICK,
 } MicConfig;
 
+const StringArray micConfigLabels({
+    "Single",
+    "Hor 2",
+    "Hor 3",
+    "Hor 4",
+});
+
 // ==============================================================================
 
 /** Pre-declare class */
@@ -102,7 +109,7 @@ public:
      This method allocates the needed buffers and performs the necessary pre-calculations that are dependent
      on sample rate, buffer size and channel configurations.
      */
-    void prepareToPlay(double sampleRate_, int maximumExpectedSamplesPerBlock_, int numActiveInputChannels);
+    void prepareToPlay(double sampleRate_, int maximumExpectedSamplesPerBlock_);
     
     /** Process a new block of samples.
      
@@ -155,8 +162,8 @@ private:
     /** Maximum buffer size [samples] */
     int maximumExpectedSamplesPerBlock = 64;
     
-    /** Number of active inputs */
-    int numActiveInputChannels = 1;
+    /** Number of microphones */
+    int numMic = 16;
     
     /** Number of beams */
     int numBeams;
@@ -166,7 +173,7 @@ private:
     
     /** Beamforming algorithm */
     std::unique_ptr<BeamformingAlgorithm> alg;
-    
+
     /** FIR filters length. Diepends on the algorithm */
     int firLen;
     
@@ -194,8 +201,6 @@ private:
     
     /** Initialize the beamforming algorithm */
     void initAlg();
-    
-    
     
     /** DOA thread */
     std::unique_ptr<BeamformerDoa> doaThread;

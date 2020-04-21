@@ -56,6 +56,7 @@ public:
     AudioParameterFloat* micGainParam;
     AudioParameterFloat* hpfFreqParam;
     AudioParameterBool*  frontFacingParam;
+    AudioParameterChoice* configParam;
     
     //==============================================================================
     // Buffer to allow external access to input signals FFT
@@ -81,6 +82,10 @@ public:
     //==============================================================================
     /** Averagel load */
     float getAverageLoad() const;
+    
+    //==============================================================================
+    /** Set a new microphone configuration */
+    void setMicConfig(const MicConfig& mc);
 
 private:
     //==============================================================================

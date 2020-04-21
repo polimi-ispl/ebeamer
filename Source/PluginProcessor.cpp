@@ -20,6 +20,7 @@ EbeamerAudioProcessor::EbeamerAudioProcessor()
     
     /** Initialize the beamformer */
     beamformer = std::make_unique<Beamformer>(numBeams,numDoas);
+    beamformer->setMicConfig(static_cast<MicConfig>(configParam->getIndex()));
     
 }
 
@@ -74,7 +75,7 @@ void EbeamerAudioProcessor::prepareToPlay (double sampleRate_, int maximumExpect
     prevHpfFreq = 0;
     
     /** Initialize the beamformer */
-    beamformer->prepareToPlay(sampleRate, maximumExpectedSamplesPerBlock, numActiveInputChannels);
+    beamformer->prepareToPlay(sampleRate, maximumExpectedSamplesPerBlock);
     
     /** Initialize beams' buffer  */
     beamBuffer.setSize(numBeams, maximumExpectedSamplesPerBlock);
@@ -210,21 +211,16 @@ void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
     }
     
 }
+//==============================================================================
+void EbeamerAudioProcessor::setMicConfig(const MicConfig& mc){
+    beamformer->setMicConfig(mc);
+    prepareToPlay(sampleRate, maximumExpectedSamplesPerBlock);
+}
 
 //==============================================================================
 float EbeamerAudioProcessor::getAverageLoad() const{
     GenericScopedLock<SpinLock> lock(loadLock);
     return load;
-}
-
-//==============================================================================
-AudioProcessorEditor* EbeamerAudioProcessor::createEditor()
-{
-    return new JucebeamAudioProcessorEditor (*this);
-}
-bool EbeamerAudioProcessor::hasEditor() const
-{
-    return true;
 }
 
 //==============================================================================
@@ -268,6 +264,10 @@ void EbeamerAudioProcessor::getStateInformation (MemoryBlock& destData)
     stringStreamTag.str(std::string());
     stringStreamTag << "frontFacing";
     xml->setAttribute(Identifier(stringStreamTag.str()), (bool) *(frontFacingParam));
+    
+    stringStreamTag.str(std::string());
+    stringStreamTag << "config";
+    xml->setAttribute(Identifier(stringStreamTag.str()), (int) *(configParam));
     
     copyXmlToBinary (*xml, destData);
 }
@@ -313,16 +313,12 @@ void EbeamerAudioProcessor::setStateInformation (const void* data, int sizeInByt
             stringStreamTag.str(std::string());
             stringStreamTag << "frontFacing";
             *(frontFacingParam) = xmlState->getBoolAttribute(Identifier(stringStreamTag.str()), false);
+            
+            stringStreamTag.str(std::string());
+            stringStreamTag << "config";
+            *(configParam) = xmlState->getIntAttribute(Identifier(stringStreamTag.str()), 0);
         }
     }
-}
-
-
-//==============================================================================
-// This creates new instances of the plugin..
-AudioProcessor* JUCE_CALLTYPE createPluginFilter()
-{
-    return new EbeamerAudioProcessor();
 }
 
 //==============================================================================
@@ -352,6 +348,12 @@ const std::unique_ptr<Beamformer>& EbeamerAudioProcessor::getBeamformer() const{
 void EbeamerAudioProcessor::initializeParameters() {
     
     // Values in dB
+    addParameter(configParam = new AudioParameterChoice("config", //tag
+                                                        "Configuration", //name
+                                                        micConfigLabels, //choices
+                                                        0 //default
+                                                        ));
+    
     addParameter(frontFacingParam = new AudioParameterBool("frontFacing", //tag
                                                            "Front facing", //name
                                                            false //default
@@ -498,4 +500,21 @@ const String EbeamerAudioProcessor::getProgramName (int index)
 
 void EbeamerAudioProcessor::changeProgramName (int index, const String& newName)
 {
+}
+
+//==============================================================================
+// This creates new instances of the plugin..
+AudioProcessor* JUCE_CALLTYPE createPluginFilter()
+{
+    return new EbeamerAudioProcessor();
+}
+
+//==============================================================================
+AudioProcessorEditor* EbeamerAudioProcessor::createEditor()
+{
+    return new JucebeamAudioProcessorEditor (*this);
+}
+bool EbeamerAudioProcessor::hasEditor() const
+{
+    return true;
 }

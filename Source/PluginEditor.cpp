@@ -7,7 +7,6 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (EbeamerAudioProcesso
 
     setSize (GUI_WIDTH, GUI_HEIGHT);
 
-    // processor.addChangeListener (this);
     scene.setBeamColors(beamColours);
     addAndMakeVisible (scene);
 
@@ -186,13 +185,24 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (EbeamerAudioProcesso
     cpuLoad.startTimerHz(CPULOAD_UPDATE_FREQ);
     addAndMakeVisible(cpuLoad);
     
+    //=====================================================
     // Add front facing toggle
-    frontToggleLabel.setText("FRONT view", NotificationType::dontSendNotification);
+    frontToggleLabel.setText("FLIP", NotificationType::dontSendNotification);
     frontToggleLabel.setFont(10);
     frontToggleLabel.attachToComponent(&frontToggle, true);
     frontToggle.setToggleState(*processor.frontFacingParam,NotificationType::dontSendNotification);
     frontToggle.addListener(this);
     addAndMakeVisible(frontToggle);
+    
+    //=====================================================
+    // Configuration selection combo
+    configComboLabel.setText("CONFIG", NotificationType::dontSendNotification);
+    configComboLabel.setFont(10);
+    configComboLabel.attachToComponent(&configCombo, true);
+    configCombo.addItemList(micConfigLabels, 10);
+    configCombo.setSelectedItemIndex(processor.configParam->getIndex());
+    configCombo.addListener(this);
+    addAndMakeVisible(configCombo);
     
 }
 
@@ -291,6 +301,10 @@ void JucebeamAudioProcessorEditor::resized()
     /** Set area for front toggle */
     performanceMonitorArea.removeFromLeft(FRONT_TOGGLE_LABEL_WIDTH);
     frontToggle.setBounds(performanceMonitorArea.removeFromLeft(FRONT_TOGGLE_WIDTH));
+    
+    /** Set area for config combo */
+    performanceMonitorArea.removeFromLeft(CONFIG_COMBO_LABEL_WIDTH);
+    configCombo.setBounds(performanceMonitorArea.removeFromLeft(CONFIG_COMBO_WIDTH));
 }
 
 void JucebeamAudioProcessorEditor::setMuteButtonColor(uint8 beamIdx) {
@@ -370,5 +384,12 @@ void JucebeamAudioProcessorEditor::sliderValueChanged(Slider *slider)
     else if(slider == &gainSlider)
     {
         *(processor.micGainParam) = slider->getValue();
+    }
+}
+
+void JucebeamAudioProcessorEditor::comboBoxChanged(ComboBox *combo){
+    if (combo == &configCombo){
+        (*processor.configParam) = configCombo.getSelectedItemIndex();
+        processor.setMicConfig(static_cast<MicConfig>(configCombo.getSelectedItemIndex()));
     }
 }

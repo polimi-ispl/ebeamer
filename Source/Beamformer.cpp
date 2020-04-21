@@ -92,16 +92,12 @@ MicConfig Beamformer::getMicConfig() const{
 }
 
 void Beamformer::setMicConfig(MicConfig micConfig_){
-    if (micConfig_ != micConfig){
-        micConfig=micConfig_;
-        initAlg();
-    }
+    micConfig=micConfig_;
 }
 
 void Beamformer::initAlg(){
-    
+   
     /** Determine configuration parameters */
-    int numMic;
     switch (micConfig){
         case LMA_1ESTICK:
             numMic = 16;
@@ -127,16 +123,16 @@ void Beamformer::initAlg(){
     
     /** Allocate FIR filters */
     for (auto &f : firIR){
-        f = AudioBuffer<float>(numActiveInputChannels,firLen);
+        f = AudioBuffer<float>(numMic,firLen);
         f.clear();
     }
     for (auto &f : firFFT){
-        f = FIR::AudioBufferFFT(numActiveInputChannels,fft);
+        f = FIR::AudioBufferFFT(numMic,fft);
         f.clear();
     }
 
     /** Allocate input buffers */
-    inputBuffer = FIR::AudioBufferFFT(numActiveInputChannels, fft);
+    inputBuffer = FIR::AudioBufferFFT(numMic, fft);
     
     /** Allocate convolution buffer */
     convolutionBuffer = FIR::AudioBufferFFT(1, fft);
@@ -146,27 +142,26 @@ void Beamformer::initAlg(){
     beamBuffer.clear();
     
     /** Allocate DOA input buffer */
-    doaInputBuffer.setSize(numActiveInputChannels, maximumExpectedSamplesPerBlock);
+    doaInputBuffer.setSize(numMic, maximumExpectedSamplesPerBlock);
     doaInputBuffer.clear();
     
     /** Set DOA input Filter  */
     doaBPFilters.clear();
-    doaBPFilters.resize(numActiveInputChannels);
+    doaBPFilters.resize(numMic);
     IIRCoefficients doaIIRCoeff = IIRCoefficients::makeBandPass(sampleRate,doaBPfreq, doaBPQ);
     for (auto &f : doaBPFilters){
         f.setCoefficients(doaIIRCoeff);
     }
     
     /** Prepare and start DOA thread */
-    doaThread = std::make_unique<BeamformerDoa>(*this,numDoas,sampleRate,numActiveInputChannels,firLen,fft);
+    doaThread = std::make_unique<BeamformerDoa>(*this,numDoas,sampleRate,numMic,firLen,fft);
     doaThread->startTimerHz(doaUpdateFrequency);
 }
 
-void Beamformer::prepareToPlay(double sampleRate_, int maximumExpectedSamplesPerBlock_, int numActiveInputChannels_){
+void Beamformer::prepareToPlay(double sampleRate_, int maximumExpectedSamplesPerBlock_){
     
     sampleRate = sampleRate_;
     maximumExpectedSamplesPerBlock = maximumExpectedSamplesPerBlock_;
-    numActiveInputChannels = numActiveInputChannels_;
     
     initAlg();
 }
@@ -181,7 +176,7 @@ void Beamformer::processBlock(const AudioBuffer<float> &inBuffer){
     
     {
         GenericScopedLock<SpinLock> lock(doaInputBufferLock);
-        for (auto chIdx = 0;chIdx <numActiveInputChannels;chIdx++){
+        for (auto chIdx = 0;chIdx <jmin(numMic,inBuffer.getNumChannels());chIdx++){
             doaInputBuffer.copyFrom(chIdx, 0, inBuffer, chIdx, 0, inBuffer.getNumSamples());
             doaBPFilters[chIdx].processSamples(doaInputBuffer.getWritePointer(chIdx), inBuffer.getNumSamples());
         }

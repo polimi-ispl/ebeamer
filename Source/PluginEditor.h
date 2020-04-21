@@ -38,8 +38,11 @@
 #define CPULOAD_WIDTH 80
 #define CPULOAD_UPDATE_FREQ 10 //Hz
 
-#define FRONT_TOGGLE_LABEL_WIDTH 65
+#define FRONT_TOGGLE_LABEL_WIDTH 40
 #define FRONT_TOGGLE_WIDTH 25
+
+#define CONFIG_COMBO_LABEL_WIDTH 65
+#define CONFIG_COMBO_WIDTH 80
 
 #define INPUT_METER_UPDATE_FREQ 10 //Hz
 #define BEAM_METER_UPDATE_FREQ 10 //Hz
@@ -50,7 +53,8 @@
 
 class JucebeamAudioProcessorEditor  : public AudioProcessorEditor,
                                       private ToggleButton::Listener,
-                                      private Slider::Listener
+                                      private Slider::Listener,
+                                      public ComboBox::Listener
 {
 public:
 
@@ -110,6 +114,10 @@ private:
     /** Swap side toggle component */
     Label frontToggleLabel;
     ToggleButton frontToggle;
+    
+    /** Configuration selection combo */
+    ComboBox configCombo;
+    Label configComboLabel;
 
     //===============================================================
     void setMuteButtonColor(uint8 beamIdx);
@@ -121,6 +129,7 @@ private:
     void buttonClicked(Button *button) override;
     void sliderValueChanged(Slider *slider) override;
     void buttonStateChanged(Button *button) override;
+    void comboBoxChanged(ComboBox *combo) override;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JucebeamAudioProcessorEditor);
 };
