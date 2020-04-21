@@ -109,6 +109,8 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (EbeamerAudioProcesso
     
     beam1MuteButtonAttachment.reset(new ButtonAttachment (valueTreeState, "muteBeam1", muteBeam1Button));
     beam2MuteButtonAttachment.reset(new ButtonAttachment (valueTreeState, "muteBeam2", muteBeam2Button));
+    
+    getLookAndFeel().setColour (MuteButton::buttonOnColourId, Colours::darkred);
 
     //==============================================================================
     
