@@ -113,10 +113,11 @@ EbeamerAudioProcessor::EbeamerAudioProcessor()
 {
     
     /** Get parameters pointers */
-    configParam = parameters.getParameterAsValue("config");
-    frontFacingParam = parameters.getParameterAsValue("frontFacing");
-    hpfFreqParam = parameters.getParameterAsValue("hpfFreq");
-    micGainParam = parameters.getParameterAsValue("micGain");
+    configParam = parameters.getRawParameterValue("config");
+    parameters.addParameterListener("config", this);
+    frontFacingParam = parameters.getRawParameterValue("frontFacing");
+    hpfFreqParam = parameters.getRawParameterValue("hpf");
+    micGainParam = parameters.getRawParameterValue("gainMic");
     
     std::ostringstream ssTag;
     std::ostringstream ssName;
@@ -124,33 +125,33 @@ EbeamerAudioProcessor::EbeamerAudioProcessor()
         ssTag.str(std::string());
         ssName.str(std::string());
         ssTag << "steerBeam" << (beamIdx+1);
-        steeringBeamParam[beamIdx] = parameters.getParameterAsValue(ssTag.str());
+        steeringBeamParam[beamIdx] = parameters.getRawParameterValue(ssTag.str());
         
         ssTag.str(std::string());
         ssName.str(std::string());
         ssTag << "widthBeam" << (beamIdx+1);
-        widthBeamParam[beamIdx] = parameters.getParameterAsValue(ssTag.str());
+        widthBeamParam[beamIdx] = parameters.getRawParameterValue(ssTag.str());
         
         ssTag.str(std::string());
         ssName.str(std::string());
         ssTag << "panBeam" << (beamIdx+1);
-        panBeamParam[beamIdx] = parameters.getParameterAsValue(ssTag.str());
+        panBeamParam[beamIdx] = parameters.getRawParameterValue(ssTag.str());
         
         ssTag.str(std::string());
         ssName.str(std::string());
         ssTag << "levelBeam" << (beamIdx+1);
-        levelBeamParam[beamIdx] = parameters.getParameterAsValue(ssTag.str());
+        levelBeamParam[beamIdx] = parameters.getRawParameterValue(ssTag.str());
         
         ssTag.str(std::string());
         ssName.str(std::string());
         ssTag << "muteBeam" << (beamIdx+1);
-        muteBeamParam[beamIdx] = parameters.getParameterAsValue(ssTag.str());
+        muteBeamParam[beamIdx] = parameters.getRawParameterValue(ssTag.str());
     }
     
-    
+
     /** Initialize the beamformer */
     beamformer = std::make_unique<Beamformer>(numBeams,numDoas);
-    beamformer->setMicConfig(static_cast<MicConfig>((int)configParam.getValue()));
+    beamformer->setMicConfig(static_cast<MicConfig>((int)*configParam));
     
 }
 
@@ -196,7 +197,7 @@ void EbeamerAudioProcessor::prepareToPlay (double sampleRate_, int maximumExpect
     /** Initialize the input gain */
     micGain.reset();
     micGain.prepare({sampleRate, static_cast<uint32>(maximumExpectedSamplesPerBlock),numActiveInputChannels});
-    micGain.setGainDecibels(micGainParam.getValue());
+    micGain.setGainDecibels(*micGainParam);
     micGain.setRampDurationSeconds(gainTimeConst);
     
     /** Initialize the High Pass Filters */
@@ -214,7 +215,7 @@ void EbeamerAudioProcessor::prepareToPlay (double sampleRate_, int maximumExpect
     for (auto beamIdx = 0; beamIdx < numBeams; ++beamIdx){
         beamGain[beamIdx].reset();
         beamGain[beamIdx].prepare({sampleRate, static_cast<uint32>(maximumExpectedSamplesPerBlock),1});
-        beamGain[beamIdx].setGainDecibels(levelBeamParam[beamIdx].getValue());
+        beamGain[beamIdx].setGainDecibels(*levelBeamParam[beamIdx]);
         beamGain[beamIdx].setRampDurationSeconds(gainTimeConst);
     }
     
@@ -261,7 +262,7 @@ void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
     ScopedNoDenormals noDenormals;
     
     /**Apply input gain directly on input buffer  */
-    micGain.setGainDecibels(micGainParam.getValue());
+    micGain.setGainDecibels(*micGainParam);
     {
         auto block = juce::dsp::AudioBlock<float>(buffer).getSubsetChannelBlock(0, numActiveInputChannels);
         auto context = juce::dsp::ProcessContextReplacing<float> (block);
@@ -276,9 +277,9 @@ void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
     }
     
     /** Renew IIR coefficient if cut frequency changed */
-    if(prevHpfFreq != (bool)hpfFreqParam.getValue()){
-        iirCoeffHPF = IIRCoefficients::makeHighPass(sampleRate, hpfFreqParam.getValue());
-        prevHpfFreq = hpfFreqParam.getValue();
+    if(prevHpfFreq != (bool)*hpfFreqParam){
+        iirCoeffHPF = IIRCoefficients::makeHighPass(sampleRate, *hpfFreqParam);
+        prevHpfFreq = *hpfFreqParam;
         for (auto& iirHPFfilter : iirHPFfilters){
             iirHPFfilter.setCoefficients(iirCoeffHPF);
         }
@@ -291,9 +292,9 @@ void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
 
     /** Set beams parameters */
     for (auto beamIdx = 0;beamIdx< numBeams; beamIdx++){
-        float beamDoa = steeringBeamParam[beamIdx].getValue();
-        beamDoa = frontFacingParam.getValue() ? -beamDoa : beamDoa;
-        BeamParameters beamParams = {beamDoa,widthBeamParam[beamIdx].getValue()};
+        float beamDoa = *steeringBeamParam[beamIdx];
+        beamDoa = *frontFacingParam ? -beamDoa : beamDoa;
+        BeamParameters beamParams = {beamDoa,*widthBeamParam[beamIdx]};
         beamformer->setBeamParameters(beamIdx, beamParams);
     }
 
@@ -305,8 +306,8 @@ void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
 
     /** Apply beams mute and volume */
     for (auto beamIdx = 0; beamIdx < numBeams; ++beamIdx){
-        if ((bool)muteBeamParam[beamIdx].getValue() == false){
-            beamGain[beamIdx].setGainDecibels(levelBeamParam[beamIdx].getValue());
+        if ((bool)*muteBeamParam[beamIdx] == false){
+            beamGain[beamIdx].setGainDecibels(*levelBeamParam[beamIdx]);
         }else{
             beamGain[beamIdx].setGainLinear(0);
         }
@@ -329,7 +330,7 @@ void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
     for (int outChannel = 0; outChannel < numActiveOutputChannels; ++outChannel){
         /** Sum the contributes from each beam */
         for (int beamIdx = 0; beamIdx < numBeams; ++beamIdx){
-            auto channelBeamGain = panToLinearGain((float)panBeamParam[beamIdx].getValue(),outChannel==0);
+            auto channelBeamGain = panToLinearGain((float)*panBeamParam[beamIdx],outChannel==0);
             buffer.addFrom(outChannel, 0, beamBuffer, beamIdx, 0, buffer.getNumSamples(), channelBeamGain);
         }
     }
@@ -343,6 +344,17 @@ void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
     }
     
 }
+
+bool EbeamerAudioProcessor::isFrontFacing() const{
+    return *frontFacingParam;
+}
+
+void EbeamerAudioProcessor::parameterChanged (const String &parameterID, float newValue){
+    if (parameterID == "config"){
+        setMicConfig(static_cast<MicConfig>((int)(newValue)));
+    }
+}
+
 //==============================================================================
 void EbeamerAudioProcessor::setMicConfig(const MicConfig& mc){
     beamformer->setMicConfig(mc);

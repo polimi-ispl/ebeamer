@@ -7,7 +7,8 @@
 //==============================================================================
 
 
-class EbeamerAudioProcessor  : public AudioProcessor
+class EbeamerAudioProcessor  : public AudioProcessor,
+                               public AudioProcessorValueTreeState::Listener
 {
 public:
     //==============================================================================
@@ -47,18 +48,6 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     
     //==============================================================================
-    // VST parameters
-    Value steeringBeamParam[numBeams];
-    Value widthBeamParam[numBeams];
-    Value panBeamParam[numBeams];
-    Value levelBeamParam[numBeams];
-    Value muteBeamParam[numBeams];
-    Value micGainParam;
-    Value hpfFreqParam;
-    Value frontFacingParam;
-    Value configParam;
-    
-    //==============================================================================
     // Buffer to allow external access to input signals FFT
     FIR::AudioBufferFFT inputsFFT;
     bool newFftInputDataAvailable = false;
@@ -86,6 +75,9 @@ public:
     //==============================================================================
     /** Set a new microphone configuration */
     void setMicConfig(const MicConfig& mc);
+    
+    /** Front facing convention */
+    bool isFrontFacing() const;
 
 private:
     //==============================================================================
@@ -161,6 +153,18 @@ private:
     /** Processor parameters tree */
     AudioProcessorValueTreeState parameters;
     
+    //==============================================================================
+    // VST parameters
+    std::atomic<float>* steeringBeamParam[numBeams];
+    std::atomic<float>* widthBeamParam[numBeams];
+    std::atomic<float>* panBeamParam[numBeams];
+    std::atomic<float>* levelBeamParam[numBeams];
+    std::atomic<float>* muteBeamParam[numBeams];
+    std::atomic<float>* micGainParam;
+    std::atomic<float>* hpfFreqParam;
+    std::atomic<float>* frontFacingParam;
+    std::atomic<float>* configParam;
     
+    void parameterChanged (const String &parameterID, float newValue) override;
     
 };
