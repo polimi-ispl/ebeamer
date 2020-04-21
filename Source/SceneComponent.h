@@ -40,10 +40,13 @@ public:
     
     void paint(Graphics&) override;
     void resized() override;
+    void setProcessor(const EbeamerAudioProcessor * p);
     
 private:
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TileComponent)
+    
+    const EbeamerAudioProcessor * processor;
 };
 
 //==============================================================================
@@ -51,17 +54,19 @@ private:
 class GridComponent    : public Component, public Timer
 {
 public:
-    GridComponent(const std::unique_ptr<Beamformer>& b);
+    GridComponent();
     ~GridComponent();
     
     void resized() override;
+    
+    void setProcessor(const EbeamerAudioProcessor * p);
     
 private:
     
     TileComponent tiles[TILE_ROW_COUNT][EbeamerAudioProcessor::numDoas];
     juce::Point<float> vertices[TILE_ROW_COUNT+1][EbeamerAudioProcessor::numDoas+1];
     
-    const std::unique_ptr<Beamformer>& beamformer;
+    const EbeamerAudioProcessor * processor;
     
     std::vector<float> th;
     
@@ -89,6 +94,8 @@ public:
     void paint(Graphics&) override;
     void resized() override;
     
+    void setProcessor(const EbeamerAudioProcessor * p);
+    
     void move(float);
     void scale(float);
     void setStatus(bool);
@@ -101,6 +108,8 @@ private:
     float width;
     bool status;
     
+    const EbeamerAudioProcessor * processor;
+    
     Colour baseColour = Colours::lightblue;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BeamComponent)
@@ -111,7 +120,7 @@ private:
 class SceneComponent    : public Component
 {
 public:
-    SceneComponent(const std::unique_ptr<Beamformer>& b);
+    SceneComponent(const EbeamerAudioProcessor& p);
     ~SceneComponent();
     
     void setBeamColors(const std::vector<Colour> &colours);

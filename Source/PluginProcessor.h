@@ -55,6 +55,7 @@ public:
     AudioParameterBool*  muteBeamParam[numBeams];
     AudioParameterFloat* micGainParam;
     AudioParameterFloat* hpfFreqParam;
+    AudioParameterBool*  frontFacingParam;
     
     //==============================================================================
     // Buffer to allow external access to input signals FFT
@@ -75,6 +76,7 @@ public:
     //==============================================================================
     // Beamformer
     std::unique_ptr<Beamformer>& getBeamformer();
+    const std::unique_ptr<Beamformer>& getBeamformer() const;
     
     //==============================================================================
     /** Averagel load */

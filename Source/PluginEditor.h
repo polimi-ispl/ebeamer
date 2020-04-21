@@ -38,6 +38,9 @@
 #define CPULOAD_WIDTH 80
 #define CPULOAD_UPDATE_FREQ 10 //Hz
 
+#define FRONT_TOGGLE_LABEL_WIDTH 65
+#define FRONT_TOGGLE_WIDTH 25
+
 #define INPUT_METER_UPDATE_FREQ 10 //Hz
 #define BEAM_METER_UPDATE_FREQ 10 //Hz
 #define ENERGY_UPDATE_FREQ 10 //Hz
@@ -103,6 +106,10 @@ private:
     //===============================================================
     /** CPU load component */
     CpuLoadComp cpuLoad;
+    
+    /** Swap side toggle component */
+    Label frontToggleLabel;
+    ToggleButton frontToggle;
 
     //===============================================================
     void setMuteButtonColor(uint8 beamIdx);
@@ -113,6 +120,7 @@ private:
     // Callbacks
     void buttonClicked(Button *button) override;
     void sliderValueChanged(Slider *slider) override;
+    void buttonStateChanged(Button *button) override;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JucebeamAudioProcessorEditor);
 };

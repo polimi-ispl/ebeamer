@@ -2,7 +2,7 @@
 #include "PluginEditor.h"
 
 JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (EbeamerAudioProcessor& p)
-:  AudioProcessorEditor (&p), processor (p), scene(p.getBeamformer()), cpuLoad(p)
+:  AudioProcessorEditor (&p), processor (p), scene(p), cpuLoad(p)
 {
 
     setSize (GUI_WIDTH, GUI_HEIGHT);
@@ -182,9 +182,17 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (EbeamerAudioProcesso
     addAndMakeVisible(gainLabel);
     
     //=====================================================
-    /** Add CPU Load and start its timer */
+    // Add CPU Load and start its timer
     cpuLoad.startTimerHz(CPULOAD_UPDATE_FREQ);
     addAndMakeVisible(cpuLoad);
+    
+    // Add front facing toggle
+    frontToggleLabel.setText("FRONT view", NotificationType::dontSendNotification);
+    frontToggleLabel.setFont(10);
+    frontToggleLabel.attachToComponent(&frontToggle, true);
+    frontToggle.setToggleState(*processor.frontFacingParam,NotificationType::dontSendNotification);
+    frontToggle.addListener(this);
+    addAndMakeVisible(frontToggle);
     
 }
 
@@ -276,9 +284,13 @@ void JucebeamAudioProcessorEditor::resized()
     //===============================================================
     /** Prepare area for the performance monitor */
     auto performanceMonitorArea = area.removeFromTop(PREFORMANCE_MONITOR_HEIGHT);
+    
     /** Set area for CPU Load */
     cpuLoad.setBounds(performanceMonitorArea.removeFromLeft(CPULOAD_WIDTH));
 
+    /** Set area for front toggle */
+    performanceMonitorArea.removeFromLeft(FRONT_TOGGLE_LABEL_WIDTH);
+    frontToggle.setBounds(performanceMonitorArea.removeFromLeft(FRONT_TOGGLE_WIDTH));
 }
 
 void JucebeamAudioProcessorEditor::setMuteButtonColor(uint8 beamIdx) {
@@ -303,6 +315,13 @@ void JucebeamAudioProcessorEditor::buttonClicked(Button *button)
         *(processor.muteBeamParam[1]) = 1 - *(processor.muteBeamParam[1]);
         setMuteButtonColor(1);
         scene.beams[1].setStatus(!processor.muteBeamParam[1]->get());
+    }
+}
+
+void JucebeamAudioProcessorEditor::buttonStateChanged(Button *button){
+    if (button == &frontToggle){
+        *(processor.frontFacingParam) = frontToggle.getToggleState();
+        scene.repaint();
     }
 }
 

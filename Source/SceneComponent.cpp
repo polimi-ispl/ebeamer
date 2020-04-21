@@ -34,6 +34,10 @@ void TileComponent::paint(Graphics& g)
     path.lineTo(corners[0][1]);
     path.closeSubPath();
     
+    if (*(processor->frontFacingParam)){
+        path.applyTransform(AffineTransform::rotation(MathConstants<float>::pi,SCENE_WIDTH/2,SCENE_HEIGHT/2));
+    }
+    
     g.setColour(tileColour);
     g.fillPath(path);
     
@@ -46,19 +50,20 @@ void TileComponent::resized()
 {
 }
 
+void TileComponent::setProcessor(const EbeamerAudioProcessor * p){
+    processor = p;
+}
 //==============================================================================
 //==============================================================================
 
-GridComponent::GridComponent(const std::unique_ptr<Beamformer>& b):beamformer(b)
-{
+GridComponent::GridComponent(){
     for(int i = 0; i < TILE_ROW_COUNT; i++)
         for(int j = 0; j < EbeamerAudioProcessor::numDoas; j++)
             addAndMakeVisible (tiles[i][j]);
     
     energy.resize(EbeamerAudioProcessor::numDoas);
     energyPreGain.resize(EbeamerAudioProcessor::numDoas,-30);
-    
-    computeVertices();
+        
     
     // Compute led tresholds
     const float ledStep = 3; //dB
@@ -75,6 +80,16 @@ GridComponent::GridComponent(const std::unique_ptr<Beamformer>& b):beamformer(b)
 
 GridComponent::~GridComponent()
 {
+}
+
+void GridComponent::setProcessor(const EbeamerAudioProcessor * p){
+    processor = p;
+    
+    for(int i = 0; i < TILE_ROW_COUNT; i++){
+        for(int j = 0; j < EbeamerAudioProcessor::numDoas; j++){
+            tiles[i][j].setProcessor(processor);
+        }
+    }
 }
 
 //==============================================================================
@@ -109,7 +124,7 @@ void GridComponent::resized()
 void GridComponent::timerCallback(){
     
     std::vector<float> newEnergy(EbeamerAudioProcessor::numDoas);
-    beamformer->getDoaEnergy(newEnergy);
+    processor->getBeamformer()->getDoaEnergy(newEnergy);
     
     for (auto dirIdx = 0; dirIdx < energyPreGain.size(); ++dirIdx){
         energyPreGain[dirIdx] = ((1-inertia) * (newEnergy[dirIdx])) + (inertia * energyPreGain[dirIdx]);
@@ -146,8 +161,8 @@ void GridComponent::timerCallback(){
 
 void GridComponent::computeVertices()
 {
-    float w = SCENE_WIDTH;
-    float h = w/2;
+    const float w = SCENE_WIDTH;
+    const float h = SCENE_HEIGHT;
     
     float angle_diff = MathConstants<float>::pi / EbeamerAudioProcessor::numDoas;
     // float radius_diff = h / TILE_ROW_COUNT;
@@ -163,13 +178,14 @@ void GridComponent::computeVertices()
         // float radius = h * sqrt( (float)(TILE_ROW_COUNT - i) / TILE_ROW_COUNT );
         
         // Exponential
-        float radius = h - h * ( exp( (float)i / TILE_ROW_COUNT ) - 1 ) / ( exp( 1 ) - 1 );
+        const float radius = h - h * ( exp( (float)i / TILE_ROW_COUNT ) - 1 ) / ( exp( 1 ) - 1 );
         
         for(int j = 0; j <= EbeamerAudioProcessor::numDoas; j++){
-            float angle = j*angle_diff;
+            const float angle = j*angle_diff;
             
             vertices[i][j].setX( w/2 - radius*cos(angle));
             vertices[i][j].setY( h  - radius*sin(angle));
+
         }
     }
 }
@@ -184,6 +200,10 @@ BeamComponent::BeamComponent(){
 BeamComponent::~BeamComponent(){
 }
 
+void BeamComponent::setProcessor(const EbeamerAudioProcessor * p){
+    processor = p;
+}
+
 //==============================================================================
 
 void BeamComponent::paint(Graphics& g){
@@ -196,6 +216,11 @@ void BeamComponent::paint(Graphics& g){
     
     path.applyTransform(AffineTransform::rotation( (MathConstants<float>::pi/2) * position));
     path.applyTransform(AffineTransform::translation(SCENE_WIDTH/2, SCENE_WIDTH/2));
+    
+    if (*(processor->frontFacingParam)){
+        //path.applyTransform(AffineTransform::rotation(MathConstants<float>::pi,SCENE_WIDTH/2,SCENE_HEIGHT/2));
+        path.applyTransform(AffineTransform::verticalFlip(SCENE_HEIGHT));
+    }
     
     if (status){
         g.setColour(baseColour.brighter());
@@ -230,17 +255,23 @@ void BeamComponent::setStatus(bool s){
 //==============================================================================
 //==============================================================================
 
-SceneComponent::SceneComponent(const std::unique_ptr<Beamformer>& b):grid(b)
-{
+SceneComponent::SceneComponent(const EbeamerAudioProcessor& p){
+    
+    
+    beams[0].move(-0.5);
+    beams[0].scale(0.25);
+    beams[0].setProcessor(&p);
+    
+    beams[1].move(0.5);
+    beams[1].scale(0.5);
+    beams[1].setProcessor(&p);
+    
+    grid.setProcessor(&p);
+    
     addAndMakeVisible (grid);
     for(int i = 0; i < EbeamerAudioProcessor::numBeams; i++)
         addAndMakeVisible (beams[i]);
     
-    beams[0].move(-0.5);
-    beams[0].scale(0.25);
-    
-    beams[1].move(0.5);
-    beams[1].scale(0.5);
 }
 
 SceneComponent::~SceneComponent()

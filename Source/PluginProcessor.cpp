@@ -159,7 +159,8 @@ void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
 
     /** Set beams parameters */
     for (auto beamIdx = 0;beamIdx< numBeams; beamIdx++){
-        BeamParameters beamParams = {steeringBeamParam[beamIdx]->get(),widthBeamParam[beamIdx]->get()};
+        auto beamDoa = *frontFacingParam ? -steeringBeamParam[beamIdx]->get() : steeringBeamParam[beamIdx]->get();
+        BeamParameters beamParams = {beamDoa,widthBeamParam[beamIdx]->get()};
         beamformer->setBeamParameters(beamIdx, beamParams);
     }
 
@@ -264,6 +265,10 @@ void EbeamerAudioProcessor::getStateInformation (MemoryBlock& destData)
     stringStreamTag << "gainMic";
     xml->setAttribute(Identifier(stringStreamTag.str()), (double) *(micGainParam));
     
+    stringStreamTag.str(std::string());
+    stringStreamTag << "frontFacing";
+    xml->setAttribute(Identifier(stringStreamTag.str()), (bool) *(frontFacingParam));
+    
     copyXmlToBinary (*xml, destData);
 }
 
@@ -304,6 +309,10 @@ void EbeamerAudioProcessor::setStateInformation (const void* data, int sizeInByt
             stringStreamTag.str(std::string());
             stringStreamTag << "gainMic";
             *(micGainParam) = xmlState->getDoubleAttribute (Identifier(stringStreamTag.str()), 20.0);
+            
+            stringStreamTag.str(std::string());
+            stringStreamTag << "frontFacing";
+            *(frontFacingParam) = xmlState->getBoolAttribute(Identifier(stringStreamTag.str()), false);
         }
     }
 }
@@ -334,12 +343,20 @@ std::vector<float> EbeamerAudioProcessor::getInputMeters(){
 std::unique_ptr<Beamformer>& EbeamerAudioProcessor::getBeamformer(){
     return beamformer;
 }
+const std::unique_ptr<Beamformer>& EbeamerAudioProcessor::getBeamformer() const{
+    return beamformer;
+}
 
 //==============================================================================
 // Helper functions
 void EbeamerAudioProcessor::initializeParameters() {
     
     // Values in dB
+    addParameter(frontFacingParam = new AudioParameterBool("frontFacing", //tag
+                                                           "Front facing", //name
+                                                           false //default
+                                                           ));
+    
     addParameter(micGainParam = new AudioParameterFloat("gainMic", //tag
                                                         "Mic gain", //name
                                                         0.0f, //min
