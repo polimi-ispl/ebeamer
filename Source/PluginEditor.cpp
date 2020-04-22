@@ -214,6 +214,11 @@ void JucebeamAudioProcessorEditor::paint (Graphics& g)
 
     g.setColour (Colours::white);
     g.setFont (15.0f);
+    
+    const auto versionArea = getBounds().removeFromBottom(10);
+    g.setColour(Colours::lightgrey);
+    g.setFont(12);
+    g.drawText("ISPL and Eventide - eBeamer v" + String(JucePlugin_VersionString),versionArea,Justification::centredBottom,false);
 
 }
 
