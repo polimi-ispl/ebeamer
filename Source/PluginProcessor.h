@@ -6,6 +6,23 @@
 
 //==============================================================================
 
+/** Midi CC type */
+typedef struct{
+    int channel;
+    int number;
+} MidiCC;
+
+struct MidiCcCompare{
+    bool operator() (const MidiCC& lhs, const MidiCC& rhs) const{
+        if (lhs.channel == rhs.channel){
+            return lhs.number < rhs.number;
+        }
+        return lhs.channel < rhs.channel;
+    }
+};
+
+//==============================================================================
+
 
 class EbeamerAudioProcessor  : public AudioProcessor,
                                public AudioProcessorValueTreeState::Listener
@@ -66,6 +83,18 @@ public:
     
     //==============================================================================
     const AudioProcessorValueTreeState& getParams() const;
+    
+    //==============================================================================
+    /** Start learning the specified parameter */
+    void startCCLearning(const String& p);
+    /** Stop learning the previous parameter */
+    void stopCCLearning();
+    /** Get parameter being learned */
+    String getCCLearning() const;
+    /** Get a read-only reference to the parameters to CC mapping */
+    const std::map<String,MidiCC>& getParamToCCMapping();
+    /** Remove mapping between MidiCC and parameter */
+    void removeCCParamMapping(const String& param);
 
 private:
     //==============================================================================
@@ -139,8 +168,6 @@ private:
     SpinLock loadLock;
     
     //==============================================================================
-    /** Undo manager for parameters */
-    UndoManager undo;
     
     /** Processor parameters tree */
     AudioProcessorValueTreeState parameters;
@@ -158,5 +185,26 @@ private:
     std::atomic<float>* configParam;
     
     void parameterChanged (const String &parameterID, float newValue) override;
+    
+    //==============================================================================
+    // MIDI management
+    
+    std::map<MidiCC,String,MidiCcCompare> ccToParamMap;
+    std::map<String,MidiCC> paramToCcMap;
+    
+    /** Process all the received MIDI messages */
+    void processMidi(MidiBuffer& midiMessages);
+    
+    /** Process a MIDI CC message and update parameter as needed */
+    void processCC(const MidiCC& cc, int value);
+    
+    /** Insert mapping between MidiCC and parameter
+     
+     @return: true if insertion successful, false if either cc or param already mapped
+     */
+    bool insertCCParamMapping(const MidiCC& cc, const String& param);
+    
+    /** Parameter whose CC is being learned  */
+    String paramCCToLearn = "";
     
 };

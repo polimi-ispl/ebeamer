@@ -87,7 +87,7 @@ EbeamerAudioProcessor::EbeamerAudioProcessor()
                   .withInput  ("eStick#3",  AudioChannelSet::ambisonic(3), true)
                   .withInput  ("eStick#4",  AudioChannelSet::ambisonic(3), true)
                   .withOutput ("Output", AudioChannelSet::stereo(), true)
-                  ),parameters(*this,&undo,Identifier("eBeamer"),initializeParameters())
+                  ),parameters(*this,nullptr,Identifier("eBeamerParams"),initializeParameters())
 {
     
     /** Get parameters pointers */
@@ -97,40 +97,19 @@ EbeamerAudioProcessor::EbeamerAudioProcessor()
     hpfFreqParam = parameters.getRawParameterValue("hpf");
     micGainParam = parameters.getRawParameterValue("gainMic");
     
-    std::ostringstream ssTag;
-    std::ostringstream ssName;
     for (auto beamIdx=0;beamIdx<numBeams;beamIdx++){
-        ssTag.str(std::string());
-        ssName.str(std::string());
-        ssTag << "steerBeam" << (beamIdx+1);
-        steeringBeamParam[beamIdx] = parameters.getRawParameterValue(ssTag.str());
-        
-        ssTag.str(std::string());
-        ssName.str(std::string());
-        ssTag << "widthBeam" << (beamIdx+1);
-        widthBeamParam[beamIdx] = parameters.getRawParameterValue(ssTag.str());
-        
-        ssTag.str(std::string());
-        ssName.str(std::string());
-        ssTag << "panBeam" << (beamIdx+1);
-        panBeamParam[beamIdx] = parameters.getRawParameterValue(ssTag.str());
-        
-        ssTag.str(std::string());
-        ssName.str(std::string());
-        ssTag << "levelBeam" << (beamIdx+1);
-        levelBeamParam[beamIdx] = parameters.getRawParameterValue(ssTag.str());
-        
-        ssTag.str(std::string());
-        ssName.str(std::string());
-        ssTag << "muteBeam" << (beamIdx+1);
-        muteBeamParam[beamIdx] = parameters.getRawParameterValue(ssTag.str());
+        steeringBeamParam[beamIdx] = parameters.getRawParameterValue("steerBeam" + String(beamIdx+1));
+        widthBeamParam[beamIdx] = parameters.getRawParameterValue("widthBeam" + String(beamIdx+1));
+        panBeamParam[beamIdx] = parameters.getRawParameterValue("panBeam" + String(beamIdx+1));
+        levelBeamParam[beamIdx] = parameters.getRawParameterValue("levelBeam" + String(beamIdx+1));
+        muteBeamParam[beamIdx] = parameters.getRawParameterValue("muteBeam" + String(beamIdx+1));
     }
     
     
     /** Initialize the beamformer */
     beamformer = std::make_unique<Beamformer>(numBeams,numDoas);
     beamformer->setMicConfig(static_cast<MicConfig>((int)*configParam));
-    
+
 }
 
 //==============================================================================
@@ -224,12 +203,88 @@ void EbeamerAudioProcessor::releaseResources()
     beamformer->releaseResources();
 }
 
+bool EbeamerAudioProcessor::insertCCParamMapping(const MidiCC& cc, const String& param){
+    if (paramToCcMap.count(param) > 0 || ccToParamMap.count(cc) > 0){
+        return false;
+    }
+    ccToParamMap[cc] = param;
+    paramToCcMap[param] = cc;
+    return true;
+}
+
+void EbeamerAudioProcessor::removeCCParamMapping(const String& param){
+    if (paramToCcMap.count(param) > 0){
+        auto cc = paramToCcMap[param];
+        paramToCcMap.erase(param);
+        ccToParamMap.erase(cc);
+    }
+}
+
+void EbeamerAudioProcessor::processCC(const MidiCC& cc, int value){
+    
+    const String paramTag = ccToParamMap[cc];
+    Value val = parameters.getParameterAsValue(paramTag);
+    auto range = parameters.getParameterRange(paramTag);
+    const bool isButton = range.interval == 1 && range.start == 0 && range.end == 1;
+    if (isButton){
+        if (value==127){
+            val.setValue(!((bool)val.getValue()));
+        }
+    }else{
+        val.setValue(range.convertFrom0to1(value/127.));
+    }
+    
+}
+
+void EbeamerAudioProcessor::startCCLearning(const String& p){
+    paramCCToLearn = p;
+}
+void EbeamerAudioProcessor::stopCCLearning(){
+    paramCCToLearn = "";
+}
+
+String EbeamerAudioProcessor::getCCLearning() const{
+    return paramCCToLearn;
+}
+
+const std::map<String,MidiCC>& EbeamerAudioProcessor::getParamToCCMapping(){
+    return paramToCcMap;
+}
+
+void EbeamerAudioProcessor::processMidi(MidiBuffer& midiMessages){
+    
+    // Loop over CC messages
+    MidiBuffer::Iterator midiIter (midiMessages);
+    MidiMessage midiMess;
+    int samplePosition;
+    while (midiIter.getNextEvent(midiMess, samplePosition)){
+        if (midiMess.isController()){
+            
+            MidiCC cc = {midiMess.getChannel(),midiMess.getControllerNumber()};
+            if (ccToParamMap.count(cc) > 0){
+                /** Process the CC message if mapped */
+                processCC(cc,midiMess.getControllerValue());
+            }else if (paramCCToLearn.length() > 0){
+                /** Remove then add the CC parameter */
+                removeCCParamMapping(paramCCToLearn);
+                insertCCParamMapping(cc, paramCCToLearn);
+            }
+        }
+    }
+    
+    /** Clear all messages */
+    midiMessages.clear();
+    
+}
+
 void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& midiMessages)
 {
     
     const auto startTick = Time::getHighResolutionTicks();
     
     GenericScopedLock<SpinLock> lock(processingLock);
+    
+    processMidi(midiMessages);
     
     /** If resources are not allocated this is an out-of-order request */
     if (!resourcesAllocated){
@@ -348,8 +403,21 @@ float EbeamerAudioProcessor::getAverageLoad() const{
 
 //==============================================================================
 void EbeamerAudioProcessor::getStateInformation (MemoryBlock& destData){
+    /** Root XML */
+    std::unique_ptr<XmlElement> xml(new XmlElement ("eBeamerRoot"));
+    
+    /** Parameters state */
     auto state = parameters.copyState();
-    std::unique_ptr<XmlElement> xml (state.createXml());
+    XmlElement* xmlParams = new XmlElement(*state.createXml());
+    xml->addChildElement(xmlParams);
+    
+    /** Save Midi CC - Params Maping */
+    auto xmlMidi = xml->createNewChildElement("eBeamerMidiMap");
+    for (auto m : paramToCcMap){
+        auto el = xmlMidi->createNewChildElement(m.first);
+        el->setAttribute("channel", m.second.channel);
+        el->setAttribute("number", m.second.number);
+    }
     copyXmlToBinary (*xml, destData);
 }
 
@@ -357,9 +425,27 @@ void EbeamerAudioProcessor::setStateInformation (const void* data, int sizeInByt
     
     std::unique_ptr<XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
     
-    if (xmlState.get() != nullptr)
-        if (xmlState->hasTagName (parameters.state.getType()))
-            parameters.replaceState (ValueTree::fromXml (*xmlState));
+    if (xmlState.get() != nullptr){
+        if (xmlState->hasTagName("eBeamerRoot")){
+            forEachXmlChildElement (*xmlState, rootElement){
+                if (rootElement->hasTagName (parameters.state.getType())){
+                    /** Parameters state */
+                    parameters.replaceState (ValueTree::fromXml (*xmlState));
+                }else if(rootElement->hasTagName ("eBeamerMidiMap")){
+                    /** Load Midi CC - Params Maping */
+                    ccToParamMap.clear();
+                    paramToCcMap.clear();
+                    stopCCLearning();
+                    forEachXmlChildElement (*rootElement, e){
+                        String tag = e->getTagName();
+                        int channel = e->getIntAttribute("channel");
+                        int number = e->getIntAttribute("number");
+                        insertCCParamMapping({channel,number}, tag);
+                    }
+                }
+            }
+        }
+    }
 }
 
 //==============================================================================
