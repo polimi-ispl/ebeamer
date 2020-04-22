@@ -411,9 +411,8 @@ void EbeamerAudioProcessor::getStateInformation (MemoryBlock& destData){
     XmlElement* xmlParams = new XmlElement(*state.createXml());
     xml->addChildElement(xmlParams);
     
-    /** Midi CC - Params Maping */
+    /** Save Midi CC - Params Maping */
     auto xmlMidi = xml->createNewChildElement("eBeamerMidiMap");
-    /** Store Params - Midi CC Mapping */
     for (auto m : paramToCcMap){
         auto el = xmlMidi->createNewChildElement(m.first);
         el->setAttribute("channel", m.second.channel);
@@ -430,8 +429,10 @@ void EbeamerAudioProcessor::setStateInformation (const void* data, int sizeInByt
         if (xmlState->hasTagName("eBeamerRoot")){
             forEachXmlChildElement (*xmlState, rootElement){
                 if (rootElement->hasTagName (parameters.state.getType())){
+                    /** Parameters state */
                     parameters.replaceState (ValueTree::fromXml (*xmlState));
                 }else if(rootElement->hasTagName ("eBeamerMidiMap")){
+                    /** Load Midi CC - Params Maping */
                     ccToParamMap.clear();
                     paramToCcMap.clear();
                     stopCCLearning();
