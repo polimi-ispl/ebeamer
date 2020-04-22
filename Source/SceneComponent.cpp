@@ -16,14 +16,12 @@
 
 TileComponent::TileComponent()
 {
+    frontFacingTransf = AffineTransform::rotation(MathConstants<float>::pi,SCENE_WIDTH/2,SCENE_HEIGHT/2);
 }
 
 TileComponent::~TileComponent()
 {
 }
-
-//==============================================================================
-
 void TileComponent::paint(Graphics& g)
 {
     Path path;
@@ -34,8 +32,8 @@ void TileComponent::paint(Graphics& g)
     path.lineTo(corners[0][1]);
     path.closeSubPath();
     
-    if ((bool)*(processor->getParams().getRawParameterValue("frontFacing"))){
-        path.applyTransform(AffineTransform::rotation(MathConstants<float>::pi,SCENE_WIDTH/2,SCENE_HEIGHT/2));
+    if ((bool)*frontFacing){
+        path.applyTransform(frontFacingTransf);
     }
     
     g.setColour(tileColour);
@@ -52,6 +50,7 @@ void TileComponent::resized()
 
 void TileComponent::setProcessor(const EbeamerAudioProcessor * p){
     processor = p;
+    frontFacing = processor->getParams().getRawParameterValue("frontFacing");
 }
 //==============================================================================
 //==============================================================================
@@ -209,11 +208,11 @@ void BeamComponent::setProcessor(const EbeamerAudioProcessor * p, int beamId_){
 }
 
 void BeamComponent::paint(Graphics& g){
+    
+    const float width = (0.1 + 2.9*(*widthParam)) * SCENE_WIDTH/10;
+    const float position = *steerParam;
+    
     Path path;
-    
-    width = (0.1 + 2.9*(*widthParam)) * SCENE_WIDTH/10;
-    position = *steerParam;
-    
     path.startNewSubPath(0, 0);
     path.cubicTo( width, -SCENE_WIDTH/3,  width, -SCENE_WIDTH/2, 0, -SCENE_WIDTH/2);
     path.cubicTo(-width, -SCENE_WIDTH/2, -width, -SCENE_WIDTH/3, 0, 0);
@@ -239,21 +238,6 @@ void BeamComponent::paint(Graphics& g){
 }
 
 void BeamComponent::resized(){
-}
-
-void BeamComponent::move(float new_position){
-    position = new_position;
-    repaint();
-}
-
-void BeamComponent::scale(float new_width){
-    width = (0.1 + 2.9*new_width) * SCENE_WIDTH/10;
-    repaint();
-}
-
-void BeamComponent::setStatus(bool s){
-    status = s;
-    repaint();
 }
 
 //==============================================================================
