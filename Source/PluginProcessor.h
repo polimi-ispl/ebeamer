@@ -6,6 +6,23 @@
 
 //==============================================================================
 
+/** Midi CC type */
+typedef struct{
+    int channel;
+    int number;
+} MidiCC;
+
+struct MidiCcCompare{
+    bool operator() (const MidiCC& lhs, const MidiCC& rhs) const{
+        if (lhs.channel == rhs.channel){
+            return lhs.number < rhs.number;
+        }
+        return lhs.channel < rhs.channel;
+    }
+};
+
+//==============================================================================
+
 
 class EbeamerAudioProcessor  : public AudioProcessor,
                                public AudioProcessorValueTreeState::Listener
@@ -158,5 +175,17 @@ private:
     std::atomic<float>* configParam;
     
     void parameterChanged (const String &parameterID, float newValue) override;
+    
+    //==============================================================================
+    // MIDI management
+    
+    std::map<MidiCC,String,MidiCcCompare> ccToParamMap;
+    std::map<String,MidiCC> paramToCcMap;
+    
+    /** Process all the received MIDI messages */
+    void processMidi(MidiBuffer& midiMessages);
+    
+    /** Process a MIDI CC message and update parameter as needed */
+    void processCC(const MidiCC& cc, int value);
     
 };

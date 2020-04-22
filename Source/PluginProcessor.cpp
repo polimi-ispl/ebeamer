@@ -131,6 +131,15 @@ EbeamerAudioProcessor::EbeamerAudioProcessor()
     beamformer = std::make_unique<Beamformer>(numBeams,numDoas);
     beamformer->setMicConfig(static_cast<MicConfig>((int)*configParam));
     
+    // MIDI management
+    ccToParamMap[{16,17}] = "steerBeam1";
+    ccToParamMap[{16,18}] = "widthBeam1";
+    ccToParamMap[{16,19}] = "panBeam1";
+    ccToParamMap[{16,20}] = "levelBeam1";
+    ccToParamMap[{16,49}] = "muteBeam1";
+    ccToParamMap[{16,41}] = "hpf";
+    ccToParamMap[{16,40}] = "gainMic";
+    ccToParamMap[{16,57}] = "frontFacing";
 }
 
 //==============================================================================
@@ -224,12 +233,58 @@ void EbeamerAudioProcessor::releaseResources()
     beamformer->releaseResources();
 }
 
+void EbeamerAudioProcessor::processCC(const MidiCC& cc, int value){
+    
+    const String paramTag = ccToParamMap[cc];
+    Value val = parameters.getParameterAsValue(paramTag);
+    auto range = parameters.getParameterRange(paramTag);
+    const bool isButton = range.interval == 1 && range.start == 0 && range.end == 1;
+    if (isButton){
+        if (value==127){
+            val.setValue(!((bool)val.getValue()));
+        }
+    }else{
+        val.setValue(range.convertFrom0to1(value/127.));
+    }
+    
+}
+
+void EbeamerAudioProcessor::processMidi(MidiBuffer& midiMessages){
+    
+    // Loop over CC messages
+    MidiBuffer::Iterator midiIter (midiMessages);
+    MidiMessage midiMess;
+    int samplePosition;
+    while (midiIter.getNextEvent(midiMess, samplePosition)){
+        if (midiMess.isController()){
+            
+            /** Log the message for debug purposes */
+            std::cout << "Channel:" << midiMess.getChannel()
+            << " CC num:" << midiMess.getControllerNumber()
+            << " CC val:" << midiMess.getControllerValue()
+            << std::endl;
+            
+            // Process the CC message if mapped
+            MidiCC cc = {midiMess.getChannel(),midiMess.getControllerNumber()};
+            if (ccToParamMap.count(cc) > 0){
+                processCC(cc,midiMess.getControllerValue());
+            }
+        }
+    }
+    
+    /** Clear all messages */
+    midiMessages.clear();
+    
+}
+
 void EbeamerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& midiMessages)
 {
     
     const auto startTick = Time::getHighResolutionTicks();
     
     GenericScopedLock<SpinLock> lock(processingLock);
+    
+    processMidi(midiMessages);
     
     /** If resources are not allocated this is an out-of-order request */
     if (!resourcesAllocated){
