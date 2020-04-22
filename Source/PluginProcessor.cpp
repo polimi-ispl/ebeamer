@@ -87,7 +87,7 @@ EbeamerAudioProcessor::EbeamerAudioProcessor()
                   .withInput  ("eStick#3",  AudioChannelSet::ambisonic(3), true)
                   .withInput  ("eStick#4",  AudioChannelSet::ambisonic(3), true)
                   .withOutput ("Output", AudioChannelSet::stereo(), true)
-                  ),parameters(*this,nullptr,Identifier("eBeamer"),initializeParameters())
+                  ),parameters(*this,nullptr,Identifier("eBeamerParams"),initializeParameters())
 {
     
     /** Get parameters pointers */
@@ -97,49 +97,19 @@ EbeamerAudioProcessor::EbeamerAudioProcessor()
     hpfFreqParam = parameters.getRawParameterValue("hpf");
     micGainParam = parameters.getRawParameterValue("gainMic");
     
-    std::ostringstream ssTag;
-    std::ostringstream ssName;
     for (auto beamIdx=0;beamIdx<numBeams;beamIdx++){
-        ssTag.str(std::string());
-        ssName.str(std::string());
-        ssTag << "steerBeam" << (beamIdx+1);
-        steeringBeamParam[beamIdx] = parameters.getRawParameterValue(ssTag.str());
-        
-        ssTag.str(std::string());
-        ssName.str(std::string());
-        ssTag << "widthBeam" << (beamIdx+1);
-        widthBeamParam[beamIdx] = parameters.getRawParameterValue(ssTag.str());
-        
-        ssTag.str(std::string());
-        ssName.str(std::string());
-        ssTag << "panBeam" << (beamIdx+1);
-        panBeamParam[beamIdx] = parameters.getRawParameterValue(ssTag.str());
-        
-        ssTag.str(std::string());
-        ssName.str(std::string());
-        ssTag << "levelBeam" << (beamIdx+1);
-        levelBeamParam[beamIdx] = parameters.getRawParameterValue(ssTag.str());
-        
-        ssTag.str(std::string());
-        ssName.str(std::string());
-        ssTag << "muteBeam" << (beamIdx+1);
-        muteBeamParam[beamIdx] = parameters.getRawParameterValue(ssTag.str());
+        steeringBeamParam[beamIdx] = parameters.getRawParameterValue("steerBeam" + String(beamIdx+1));
+        widthBeamParam[beamIdx] = parameters.getRawParameterValue("widthBeam" + String(beamIdx+1));
+        panBeamParam[beamIdx] = parameters.getRawParameterValue("panBeam" + String(beamIdx+1));
+        levelBeamParam[beamIdx] = parameters.getRawParameterValue("levelBeam" + String(beamIdx+1));
+        muteBeamParam[beamIdx] = parameters.getRawParameterValue("muteBeam" + String(beamIdx+1));
     }
     
     
     /** Initialize the beamformer */
     beamformer = std::make_unique<Beamformer>(numBeams,numDoas);
     beamformer->setMicConfig(static_cast<MicConfig>((int)*configParam));
-    
-    // MIDI management
-//    insertCCParamMapping({16,17}, "steerBeam1");
-//    insertCCParamMapping({16,18}, "widthBeam1");
-//    insertCCParamMapping({16,19}, "panBeam1");
-//    insertCCParamMapping({16,20}, "levelBeam1");
-//    insertCCParamMapping({16,49}, "muteBeam1");
-//    insertCCParamMapping({16,41}, "hpf");
-//    insertCCParamMapping({16,40}, "gainMic");
-//    insertCCParamMapping({16,57}, "frontFacing");
+
 }
 
 //==============================================================================
@@ -433,8 +403,22 @@ float EbeamerAudioProcessor::getAverageLoad() const{
 
 //==============================================================================
 void EbeamerAudioProcessor::getStateInformation (MemoryBlock& destData){
+    /** Root XML */
+    std::unique_ptr<XmlElement> xml(new XmlElement ("eBeamerRoot"));
+    
+    /** Parameters state */
     auto state = parameters.copyState();
-    std::unique_ptr<XmlElement> xml (state.createXml());
+    XmlElement* xmlParams = new XmlElement(*state.createXml());
+    xml->addChildElement(xmlParams);
+    
+    /** Midi CC - Params Maping */
+    auto xmlMidi = xml->createNewChildElement("eBeamerMidiMap");
+    /** Store Params - Midi CC Mapping */
+    for (auto m : paramToCcMap){
+        auto el = xmlMidi->createNewChildElement(m.first);
+        el->setAttribute("channel", m.second.channel);
+        el->setAttribute("number", m.second.number);
+    }
     copyXmlToBinary (*xml, destData);
 }
 
@@ -442,9 +426,25 @@ void EbeamerAudioProcessor::setStateInformation (const void* data, int sizeInByt
     
     std::unique_ptr<XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
     
-    if (xmlState.get() != nullptr)
-        if (xmlState->hasTagName (parameters.state.getType()))
-            parameters.replaceState (ValueTree::fromXml (*xmlState));
+    if (xmlState.get() != nullptr){
+        if (xmlState->hasTagName("eBeamerRoot")){
+            forEachXmlChildElement (*xmlState, rootElement){
+                if (rootElement->hasTagName (parameters.state.getType())){
+                    parameters.replaceState (ValueTree::fromXml (*xmlState));
+                }else if(rootElement->hasTagName ("eBeamerMidiMap")){
+                    ccToParamMap.clear();
+                    paramToCcMap.clear();
+                    stopCCLearning();
+                    forEachXmlChildElement (*rootElement, e){
+                        String tag = e->getTagName();
+                        int channel = e->getIntAttribute("channel");
+                        int number = e->getIntAttribute("number");
+                        insertCCParamMapping({channel,number}, tag);
+                    }
+                }
+            }
+        }
+    }
 }
 
 //==============================================================================
