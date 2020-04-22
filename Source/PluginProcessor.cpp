@@ -132,14 +132,14 @@ EbeamerAudioProcessor::EbeamerAudioProcessor()
     beamformer->setMicConfig(static_cast<MicConfig>((int)*configParam));
     
     // MIDI management
-    ccToParamMap[{16,17}] = "steerBeam1";
-    ccToParamMap[{16,18}] = "widthBeam1";
-    ccToParamMap[{16,19}] = "panBeam1";
-    ccToParamMap[{16,20}] = "levelBeam1";
-    ccToParamMap[{16,49}] = "muteBeam1";
-    ccToParamMap[{16,41}] = "hpf";
-    ccToParamMap[{16,40}] = "gainMic";
-    ccToParamMap[{16,57}] = "frontFacing";
+//    insertCCParamMapping({16,17}, "steerBeam1");
+//    insertCCParamMapping({16,18}, "widthBeam1");
+//    insertCCParamMapping({16,19}, "panBeam1");
+//    insertCCParamMapping({16,20}, "levelBeam1");
+//    insertCCParamMapping({16,49}, "muteBeam1");
+//    insertCCParamMapping({16,41}, "hpf");
+//    insertCCParamMapping({16,40}, "gainMic");
+//    insertCCParamMapping({16,57}, "frontFacing");
 }
 
 //==============================================================================
@@ -233,6 +233,23 @@ void EbeamerAudioProcessor::releaseResources()
     beamformer->releaseResources();
 }
 
+bool EbeamerAudioProcessor::insertCCParamMapping(const MidiCC& cc, const String& param){
+    if (paramToCcMap.count(param) > 0 || ccToParamMap.count(cc) > 0){
+        return false;
+    }
+    ccToParamMap[cc] = param;
+    paramToCcMap[param] = cc;
+    return true;
+}
+
+void EbeamerAudioProcessor::removeCCParamMapping(const String& param){
+    if (paramToCcMap.count(param) > 0){
+        auto cc = paramToCcMap[param];
+        paramToCcMap.erase(param);
+        ccToParamMap.erase(cc);
+    }
+}
+
 void EbeamerAudioProcessor::processCC(const MidiCC& cc, int value){
     
     const String paramTag = ccToParamMap[cc];
@@ -249,6 +266,17 @@ void EbeamerAudioProcessor::processCC(const MidiCC& cc, int value){
     
 }
 
+void EbeamerAudioProcessor::startCCLearning(const String& p){
+    paramCCToLearn = p;
+}
+void EbeamerAudioProcessor::stopCCLearning(){
+    paramCCToLearn = "";
+}
+
+const std::map<String,MidiCC>& EbeamerAudioProcessor::getParamToCCMapping(){
+    return paramToCcMap;
+}
+
 void EbeamerAudioProcessor::processMidi(MidiBuffer& midiMessages){
     
     // Loop over CC messages
@@ -258,16 +286,20 @@ void EbeamerAudioProcessor::processMidi(MidiBuffer& midiMessages){
     while (midiIter.getNextEvent(midiMess, samplePosition)){
         if (midiMess.isController()){
             
-            /** Log the message for debug purposes */
-            std::cout << "Channel:" << midiMess.getChannel()
-            << " CC num:" << midiMess.getControllerNumber()
-            << " CC val:" << midiMess.getControllerValue()
-            << std::endl;
+//            /** Log the message for debug purposes */
+//            std::cout << "Channel:" << midiMess.getChannel()
+//            << " CC num:" << midiMess.getControllerNumber()
+//            << " CC val:" << midiMess.getControllerValue()
+//            << std::endl;
             
-            // Process the CC message if mapped
             MidiCC cc = {midiMess.getChannel(),midiMess.getControllerNumber()};
             if (ccToParamMap.count(cc) > 0){
+                /** Process the CC message if mapped */
                 processCC(cc,midiMess.getControllerValue());
+            }else if (paramCCToLearn.length() > 0){
+                /** Remove then add the CC parameter */
+                removeCCParamMapping(paramCCToLearn);
+                insertCCParamMapping(cc, paramCCToLearn);
             }
         }
     }

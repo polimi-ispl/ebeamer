@@ -83,6 +83,14 @@ public:
     
     //==============================================================================
     const AudioProcessorValueTreeState& getParams() const;
+    
+    //==============================================================================
+    /** Start learning the specified parameter */
+    void startCCLearning(const String& p);
+    /** Stop learning the previous parameter */
+    void stopCCLearning();
+    /** Get a read-only reference to the parameters to CC mapping */
+    const std::map<String,MidiCC>& getParamToCCMapping();
 
 private:
     //==============================================================================
@@ -187,5 +195,17 @@ private:
     
     /** Process a MIDI CC message and update parameter as needed */
     void processCC(const MidiCC& cc, int value);
+    
+    /** Insert mapping between MidiCC and parameter
+     
+     @return: true if insertion successful, false if either cc or param already mapped
+     */
+    bool insertCCParamMapping(const MidiCC& cc, const String& param);
+    
+    /** Remove mapping between MidiCC and parameter */
+    void removeCCParamMapping(const String& param);
+    
+    /** Parameter whose CC is being learned  */
+    String paramCCToLearn = "";
     
 };
