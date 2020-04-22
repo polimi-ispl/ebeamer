@@ -421,7 +421,6 @@ void EbeamerAudioProcessor::getStateInformation (MemoryBlock& destData){
         el->setAttribute("channel", m.second.channel);
         el->setAttribute("number", m.second.number);
     }
-    std::cout << xml->toString() << std::endl;
     copyXmlToBinary (*xml, destData);
 }
 
@@ -430,7 +429,6 @@ void EbeamerAudioProcessor::setStateInformation (const void* data, int sizeInByt
     std::unique_ptr<XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
     
     if (xmlState.get() != nullptr){
-        std::cout << xmlState->toString() << std::endl;
         if (xmlState->hasTagName("eBeamerRoot")){
             forEachXmlChildElement (*xmlState, rootElement){
                 if (rootElement->hasTagName (parameters.state.getType())){
