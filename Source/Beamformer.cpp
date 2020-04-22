@@ -163,6 +163,9 @@ void Beamformer::prepareToPlay(double sampleRate_, int maximumExpectedSamplesPer
     sampleRate = sampleRate_;
     maximumExpectedSamplesPerBlock = maximumExpectedSamplesPerBlock_;
     
+    /** Alpha for FIR update */
+    alpha = 1-exp(-(maximumExpectedSamplesPerBlock/sampleRate)/firUpdateTimeConst);
+    
     initAlg();
 }
 

@@ -162,8 +162,10 @@ private:
     
     /** Measured average load */
     float load = 0;
+    /** Load time constant [s] */
+    const float loadTimeConst = 1;
     /** Load update factor (the higher the faster the update) */
-    const float loadAlpha = 0.005;
+    float loadAlpha = 1;
     /** Load lock */
     SpinLock loadLock;
     

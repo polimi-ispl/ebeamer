@@ -193,8 +193,10 @@ private:
     /** Beams' outputs buffer */
     AudioBuffer<float> beamBuffer;
     
+    /** FIR coefficients update time constant [s] */
+    const float firUpdateTimeConst = 0.08;
     /** FIR coefficients update alpha */
-    const float alpha = 0.02;
+    float alpha = 1;
     
     /** Microphones configuration */
     MicConfig micConfig = LMA_1ESTICK;
