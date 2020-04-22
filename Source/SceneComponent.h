@@ -47,6 +47,8 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TileComponent)
     
     const EbeamerAudioProcessor * processor;
+    std::atomic<float>* frontFacing;
+    AffineTransform frontFacingTransf;
 };
 
 //==============================================================================
@@ -96,17 +98,9 @@ public:
     
     void setProcessor(const EbeamerAudioProcessor * p, int beamId_);
     
-    void move(float);
-    void scale(float);
-    void setStatus(bool);
-    
     void setBaseColor(Colour colour){baseColour = colour;}
     
 private:
-    
-    float position;
-    float width;
-    bool status;
     
     int beamId;
     

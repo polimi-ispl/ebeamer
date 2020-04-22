@@ -184,6 +184,9 @@ void EbeamerAudioProcessor::prepareToPlay (double sampleRate_, int maximumExpect
     
     resourcesAllocated = true;
     
+    /** Time constants */
+    loadAlpha = 1-exp(-(maximumExpectedSamplesPerBlock/sampleRate)/loadTimeConst);
+    
 }
 
 void EbeamerAudioProcessor::releaseResources()
@@ -430,7 +433,7 @@ void EbeamerAudioProcessor::setStateInformation (const void* data, int sizeInByt
             forEachXmlChildElement (*xmlState, rootElement){
                 if (rootElement->hasTagName (parameters.state.getType())){
                     /** Parameters state */
-                    parameters.replaceState (ValueTree::fromXml (*xmlState));
+                    parameters.replaceState (ValueTree::fromXml (*rootElement));
                 }else if(rootElement->hasTagName ("eBeamerMidiMap")){
                     /** Load Midi CC - Params Maping */
                     ccToParamMap.clear();
