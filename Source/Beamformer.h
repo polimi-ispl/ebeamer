@@ -194,7 +194,7 @@ private:
     AudioBuffer<float> beamBuffer;
     
     /** FIR coefficients update time constant [s] */
-    const float firUpdateTimeConst = 0.08;
+    const float firUpdateTimeConst = 0.2;
     /** FIR coefficients update alpha */
     float alpha = 1;
     
