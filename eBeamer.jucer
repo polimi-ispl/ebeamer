@@ -7,7 +7,8 @@
               pluginName="eBeamer" pluginDesc="eStick beam controller" pluginManufacturer="ISPL Polimi"
               pluginManufacturerCode="Ispl" pluginCode="ebea" version="0.4.3"
               bundleIdentifier="it.polimi.deib.ispl.ebeamer" companyWebsite="http://ispl.deib.polimi.it/"
-              aaxIdentifier="it.polimi.deib.ispl.ebeamer" pluginAUExportPrefix="ebeamerAU">
+              aaxIdentifier="it.polimi.deib.ispl.ebeamer" pluginAUExportPrefix="ebeamerAU"
+              pluginCharacteristicsValue="pluginWantsMidiIn">
   <MAINGROUP id="X7PQw9" name="eBeamer">
     <GROUP id="{3D6AD065-0387-5993-02F4-EFEE30370E91}" name="Eigen">
       <GROUP id="{AEBD6D17-0D9F-6422-FDAF-3B90144ABB2C}" name="src">
