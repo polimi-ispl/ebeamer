@@ -30,13 +30,17 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (EbeamerAudioProcesso
     steeringBeam1Slider.setSliderStyle(Slider::LinearHorizontal);
     steeringBeam1Slider.setTextBoxStyle(Slider::TextBoxRight,false,LABEL_WIDTH,LABEL_HEIGHT);
     steeringBeam1Slider.setColour(Slider::thumbColourId, beamColours[0]);
+    steeringBeam1Slider.setPopupMenuEnabled(true);
+    steeringBeam1Slider.setProcessorParamName(&processor, "steerBeam1");
     addAndMakeVisible(steeringBeam1Slider);
 
     steeringBeam2Slider.setSliderStyle(Slider::LinearHorizontal);
     steeringBeam2Slider.setTextBoxStyle(Slider::TextBoxRight,false,LABEL_WIDTH,LABEL_HEIGHT);
     steeringBeam2Slider.setColour(Slider::thumbColourId, beamColours[1]);
+    steeringBeam2Slider.setPopupMenuEnabled(true);
+    steeringBeam2Slider.setProcessorParamName(&processor, "steerBeam2");
     addAndMakeVisible(steeringBeam2Slider);
-
+    
     steeringBeam1SliderAttachment.reset(new SliderAttachment (valueTreeState, "steerBeam1", steeringBeam1Slider));
     steeringBeam2SliderAttachment.reset(new SliderAttachment (valueTreeState, "steerBeam2", steeringBeam2Slider));
 
@@ -48,11 +52,15 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (EbeamerAudioProcesso
     widthBeam1Knob.setSliderStyle(Slider::RotaryHorizontalVerticalDrag);
     widthBeam1Knob.setTextBoxStyle(Slider::TextBoxRight,false,LABEL_WIDTH,LABEL_HEIGHT);
     widthBeam1Knob.setColour(Slider::thumbColourId, beamColours[0]);
+    widthBeam1Knob.setPopupMenuEnabled(true);
+    widthBeam1Knob.setProcessorParamName(&processor, "widthBeam1");
     addAndMakeVisible(widthBeam1Knob);
 
     widthBeam2Knob.setSliderStyle(Slider::RotaryHorizontalVerticalDrag);
     widthBeam2Knob.setTextBoxStyle(Slider::TextBoxLeft,false,LABEL_WIDTH,LABEL_HEIGHT);
     widthBeam2Knob.setColour(Slider::thumbColourId, beamColours[1]);
+    widthBeam2Knob.setPopupMenuEnabled(true);
+    widthBeam2Knob.setProcessorParamName(&processor, "widthBeam2");
     addAndMakeVisible(widthBeam2Knob);
     
     widthBeam1KnobAttachment.reset(new SliderAttachment (valueTreeState, "widthBeam1", widthBeam1Knob));
@@ -66,11 +74,13 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (EbeamerAudioProcesso
     panBeam1Knob.setSliderStyle(Slider::RotaryHorizontalVerticalDrag);
     panBeam1Knob.setTextBoxStyle(Slider::TextBoxRight,false,LABEL_WIDTH,LABEL_HEIGHT);
     panBeam1Knob.setColour(Slider::thumbColourId, beamColours[0]);
+    panBeam1Knob.setPopupMenuEnabled(true);
     addAndMakeVisible(panBeam1Knob);
 
     panBeam2Knob.setSliderStyle(Slider::RotaryHorizontalVerticalDrag);
     panBeam2Knob.setTextBoxStyle(Slider::TextBoxLeft,false,LABEL_WIDTH,LABEL_HEIGHT);
     panBeam2Knob.setColour(Slider::thumbColourId, beamColours[1]);
+    panBeam2Knob.setPopupMenuEnabled(true);
     addAndMakeVisible(panBeam2Knob);
     
     panBeam1KnobAttachment.reset(new SliderAttachment (valueTreeState, "panBeam1", panBeam1Knob));
@@ -85,11 +95,13 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (EbeamerAudioProcesso
     levelBeam1Knob.setSliderStyle(Slider::RotaryHorizontalVerticalDrag);
     levelBeam1Knob.setTextBoxStyle(Slider::TextBoxRight,false,LABEL_WIDTH,LABEL_HEIGHT);
     levelBeam1Knob.setColour(Slider::thumbColourId, beamColours[0]);
+    levelBeam1Knob.setPopupMenuEnabled(true);
     addAndMakeVisible(levelBeam1Knob);
 
     levelBeam2Knob.setSliderStyle(Slider::RotaryHorizontalVerticalDrag);
     levelBeam2Knob.setTextBoxStyle(Slider::TextBoxLeft,false,LABEL_WIDTH,LABEL_HEIGHT);
     levelBeam2Knob.setColour(Slider::thumbColourId, beamColours[1]);
+    levelBeam2Knob.setPopupMenuEnabled(true);
     addAndMakeVisible(levelBeam2Knob);
 
     levelBeam1KnobAttachment.reset(new SliderAttachment (valueTreeState, "levelBeam1", levelBeam1Knob));
@@ -130,6 +142,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (EbeamerAudioProcesso
     
     hpfSlider.setSliderStyle(Slider::LinearHorizontal);
     hpfSlider.setTextBoxStyle(Slider::TextBoxRight,false,LABEL_WIDTH,LABEL_HEIGHT);
+    hpfSlider.setPopupMenuEnabled(true);
     addAndMakeVisible(hpfSlider);
     
     hpfSliderAttachment.reset(new SliderAttachment (valueTreeState, "hpf", hpfSlider));
@@ -148,6 +161,7 @@ JucebeamAudioProcessorEditor::JucebeamAudioProcessorEditor (EbeamerAudioProcesso
     
     gainSlider.setSliderStyle(Slider::LinearHorizontal);
     gainSlider.setTextBoxStyle(Slider::TextBoxRight,false,LABEL_WIDTH,LABEL_HEIGHT);
+    gainSlider.setPopupMenuEnabled(true);
     addAndMakeVisible(gainSlider);
     
     gainSliderAttachment.reset(new SliderAttachment (valueTreeState, "gainMic", gainSlider));

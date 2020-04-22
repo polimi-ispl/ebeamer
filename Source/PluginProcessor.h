@@ -89,8 +89,12 @@ public:
     void startCCLearning(const String& p);
     /** Stop learning the previous parameter */
     void stopCCLearning();
+    /** Get parameter being learned */
+    String getCCLearning() const;
     /** Get a read-only reference to the parameters to CC mapping */
     const std::map<String,MidiCC>& getParamToCCMapping();
+    /** Remove mapping between MidiCC and parameter */
+    void removeCCParamMapping(const String& param);
 
 private:
     //==============================================================================
@@ -164,8 +168,6 @@ private:
     SpinLock loadLock;
     
     //==============================================================================
-    /** Undo manager for parameters */
-    UndoManager undo;
     
     /** Processor parameters tree */
     AudioProcessorValueTreeState parameters;
@@ -201,9 +203,6 @@ private:
      @return: true if insertion successful, false if either cc or param already mapped
      */
     bool insertCCParamMapping(const MidiCC& cc, const String& param);
-    
-    /** Remove mapping between MidiCC and parameter */
-    void removeCCParamMapping(const String& param);
     
     /** Parameter whose CC is being learned  */
     String paramCCToLearn = "";

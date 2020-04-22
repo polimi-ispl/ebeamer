@@ -87,7 +87,7 @@ EbeamerAudioProcessor::EbeamerAudioProcessor()
                   .withInput  ("eStick#3",  AudioChannelSet::ambisonic(3), true)
                   .withInput  ("eStick#4",  AudioChannelSet::ambisonic(3), true)
                   .withOutput ("Output", AudioChannelSet::stereo(), true)
-                  ),parameters(*this,&undo,Identifier("eBeamer"),initializeParameters())
+                  ),parameters(*this,nullptr,Identifier("eBeamer"),initializeParameters())
 {
     
     /** Get parameters pointers */
@@ -273,6 +273,10 @@ void EbeamerAudioProcessor::stopCCLearning(){
     paramCCToLearn = "";
 }
 
+String EbeamerAudioProcessor::getCCLearning() const{
+    return paramCCToLearn;
+}
+
 const std::map<String,MidiCC>& EbeamerAudioProcessor::getParamToCCMapping(){
     return paramToCcMap;
 }
@@ -285,12 +289,6 @@ void EbeamerAudioProcessor::processMidi(MidiBuffer& midiMessages){
     int samplePosition;
     while (midiIter.getNextEvent(midiMess, samplePosition)){
         if (midiMess.isController()){
-            
-//            /** Log the message for debug purposes */
-//            std::cout << "Channel:" << midiMess.getChannel()
-//            << " CC num:" << midiMess.getControllerNumber()
-//            << " CC val:" << midiMess.getControllerValue()
-//            << std::endl;
             
             MidiCC cc = {midiMess.getChannel(),midiMess.getControllerNumber()};
             if (ccToParamMap.count(cc) > 0){

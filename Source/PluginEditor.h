@@ -4,6 +4,7 @@
 #include "SceneComponent.h"
 #include "AudioComponents.h"
 #include "CpuLoadComp.h"
+#include "SliderCC.h"
 
 #define GUI_WIDTH 540
 
@@ -78,12 +79,12 @@ private:
     //==============================================================================
     Label steerLabel;
     Label steeringBeam1Label, steeringBeam2Label;
-    Slider steeringBeam1Slider, steeringBeam2Slider;
+    SliderCC steeringBeam1Slider, steeringBeam2Slider;
     std::unique_ptr<SliderAttachment> steeringBeam1SliderAttachment, steeringBeam2SliderAttachment;
 
     //==============================================================================
     Label widthLabel;
-    Slider widthBeam1Knob, widthBeam2Knob;
+    SliderCC widthBeam1Knob, widthBeam2Knob;
     std::unique_ptr<SliderAttachment> widthBeam1KnobAttachment, widthBeam2KnobAttachment;
     
     //==============================================================================
