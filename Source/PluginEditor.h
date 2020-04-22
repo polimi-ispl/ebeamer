@@ -123,7 +123,7 @@ private:
     //==============================================================================
     /** Swap side toggle component */
     Label frontToggleLabel;
-    ToggleButton frontToggle;
+    ToggleButtonCC frontToggle;
     std::unique_ptr<ButtonAttachment> frontToggleAttachment;
     
     //==============================================================================

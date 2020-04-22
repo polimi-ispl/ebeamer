@@ -13,69 +13,67 @@
 
 //==============================================================================
 
-SliderCC::SliderCC(){
-}
-
-
-SliderCC::~SliderCC(){
+MidiCCPopup::MidiCCPopup(Component& owner_):owner(owner_){
     
 }
 
-void SliderCC::setProcessorParamName(EbeamerAudioProcessor* proc, const String & param){
+MidiCCPopup::~MidiCCPopup(){
+    
+}
+
+void MidiCCPopup::setProcessorParamName(EbeamerAudioProcessor* proc, const String & param){
     processor = proc;
     paramName = param;
 }
 
-bool SliderCC::isLearning() const{
+bool MidiCCPopup::isLearning() const{
     return paramName == processor->getCCLearning();
 }
 
-void SliderCC::showPopupMenu()
+void MidiCCPopup::showPopupMenu()
 {
     PopupMenu m;
-    m.setLookAndFeel (&getLookAndFeel());
-    m.addItem(1,"Learn CC",true,isLearning());
+    m.setLookAndFeel (&owner.getLookAndFeel());
+    if (isLearning()){
+        m.addItem(1,"Stop learning CC",true,false);
+    }else{
+        m.addItem(1,"Learn CC",true,false);
+    }
     
     auto mapping = processor->getParamToCCMapping();
     if (mapping.count(paramName) > 0){
-        m.addItem(2,"Forget CC " + String(mapping[paramName].channel) + ":" + String(mapping[paramName].number),true,false);
+        m.addItem(2,"Forget CC ",true,false);
+        m.addItem(3,"Chan: " + String(mapping[paramName].channel) + " - CC: " + String(mapping[paramName].number),false,false);
     }
 
     if (popupArea.getX() == 0){
         popupArea = PopupMenu::Options().getTargetScreenArea();
     }
-    m.showAt(popupArea,0,0,0,0,ModalCallbackFunction::forComponent (sliderMenuCallback, this));
+    m.showAt(popupArea,0,0,0,0,ModalCallbackFunction::create (sliderMenuCallback, this));
     
 }
 
-void SliderCC::sliderMenuCallback (int result, SliderCC* slider)
+void MidiCCPopup::sliderMenuCallback (int result, MidiCCPopup* popup)
 {
-    if (slider != nullptr)
+    if (popup != nullptr)
     {
         switch (result)
         {
             case 1:
-                if (!slider->isLearning()){
-                    slider->processor->startCCLearning(slider->paramName);
-                    slider->showPopupMenu();
+                if (!popup->isLearning()){
+                    popup->processor->removeCCParamMapping(popup->paramName);
+                    popup->processor->startCCLearning(popup->paramName);
+                    popup->showPopupMenu();
                 }else{
-                    slider->processor->stopCCLearning();
-                    slider->popupArea.setBounds(0,0,0,0);
+                    popup->processor->stopCCLearning();
+                    popup->popupArea.setBounds(0,0,0,0);
                 }
                 break;
             case 2:
-                slider->processor->removeCCParamMapping(slider->paramName);
-                slider->popupArea.setBounds(0,0,0,0);
+                popup->processor->removeCCParamMapping(popup->paramName);
+                popup->popupArea.setBounds(0,0,0,0);
                 break;
             default:  break;
         }
-    }
-}
-
-void SliderCC::mouseDown (const MouseEvent& e){
-    if (e.mods.isPopupMenu()){
-        showPopupMenu();
-    }else{
-        Slider::mouseDown(e);
     }
 }

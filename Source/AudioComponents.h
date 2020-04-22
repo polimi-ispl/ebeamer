@@ -16,9 +16,10 @@
 #define GREEN_LT -20.0f //dB
 
 #include "../JuceLibraryCode/JuceHeader.h"
+#include "SliderCC.h"
 
 //==============================================================================
-class DecibelSlider : public Slider
+class DecibelSlider : public SliderCC
 {
 public:
     
@@ -44,7 +45,7 @@ private:
 
 //==============================================================================
 
-class FrequencySlider : public Slider
+class FrequencySlider : public SliderCC
 {
 public:
     
@@ -71,7 +72,7 @@ private:
 
 //==============================================================================
 
-class PanSlider : public Slider
+class PanSlider : public SliderCC
 {
 public:
     
@@ -197,7 +198,7 @@ private:
 };
 
 //==============================================================================
-class MuteButton: public TextButton {
+class MuteButton: public TextButtonCC {
 public:
     
     MuteButton();
