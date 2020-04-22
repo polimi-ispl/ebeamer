@@ -9,7 +9,7 @@
 */
 
 #include <JuceHeader.h>
-#include "SliderCC.h"
+#include "MidiComp.h"
 
 //==============================================================================
 

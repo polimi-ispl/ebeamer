@@ -531,8 +531,8 @@
         <FILE id="jAuseV" name="SigProc.h" compile="0" resource="0" file="Source/SigProc.h"/>
       </GROUP>
       <GROUP id="{AC0EAE82-70E6-47BD-23DD-295BD02717C2}" name="gui">
-        <FILE id="oTcmEh" name="SliderCC.cpp" compile="1" resource="0" file="Source/SliderCC.cpp"/>
-        <FILE id="mOsxAM" name="SliderCC.h" compile="0" resource="0" file="Source/SliderCC.h"/>
+        <FILE id="cAtJi8" name="MidiComp.cpp" compile="1" resource="0" file="Source/MidiComp.cpp"/>
+        <FILE id="Y5WEkJ" name="MidiComp.h" compile="0" resource="0" file="Source/MidiComp.h"/>
         <FILE id="YioHCd" name="CpuLoadComp.cpp" compile="1" resource="0" file="Source/CpuLoadComp.cpp"/>
         <FILE id="c9KQHu" name="CpuLoadComp.h" compile="0" resource="0" file="Source/CpuLoadComp.h"/>
         <FILE id="wmvu4j" name="SceneComponent.cpp" compile="1" resource="0"

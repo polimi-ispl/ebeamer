@@ -16,7 +16,7 @@
 #define GREEN_LT -20.0f //dB
 
 #include "../JuceLibraryCode/JuceHeader.h"
-#include "SliderCC.h"
+#include "MidiComp.h"
 
 //==============================================================================
 class DecibelSlider : public SliderCC

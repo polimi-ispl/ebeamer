@@ -4,7 +4,7 @@
 #include "SceneComponent.h"
 #include "AudioComponents.h"
 #include "CpuLoadComp.h"
-#include "SliderCC.h"
+#include "MidiComp.h"
 
 #define GUI_WIDTH 540
 
