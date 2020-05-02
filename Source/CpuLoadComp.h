@@ -1,46 +1,52 @@
 /*
-  ==============================================================================
-
-    CpuLoadComp.h
-    Created: 18 Apr 2020 4:23:20pm
-    Author:  Luca Bondi
-
-  ==============================================================================
+ CPU load component
+ 
+ Authors:
+ Luca Bondi (luca.bondi@polimi.it)
 */
 
 #pragma once
 
-#include <JuceHeader.h>
-#include "PluginProcessor.h"
+#include "../JuceLibraryCode/JuceHeader.h"
 
 //==============================================================================
-/*
-*/
-class CpuLoadComp    : public Component,
-                       public Timer
-{
+
+class CpuLoadComp : public Component,
+                    public Timer {
 public:
-    CpuLoadComp(const EbeamerAudioProcessor &p);
+    CpuLoadComp();
+
     ~CpuLoadComp();
 
-    void paint (Graphics&) override;
+    class Callback {
+    public:
+        virtual ~Callback() = default;
+
+        virtual float getCpuLoad() const = 0;
+    };
+
+    void setSource(Callback *cb);
+
+    void paint(Graphics &) override;
+
     void resized() override;
 
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CpuLoadComp)
-    
+
     /** Load indicator text */
     TextEditor text;
     /** Label for load indicator text */
     Label label;
+
     /** Timer callback */
     void timerCallback() override;
-    
-    /** Processor instance */
-    const EbeamerAudioProcessor &processor;
-    
+
+    /** Callback instance */
+    Callback *callback = nullptr;
+
     // Constants
     const float textHeight = 10;
     const float labelWidth = 50;
-    
+
 };

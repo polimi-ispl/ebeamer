@@ -1,11 +1,8 @@
 /*
-  ==============================================================================
-
-    Linalg.h
-    Created: 15 Apr 2020 10:13:19am
-    Author:  Luca Bondi
-
-  ==============================================================================
+  Signal processing utilities
+ 
+ Authors:
+ Luca Bondi (luca.bondi@polimi.it)
 */
 
 #pragma once
@@ -39,4 +36,5 @@ void designTukeyWindow(Vec &win, size_t winLen, size_t rampLen);
  @param alpha: exponential interpolation coefficient. 1 means complete override (instant update), 0 means no override (complete preservation)
  
  */
-void freqToTime(AudioBuffer<float>& time, const int timeCh, const CpxVec& freq, const juce::dsp::FFT* fft, const Vec& window = Vec(), float alpha = 1);
+void freqToTime(AudioBuffer<float> &time, const int timeCh, const CpxVec &freq, const juce::dsp::FFT *fft,
+                const Vec &window = Vec(), float alpha = 1);
