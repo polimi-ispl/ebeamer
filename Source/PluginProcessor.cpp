@@ -131,7 +131,7 @@ bool EbeamerAudioProcessor::isBusesLayoutSupported(const BusesLayout &layouts) c
             return false;
         }
     }
-    if ((layouts.getMainInputChannels() < 2) or (layouts.getMainOutputChannels() < 2)) {
+    if ((layouts.getMainInputChannels() < 2) || (layouts.getMainOutputChannels() < 2)) {
         // In any case don't allow less than 2 input and 2 output channels
         return false;
     }
