@@ -8,7 +8,7 @@
 #pragma once
 #define DB_MINUS_INF -100.0
 
-#include <JuceHeader.h>
+#include "../JuceLibraryCode/JuceHeader.h"
 #include "MidiCC.h"
 
 //==============================================================================
