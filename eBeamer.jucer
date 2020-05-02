@@ -520,36 +520,36 @@
       <FILE id="blQU12" name="UmfPackSupport" compile="0" resource="1" file="Eigen/UmfPackSupport"/>
     </GROUP>
     <GROUP id="{52771D1D-3211-6CF7-CE70-5C5684F5D0E1}" name="Source">
-      <GROUP id="{9C700E64-16FC-5C2F-54C5-EEBA5745C5EB}" name="beam">
-        <FILE id="xAGzr3" name="Beamformer.cpp" compile="1" resource="0" file="Source/Beamformer.cpp"/>
-        <FILE id="XiY410" name="Beamformer.h" compile="0" resource="0" file="Source/Beamformer.h"/>
-        <FILE id="gnz0FR" name="BeamformingAlgorithm.h" compile="0" resource="0"
-              file="Source/BeamformingAlgorithm.h"/>
-        <FILE id="zYYb6u" name="DAS.cpp" compile="1" resource="0" file="Source/DAS.cpp"/>
-        <FILE id="IkwOB6" name="DAS.h" compile="0" resource="0" file="Source/DAS.h"/>
-        <FILE id="yHmMDU" name="SigProc.cpp" compile="1" resource="0" file="Source/SigProc.cpp"/>
-        <FILE id="jAuseV" name="SigProc.h" compile="0" resource="0" file="Source/SigProc.h"/>
-      </GROUP>
       <GROUP id="{AC0EAE82-70E6-47BD-23DD-295BD02717C2}" name="gui">
-        <FILE id="cAtJi8" name="MidiComp.cpp" compile="1" resource="0" file="Source/MidiComp.cpp"/>
-        <FILE id="Y5WEkJ" name="MidiComp.h" compile="0" resource="0" file="Source/MidiComp.h"/>
         <FILE id="YioHCd" name="CpuLoadComp.cpp" compile="1" resource="0" file="Source/CpuLoadComp.cpp"/>
         <FILE id="c9KQHu" name="CpuLoadComp.h" compile="0" resource="0" file="Source/CpuLoadComp.h"/>
-        <FILE id="wmvu4j" name="SceneComponent.cpp" compile="1" resource="0"
-              file="Source/SceneComponent.cpp"/>
-        <FILE id="xYiNGT" name="SceneComponent.h" compile="0" resource="0"
-              file="Source/SceneComponent.h"/>
-        <FILE id="K0vtPd" name="AudioComponents.cpp" compile="1" resource="0"
-              file="Source/AudioComponents.cpp"/>
-        <FILE id="ppijeG" name="AudioComponents.h" compile="0" resource="0"
-              file="Source/AudioComponents.h"/>
+        <FILE id="cAtJi8" name="MidiComp.cpp" compile="1" resource="0" file="Source/MidiComp.cpp"/>
+        <FILE id="Y5WEkJ" name="MidiComp.h" compile="0" resource="0" file="Source/MidiComp.h"/>
+        <FILE id="K0vtPd" name="MeterComp.cpp" compile="1" resource="0" file="Source/MeterComp.cpp"/>
+        <FILE id="ppijeG" name="MeterComp.h" compile="0" resource="0" file="Source/MeterComp.h"/>
+        <FILE id="wmvu4j" name="SceneComp.cpp" compile="1" resource="0" file="Source/SceneComp.cpp"/>
+        <FILE id="xYiNGT" name="SceneComp.h" compile="0" resource="0" file="Source/SceneComp.h"/>
       </GROUP>
-      <GROUP id="{E9D0D3F7-D6D8-F478-824A-818882ADDC02}" name="lib">
-        <FILE id="RYq6o2" name="AudioParts.cpp" compile="1" resource="0" file="Source/AudioParts.cpp"/>
-        <FILE id="gSP93w" name="AudioParts.h" compile="0" resource="0" file="Source/AudioParts.h"/>
-        <FILE id="RUNOuV" name="FIR.cpp" compile="1" resource="0" file="Source/FIR.cpp"/>
-        <FILE id="ZOxevA" name="FIR.h" compile="0" resource="0" file="Source/FIR.h"/>
+      <GROUP id="{E9D0D3F7-D6D8-F478-824A-818882ADDC02}" name="processing">
+        <FILE id="RUNOuV" name="AudioBufferFFT.cpp" compile="1" resource="0"
+              file="Source/AudioBufferFFT.cpp"/>
+        <FILE id="ZOxevA" name="AudioBufferFFT.h" compile="0" resource="0"
+              file="Source/AudioBufferFFT.h"/>
+        <FILE id="xAGzr3" name="Beamformer.cpp" compile="1" resource="0" file="Source/Beamformer.cpp"/>
+        <FILE id="XiY410" name="Beamformer.h" compile="0" resource="0" file="Source/Beamformer.h"/>
+        <FILE id="SG6CjR" name="BeamformingAlgorithms.cpp" compile="1" resource="0"
+              file="Source/BeamformingAlgorithms.cpp"/>
+        <FILE id="b9o25D" name="BeamformingAlgorithms.h" compile="0" resource="0"
+              file="Source/BeamformingAlgorithms.h"/>
+        <FILE id="yHmMDU" name="SignalProcessing.cpp" compile="1" resource="0"
+              file="Source/SignalProcessing.cpp"/>
+        <FILE id="jAuseV" name="SignalProcessing.h" compile="0" resource="0"
+              file="Source/SignalProcessing.h"/>
+        <FILE id="RYq6o2" name="MeterDecay.cpp" compile="1" resource="0" file="Source/MeterDecay.cpp"/>
+        <FILE id="gSP93w" name="MeterDecay.h" compile="0" resource="0" file="Source/MeterDecay.h"/>
       </GROUP>
+      <FILE id="oM5jw0" name="ebeamerDefs.h" compile="0" resource="0" file="Source/ebeamerDefs.h"/>
+      <FILE id="x4u9NK" name="MidiCC.h" compile="0" resource="0" file="Source/MidiCC.h"/>
       <FILE id="T0rnb7" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
       <FILE id="KwV1a4" name="PluginProcessor.h" compile="0" resource="0"
@@ -583,6 +583,23 @@
         <MODULEPATH id="juce_audio_formats" path="../../../JUCE/modules"/>
       </MODULEPATHS>
     </XCODE_MAC>
+    <CLION targetFolder="Builds/CLion" clionXcodeEnabled="1">
+      <MODULEPATHS>
+        <MODULEPATH id="juce_gui_extra"/>
+        <MODULEPATH id="juce_gui_basics"/>
+        <MODULEPATH id="juce_graphics"/>
+        <MODULEPATH id="juce_events"/>
+        <MODULEPATH id="juce_dsp"/>
+        <MODULEPATH id="juce_data_structures"/>
+        <MODULEPATH id="juce_core"/>
+        <MODULEPATH id="juce_audio_utils"/>
+        <MODULEPATH id="juce_audio_processors"/>
+        <MODULEPATH id="juce_audio_plugin_client"/>
+        <MODULEPATH id="juce_audio_formats"/>
+        <MODULEPATH id="juce_audio_devices"/>
+        <MODULEPATH id="juce_audio_basics"/>
+      </MODULEPATHS>
+    </CLION>
   </EXPORTFORMATS>
   <MODULES>
     <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
