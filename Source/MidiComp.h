@@ -16,7 +16,7 @@ class MidiCCPopup {
 public:
     MidiCCPopup(Component &owner);
 
-    ~MidiCCPopup();
+    ~MidiCCPopup(){};
 
     void setCallback(MidiCC::Callback *cb, const String &param);
 
@@ -58,12 +58,29 @@ public:
     ~TextButtonCC() override {};
 
     void mouseDown(const MouseEvent &e) override {
+
         if (e.mods.isPopupMenu()) {
             MidiCCPopup::showPopupMenu();
         } else {
             TextButton::mouseDown(e);
         }
     }
+    
+    void mouseUp(const MouseEvent &e) override {
+        if (!e.mods.isPopupMenu()){
+            TextButton::mouseUp(e);
+        }
+    }
+
+};
+
+//==============================================================================
+class MuteButton : public TextButtonCC {
+public:
+
+    MuteButton(){
+        setClickingTogglesState(true);
+    };
 
 };
 
@@ -81,7 +98,12 @@ public:
             ToggleButton::mouseDown(e);
         }
     }
-
+    
+    void mouseUp(const MouseEvent &e) override {
+        if (!e.mods.isPopupMenu()){
+            ToggleButton::mouseUp(e);
+        }
+    }
 };
 
 //==============================================================================
@@ -171,10 +193,4 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PanSlider)
 };
 
-//==============================================================================
-class MuteButton : public TextButtonCC {
-public:
 
-    MuteButton();
-
-};

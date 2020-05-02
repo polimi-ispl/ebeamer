@@ -9,13 +9,8 @@
 #include "MidiComp.h"
 
 //==============================================================================
-
-MidiCCPopup::MidiCCPopup(Component &owner_) : owner(owner_) {
-
-}
-
-MidiCCPopup::~MidiCCPopup() {
-
+MidiCCPopup::MidiCCPopup(Component &o):owner(o){
+    
 }
 
 void MidiCCPopup::setCallback(MidiCC::Callback *cb, const String &param) {
