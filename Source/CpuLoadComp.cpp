@@ -1,22 +1,18 @@
 /*
-  ==============================================================================
-
-    CpuLoadComp.cpp
-    Created: 18 Apr 2020 4:23:20pm
-    Author:  Luca Bondi
-
-  ==============================================================================
+ CPU load component
+ 
+ Authors:
+ Luca Bondi (luca.bondi@polimi.it)
 */
 
 #include <JuceHeader.h>
 #include "CpuLoadComp.h"
 
 //==============================================================================
-CpuLoadComp::CpuLoadComp(const EbeamerAudioProcessor &p):processor(p)
-{
+CpuLoadComp::CpuLoadComp() {
 
     text.setFont(textHeight);
-    text.setText(String(int(processor.getAverageLoad()*100))+"%");
+    text.setText("0 %");
     text.setReadOnly(true);
     label.setFont(textHeight);
     label.setText("CPU load", NotificationType::dontSendNotification);
@@ -25,21 +21,24 @@ CpuLoadComp::CpuLoadComp(const EbeamerAudioProcessor &p):processor(p)
     addAndMakeVisible(text);
 }
 
-CpuLoadComp::~CpuLoadComp()
-{
+CpuLoadComp::~CpuLoadComp() {
 }
 
-void CpuLoadComp::paint (Graphics& g)
-{
+void CpuLoadComp::paint(Graphics &g) {
 }
 
-void CpuLoadComp::resized()
-{
+void CpuLoadComp::setSource(Callback *cb) {
+    callback = cb;
+}
+
+void CpuLoadComp::resized() {
     auto area = getLocalBounds();
     area.removeFromLeft(labelWidth);
     text.setBounds(area);
 }
 
-void CpuLoadComp::timerCallback(){
-    text.setText(String(int(processor.getAverageLoad()*100))+"%");
+void CpuLoadComp::timerCallback() {
+    if (callback == nullptr)
+        return;
+    text.setText(String(int(callback->getCpuLoad() * 100)) + "%");
 }
