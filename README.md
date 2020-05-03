@@ -4,7 +4,7 @@ A JUCE-based VST3 plug-in and standalone application to support the [eStick](htt
 ![The eBeamer](docs/gui.png)
 
 ## Getting Started
-- Just want to try out the VST or the app? Go the the [release](releases/) page.
+- Just want to try out the VST or the app? Go the the [release](https://github.com/listensmart/ebeamer/releases) page.
 - If you're not familiar with JUCE, [this](https://juce.com/learn) is a good place to start.
 - If you're developing on Windows, download and extract the [ASIO ASK](https://www.steinberg.net/en/company/developers.html) in the *ASIO/* folder.
 
