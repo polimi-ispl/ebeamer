@@ -35,7 +35,7 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CpuLoadComp)
 
     /** Load indicator text */
-    TextEditor text;
+    Label text;
     /** Label for load indicator text */
     Label label;
 
@@ -46,7 +46,6 @@ private:
     Callback *callback = nullptr;
 
     // Constants
-    const float textHeight = 10;
-    const float labelWidth = 50;
+    const float labelWidth = 45;
 
 };

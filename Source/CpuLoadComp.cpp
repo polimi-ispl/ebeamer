@@ -11,11 +11,8 @@
 //==============================================================================
 CpuLoadComp::CpuLoadComp() {
 
-    text.setFont(textHeight);
-    text.setText("0 %");
-    text.setReadOnly(true);
-    label.setFont(textHeight);
-    label.setText("CPU load", NotificationType::dontSendNotification);
+    text.setText("0 %", NotificationType::dontSendNotification);
+    label.setText("CPU", NotificationType::dontSendNotification);
     label.setJustificationType(Justification::left);
     label.attachToComponent(&text, true);
     addAndMakeVisible(text);
@@ -40,5 +37,5 @@ void CpuLoadComp::resized() {
 void CpuLoadComp::timerCallback() {
     if (callback == nullptr)
         return;
-    text.setText(String(int(callback->getCpuLoad() * 100)) + "%");
+    text.setText(String(int(callback->getCpuLoad() * 100)) + "%", NotificationType::dontSendNotification);
 }
