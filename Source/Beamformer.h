@@ -18,9 +18,9 @@
 
 class Beamformer;
 
-/** Class that computes periodically the Direction of Arrival of sound
+/** Thread that computes periodically the Direction of Arrival of sound
  */
-class BeamformerDoa : public Timer {
+class BeamformerDoa : public Thread {
 public:
 
     BeamformerDoa(Beamformer &b,
@@ -33,7 +33,7 @@ public:
 
     ~BeamformerDoa();
 
-    void timerCallback() override;
+    void run() override;
 
 private:
 

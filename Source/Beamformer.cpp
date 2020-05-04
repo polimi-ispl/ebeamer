@@ -13,7 +13,7 @@ BeamformerDoa::BeamformerDoa(Beamformer &b,
                              float sampleRate_,
                              int numActiveInputChannels,
                              int firLen,
-                             std::shared_ptr<dsp::FFT> fft_) : beamformer(b) {
+                             std::shared_ptr<dsp::FFT> fft_) : Thread("DOA"), beamformer(b) {
     
     numDoaHor = numDoaHor_;
     numDoaVer = numDoaVer_;
@@ -52,33 +52,45 @@ BeamformerDoa::BeamformerDoa(Beamformer &b,
     }
 }
 
-BeamformerDoa::~BeamformerDoa() {
+void BeamformerDoa::run() {
+    
+    while (!threadShouldExit()){
+        
+        const auto startTick = Time::getHighResolutionTicks();
+        
+        beamformer.getDoaInputBuffer(inputBuffer);
+        
+        /** Compute DOA levels */
+        for (auto vDirIdx = 0; vDirIdx < numDoaVer; vDirIdx++) {
+            for (auto hDirIdx = 0; hDirIdx < numDoaHor; hDirIdx++) {
+                auto dirIdx = vDirIdx * numDoaHor + hDirIdx;
+                doaBeam.clear();
+                for (auto inCh = 0; inCh < inputBuffer.getNumChannels(); inCh++) {
+                    /** Convolve inputs and DOA FIR */
+                    convolutionBuffer.convolve(0, inputBuffer, inCh, doaFirFFT[dirIdx], inCh);
+                    convolutionBuffer.addToTimeSeries(0, doaBeam, 0);
+                }
+                
+                const Range<float> minMax = FloatVectorOperations::findMinAndMax(doaBeam.getReadPointer(0),
+                                                                                 doaBeam.getNumSamples());
+                const float dirEnergy = jmax(abs(minMax.getStart()), abs(minMax.getEnd()));
+                const float dirEnergyDb = Decibels::gainToDecibels(dirEnergy);
+                doaLevels(vDirIdx,hDirIdx) = dirEnergyDb;
+            }
+        }
+        beamformer.setDoaEnergy(doaLevels);
+        
+        const auto endTick = Time::getHighResolutionTicks();
+        const float elapsedTime = Time::highResolutionTicksToSeconds(endTick-startTick);
+        const float expectedPeriod = 1.f/ENERGY_UPDATE_FREQ;
+        if (elapsedTime < expectedPeriod){
+            Time::waitForMillisecondCounter(Time::getMillisecondCounter() + (expectedPeriod-elapsedTime));
+        }
+        
+    }
 }
 
-void BeamformerDoa::timerCallback() {
-    
-    beamformer.getDoaInputBuffer(inputBuffer);
-    
-    /** Compute DOA levels */
-    for (auto vDirIdx = 0; vDirIdx < numDoaVer; vDirIdx++) {
-        for (auto hDirIdx = 0; hDirIdx < numDoaHor; hDirIdx++) {
-            auto dirIdx = vDirIdx * numDoaHor + hDirIdx;
-            doaBeam.clear();
-            for (auto inCh = 0; inCh < inputBuffer.getNumChannels(); inCh++) {
-                /** Convolve inputs and DOA FIR */
-                convolutionBuffer.convolve(0, inputBuffer, inCh, doaFirFFT[dirIdx], inCh);
-                convolutionBuffer.addToTimeSeries(0, doaBeam, 0);
-            }
-            
-            const Range<float> minMax = FloatVectorOperations::findMinAndMax(doaBeam.getReadPointer(0),
-                                                                             doaBeam.getNumSamples());
-            const float dirEnergy = jmax(abs(minMax.getStart()), abs(minMax.getEnd()));
-            const float dirEnergyDb = Decibels::gainToDecibels(dirEnergy);
-            doaLevels(vDirIdx,hDirIdx) = dirEnergyDb;
-        }
-    }
-    
-    beamformer.setDoaEnergy(doaLevels);
+BeamformerDoa::~BeamformerDoa(){
     
 }
 
@@ -178,12 +190,12 @@ Beamformer::Beamformer(int numBeams_, MicConfig mic, double sampleRate_, int max
     
     /** Prepare and start DOA thread */
     doaThread = std::make_unique<BeamformerDoa>(*this, numDoaHor, numDoaVer, sampleRate, numMic, firLen, fft);
-    doaThread->startTimerHz(doaUpdateFrequency);
+    doaThread->startThread();
     
 }
 
 Beamformer::~Beamformer() {
-    
+    doaThread->stopThread(100);
 }
 
 MicConfig Beamformer::getMicConfig() const {
