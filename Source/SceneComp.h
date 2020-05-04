@@ -22,24 +22,17 @@ public:
     
     void paint(Graphics &) override;
     
-    void resized() override;
-    
-    void setFrontFacingParam(const std::atomic<float> *p);
+    void resized() override {};
     
     void setColour(const Colour &col);
     
-    void setCorners(const juce::Point<float> &,
-                    const juce::Point<float> &,
-                    const juce::Point<float> &,
-                    const juce::Point<float> &);
+    void setPath(const Path &);
     
 private:
     
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TileComp)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TileComp)
     
-    Rectangle<int> area;
-    
-    juce::Point<float> corners[2][2];
+    Path path;
     Colour tileColour;
     
     const std::atomic<float> *frontFacing = nullptr;
@@ -60,32 +53,37 @@ public:
     public:
         virtual ~Callback() = default;
         
-        virtual void getDoaEnergy(std::vector<float> &energy) const = 0;
+        virtual void getDoaEnergy(Mtx &energy) const = 0;
     };
     
     void setCallback(const Callback *p);
     
-    void setParams(const std::atomic<float> *frontFacing);
+    void setParams(const std::atomic<float> *config,
+                   const std::atomic<float> *frontFacing);
     
 private:
     
+    SpinLock lock;
+    
     Rectangle<int> area;
     
-    TileComp tiles[TILE_ROW_COUNT][NUM_DOAS];
-    juce::Point<float> vertices[TILE_ROW_COUNT + 1][NUM_DOAS + 1];
+    std::vector<std::vector<std::unique_ptr<TileComp>>> tiles;
+    std::vector<std::vector<juce::Point<float>>> vertices;
     
     const Callback *callback = nullptr;
+    const std::atomic<float> *frontFacingParam = nullptr;
+    const std::atomic<float> *configParam = nullptr;
     
     std::vector<float> th;
     
-    std::vector<float> energy, energyPreGain;
+    Mtx energy, energyPreGain;
     float inertia = 0.85;
     float gain = 0;
     const float maxGain = 60, minGain = -20;
     
     const float gridUpdateFrequency = 10;
     
-    void computeVertices();
+    void makeLayout();
     
     void timerCallback() override;
     
@@ -104,10 +102,13 @@ public:
     
     void resized() override;
     
-    void setParams(const std::atomic<float> *frontFacing,
+    void setParams(
+                   const std::atomic<float> *config,
+                   const std::atomic<float> *frontFacing,
                    const std::atomic<float> *mute,
                    const std::atomic<float> *width,
-                   const std::atomic<float> *steer);
+                   const std::atomic<float> *steerX,
+                   const std::atomic<float> *steerY);
     
     //TODO: Use LookAndFeel
     void setBaseColor(Colour colour) { baseColour = colour; }
@@ -117,7 +118,9 @@ private:
     const std::atomic<float> *frontFacingParam = nullptr;
     const std::atomic<float> *muteParam = nullptr;
     const std::atomic<float> *widthParam = nullptr;
-    const std::atomic<float> *steerParam = nullptr;
+    const std::atomic<float> *steerXParam = nullptr;
+    const std::atomic<float> *steerYParam = nullptr;
+    const std::atomic<float> *configParam = nullptr;
     
     Rectangle<int> area;
     
@@ -137,6 +140,8 @@ public:
     class Callback : public GridComp::Callback {
     public:
         virtual ~Callback() = default;
+        
+        virtual const std::atomic<float> *getConfigParam() const = 0;
         
         virtual const std::atomic<float> *getFrontFacingParam() const = 0;
         
@@ -162,7 +167,7 @@ public:
 private:
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SceneComp)
-    
+    const Callback *callback = nullptr;
     BeamComp beams[NUM_BEAMS];
     GridComp grid;
 };

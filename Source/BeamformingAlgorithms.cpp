@@ -39,9 +39,9 @@ namespace DAS {
     void FarfieldURA::getFir(AudioBuffer<float> &fir, const BeamParameters &params, float alpha) const {
 
         /** Angle in radians (0 front, pi/2 source closer to last channel, -pi/2 source closer to first channel */
-        const float angleRadX = params.doa[0] * pi / 2;
+        const float angleRadX = params.doaX * pi / 2;
         /** Angle in radians (0 front, pi/2 source closer to last channel, -pi/2 source closer to first channel */
-        const float angleRadY = params.doa[1] * pi / 2;
+        const float angleRadY = params.doaY * pi / 2;
         /** Delay between adjacent microphones [s] */
         const float deltaX = sin(angleRadX) * micDistX / soundspeed;
         /** Delay between adjacent microphones [s] */

@@ -20,9 +20,13 @@
  */
 typedef struct {
     /** Pointing direction of the beam, x axis.
-     Range: -1 (source closer to first microphone, left/top) to +1 (source closer to last microphone, right/bottom)
+     Range: -1 (source closer to first microphone, left) to +1 (source closer to last microphone, right)
      */
-    float doa[2];
+    float doaX;
+    /** Pointing direction of the beam, y axis.
+    Range: -1 (source closer to first microphone, top) to +1 (source closer to last microphone, bottom)
+    */
+    float doaY;
     /** Width of the beam.
      Range: 0 (the most focused) to 1 (the least focused)
      */

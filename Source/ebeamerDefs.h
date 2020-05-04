@@ -8,7 +8,8 @@
 #pragma once
 
 #define NUM_BEAMS 2
-#define NUM_DOAS 25
+#define NUM_DOAX 25
+#define NUM_DOAY 9
 
 #define GUI_WIDTH 540
 #define GUI_HEIGHT 830
@@ -16,7 +17,7 @@
 #define SCENE_WIDTH 460
 #define SCENE_HEIGHT 230
 
-#define TILE_ROW_COUNT 7
+#define ULA_TILE_ROW_COUNT 7
 
 #define LABEL_BEAM_WIDTH 25
 #define STEER_SLIDER_HEIGHT 40
@@ -60,6 +61,7 @@
 #define BEAM_METER_UPDATE_FREQ 10 //Hz
 #define ENERGY_UPDATE_FREQ 10 //Hz
 
+#include "../JuceLibraryCode/JuceHeader.h"
 
 /** Available eSticks configurations type */
 typedef enum {
@@ -84,3 +86,5 @@ const StringArray micConfigLabels({
                                           "Stack 4",
                                           "Stack 2x2",
                                   });
+
+bool isLinearArray(MicConfig m);

@@ -223,6 +223,7 @@ EBeamerAudioProcessorEditor::EBeamerAudioProcessorEditor(EbeamerAudioProcessor &
     
     /* The editor needs to change its layout when the config changes */
     valueTreeState.addParameterListener("config", this);
+    valueTreeState.addParameterListener("frontFacing", this);
     
 }
 
@@ -255,29 +256,20 @@ void EBeamerAudioProcessorEditor::resized() {
     
     auto sceneArea = area.removeFromTop(SCENE_HEIGHT);
     
-    switch (static_cast<MicConfig>((int)*valueTreeState.getRawParameterValue("config"))){
-        case ULA_1ESTICK:
-        case ULA_2ESTICK:
-        case ULA_3ESTICK:
-        case ULA_4ESTICK:
-            steerBeamY1Slider.setVisible(false);
-            steerBeamY2Slider.setVisible(false);
-            sceneArea.removeFromRight((area.getWidth() - SCENE_WIDTH) / 2);
-            sceneArea.removeFromLeft((area.getWidth() - SCENE_WIDTH) / 2);
-            scene.setBounds(sceneArea);
-            break;
-        case URA_2ESTICK:
-        case URA_3ESTICK:
-        case URA_4ESTICK:
-        case URA_2x2ESTICK:
-            steerBeamY1Slider.setVisible(true);
-            steerBeamY2Slider.setVisible(true);
-            sceneArea.removeFromLeft(10);
-            sceneArea.removeFromRight(10);
-            steerBeamY1Slider.setBounds(sceneArea.removeFromLeft(50));
-            steerBeamY2Slider.setBounds(sceneArea.removeFromRight(50));
-            scene.setBounds(sceneArea);
-            break;
+    if (isLinearArray(static_cast<MicConfig>((int)*valueTreeState.getRawParameterValue("config")))){
+        steerBeamY1Slider.setVisible(false);
+        steerBeamY2Slider.setVisible(false);
+        sceneArea.removeFromRight((area.getWidth() - SCENE_WIDTH) / 2);
+        sceneArea.removeFromLeft((area.getWidth() - SCENE_WIDTH) / 2);
+        scene.setBounds(sceneArea);
+    }else{
+        steerBeamY1Slider.setVisible(true);
+        steerBeamY2Slider.setVisible(true);
+        sceneArea.removeFromLeft(10);
+        sceneArea.removeFromRight(10);
+        steerBeamY1Slider.setBounds(sceneArea.removeFromLeft(50));
+        steerBeamY2Slider.setBounds(sceneArea.removeFromRight(50));
+        scene.setBounds(sceneArea);
     }
     
     area.removeFromLeft(LEFT_RIGHT_MARGIN);
@@ -359,5 +351,8 @@ void EBeamerAudioProcessorEditor::resized() {
 void EBeamerAudioProcessorEditor::parameterChanged (const String & parameterID, float newValue){
     if (parameterID == "config"){
         resized();
+    }
+    if (parameterID == "frontFacing"){
+        scene.resized();
     }
 }
