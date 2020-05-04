@@ -492,7 +492,9 @@ const std::atomic<float> *EbeamerAudioProcessor::getBeamSteerY(int idx) const {
 }
 
 void EbeamerAudioProcessor::getDoaEnergy(Mtx &energy) const {
-    beamformer->getDoaEnergy(energy);
+    if (beamformer != nullptr){
+        beamformer->getDoaEnergy(energy);
+    }
 }
 
 //==============================================================================

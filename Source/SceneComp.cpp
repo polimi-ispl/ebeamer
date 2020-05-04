@@ -66,7 +66,7 @@ void GridComp::resized() {
             if (isLinearArray(static_cast<MicConfig>((int)*configParam))){
                 transf = AffineTransform::rotation(pi, area.getWidth()/2, area.getHeight()/2);
             }else{
-                transf = AffineTransform::verticalFlip(area.getHeight()).rotated(pi, area.getWidth()/2, area.getHeight()/2);
+                transf = AffineTransform::verticalFlip(area.getHeight()).rotation(pi, area.getWidth()/2, area.getHeight()/2);
             }
         }
         
@@ -128,11 +128,11 @@ void GridComp::timerCallback() {
     // Very basic automatic gain
     auto maxLevel = energyPreGain.maxCoeff() + gain;
     
-    if (maxLevel > 0) {
+    if (maxLevel > 3) {
         gain = jmax(gain - maxLevel - 3, minGain);
     } else if (maxLevel < -18) {
         gain = jmin(gain - maxLevel, maxGain);
-    } else if (maxLevel > -3) {
+    } else if (maxLevel > 0) {
         gain = jmax(gain - 0.5f, minGain);
     } else if (maxLevel < -9) {
         gain = jmin(gain + 0.5f, maxGain);
@@ -183,8 +183,8 @@ void GridComp::makeLayout() {
     }else{
         vertices.resize(NUM_DOAY+1, std::vector<juce::Point<float>>(NUM_DOAX+1));
         
-        const float deltaY = area.getHeight() / NUM_DOAY;
-        const float deltaX = area.getWidth() / NUM_DOAX;
+        const float deltaY = float(area.getHeight()) / NUM_DOAY;
+        const float deltaX = float(area.getWidth()) / NUM_DOAX;
         
         for (int rowIdx = 0; rowIdx <= NUM_DOAY; rowIdx++) {
             for (int colIdx = 0; colIdx <= NUM_DOAX; colIdx++) {
@@ -258,14 +258,14 @@ void BeamComp::paint(Graphics &g) {
         path.addEllipse(positionX-width/2, positionY-width/2, width, width);
     }
     
-    if (~(bool) *muteParam) {
+    if (!(bool) *muteParam) {
         g.setColour(baseColour.brighter());
         g.setOpacity(0.4);
         g.fillPath(path);
     }
     
     g.setColour(baseColour);
-    g.setOpacity(0.8);
+    g.setOpacity(0.9);
     PathStrokeType strokeType(2);
     g.strokePath(path, strokeType);
 }
@@ -302,7 +302,7 @@ void SceneComp::resized() {
         if (!isLinearArray(static_cast<MicConfig>((int)*callback->getConfigParam())))
             sceneArea.removeFromTop(20);
     
-    if (grid.getLocalBounds() == sceneArea){
+    if (grid.getBounds() == sceneArea){
         grid.resized();
     }else{
         grid.setBounds(sceneArea);

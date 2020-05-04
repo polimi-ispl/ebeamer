@@ -265,10 +265,14 @@ void EBeamerAudioProcessorEditor::resized() {
     }else{
         steerBeamY1Slider.setVisible(true);
         steerBeamY2Slider.setVisible(true);
-        sceneArea.removeFromLeft(10);
-        sceneArea.removeFromRight(10);
+        sceneArea.removeFromLeft(15);
+        sceneArea.removeFromRight(15);
         steerBeamY1Slider.setBounds(sceneArea.removeFromLeft(50));
         steerBeamY2Slider.setBounds(sceneArea.removeFromRight(50));
+        sceneArea.removeFromLeft(5);
+        sceneArea.removeFromRight(5);
+        sceneArea.removeFromTop(10);
+        sceneArea.removeFromBottom(10);
         scene.setBounds(sceneArea);
     }
     
