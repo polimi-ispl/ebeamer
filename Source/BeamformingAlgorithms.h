@@ -11,12 +11,18 @@
 #include "SignalProcessing.h"
 #include "BeamformingAlgorithms.h"
 
-/** Beam parameters data structure for a linear 1D array */
+/** Beam parameters data structure for a Uniform Rectangular Array
+    Convention used:
+    - Array seen from behind
+    - Upper-left microphone is number 0
+    - eSticks are running along the x axes
+    - eSticks are stacked along the y axes, top-most eStick has mic form 0 to 15
+ */
 typedef struct {
-    /** DIrection of arrival of the beam.
-     Range: -1 (source closer to first microphone) to +1 (source closer to last microphone)
+    /** Pointing direction of the beam, x axis.
+     Range: -1 (source closer to first microphone, left/top) to +1 (source closer to last microphone, right/bottom)
      */
-    float doa;
+    float doa[2];
     /** Width of the beam.
      Range: 0 (the most focused) to 1 (the least focused)
      */
@@ -44,25 +50,27 @@ public:
 
 };
 
-
+/** Delay-And-Sum Beamformers*/
 namespace DAS {
 
-/** Farfield Linear Microphone Array Delay and Sum beamformer
+/** Farfield Uniform Rectangular Array Beamformer
  
- This class is used do setup a LMA and compute the FIR impulse response
+ This class is used do setup a URA and compute the FIR impulse response
  */
-    class FarfieldLMA : public BeamformingAlgorithm {
+    class FarfieldURA : public BeamformingAlgorithm {
 
     public:
 
-        /** initialize the LMA
+        /** initialize the URA
 
-         @param micDist: microphones distance [m]
-         @param numMic: number of microphone capsules
+         @param micDistX: microphones distance on the X axes [m]
+         @param micDistY: microphones distance on the Y axes [m]
+         @param numMic: total number of microphone capsules
+         @param numRows: total number of rows
          @param fs: sampling frequency [Hz]
          @param soundspeed: sampling frequency [m/s]
          */
-        FarfieldLMA(float micDist, int numMic, float fs, float soundspeed);
+        FarfieldURA(float micDistX, float micDistY, int numMic, int numRows, float fs, float soundspeed);
 
         /** Get the minimum FIR length for the given configuration [samples] */
         int getFirLen() const override;
@@ -77,11 +85,20 @@ namespace DAS {
 
     private:
 
-        /** Distance between microphones [m] */
-        float micDist;
-
+        /** Distance between microphones, X axes [m] */
+        float micDistX;
+        
+        /** Distance between microphones, Y axes [m] */
+        float micDistY;
+        
         /** Number of microphones */
         int numMic;
+        
+        /** Number of rows */
+        int numRows;
+        
+        /** Number of mic per row */
+        int numMicPerRow;
 
         /** Sampling frequency [Hz] */
         float fs;

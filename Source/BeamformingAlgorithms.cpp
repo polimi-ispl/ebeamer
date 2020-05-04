@@ -9,15 +9,19 @@
 
 namespace DAS {
 
-    FarfieldLMA::FarfieldLMA(float micDist_, int numMic_, float fs_, float soundspeed_) {
+    FarfieldURA::FarfieldURA(float micDistX_, float micDistY_,
+                             int numMic_, int numRows_, float fs_, float soundspeed_) {
 
-        micDist = micDist_;
+        micDistX = micDistX_;
+        micDistY = micDistY_;
         numMic = numMic_;
+        numRows = numRows_;
+        numMicPerRow = numMic/numRows;
         fs = fs_;
         soundspeed = soundspeed_;
 
         commonDelay = 64;
-        firLen = ceil(numMic * micDist / soundspeed * fs) + 2 * commonDelay;
+        firLen = ceil(jmax(numMic/numRows * micDistX,numRows * micDistY) / soundspeed * fs) + 2 * commonDelay;
 
         fft = std::make_unique<juce::dsp::FFT>(ceil(log2(firLen)));
 
@@ -28,18 +32,28 @@ namespace DAS {
 
     }
 
-    int FarfieldLMA::getFirLen() const {
+    int FarfieldURA::getFirLen() const {
         return firLen;
     }
 
-    void FarfieldLMA::getFir(AudioBuffer<float> &fir, const BeamParameters &params, float alpha) const {
+    void FarfieldURA::getFir(AudioBuffer<float> &fir, const BeamParameters &params, float alpha) const {
 
         /** Angle in radians (0 front, pi/2 source closer to last channel, -pi/2 source closer to first channel */
-        const float angleRad = (params.doa + 1) * pi / 2;
+        const float angleRadX = params.doa[0] * pi / 2;
+        /** Angle in radians (0 front, pi/2 source closer to last channel, -pi/2 source closer to first channel */
+        const float angleRadY = params.doa[1] * pi / 2;
         /** Delay between adjacent microphones [s] */
-        const float delta = -cos(angleRad) * micDist / soundspeed;
-        /** Compute delays for each microphone [s] */
-        Vec micDelays = delta * Vec::LinSpaced(numMic, 0, numMic - 1);
+        const float deltaX = sin(angleRadX) * micDistX / soundspeed;
+        /** Delay between adjacent microphones [s] */
+        const float deltaY = sin(angleRadY) * micDistY / soundspeed;
+        /** Compute delays for each microphone, X component [s] */
+        const Vec micDelaysX = deltaX * Vec::LinSpaced(numMicPerRow, 0, numMicPerRow - 1);
+        /** Compute delays for each microphone, Y component [s] */
+        const Vec micDelaysY = deltaY * Vec::LinSpaced(numRows, 0, numRows - 1);
+        /** Matrix of delays. Eigen is column-first.*/
+        Mtx micDelaysMtx = micDelaysX.replicate(1,numRows) + micDelaysY.transpose().replicate(numMicPerRow,1);
+        /** Vector of delays */
+        Eigen::Map<Vec> micDelays(micDelaysMtx.data(),micDelaysMtx.size());
         /** Compensate for minimum delay and apply common delay */
         micDelays.array() += -micDelays.minCoeff() + commonDelay / fs;
         /** Compute the fractional delays in frequency domain */
@@ -47,11 +61,21 @@ namespace DAS {
 
 
         /** Compute how many microphones are muted at each end */
-        const int inactiveMicAtBorder = roundToInt((numMic / 2 - 1) * params.width);
-        /** Generate the mask of active microphones */
-        Vec micGains = Vec::Ones(numMic);
-        micGains.head(inactiveMicAtBorder).array() = 0;
-        micGains.tail(inactiveMicAtBorder).array() = 0;
+        const int inactiveMicAtBorderX = roundToInt((numMicPerRow / 2 - 1) * params.width);
+        const int inactiveMicAtBorderY = roundToInt((numRows / 2 - 1) * params.width);
+        /** Generate the mask of active microphones.  Eigen is column-first.*/
+        Mtx micGainsMtx = Mtx::Ones(numMicPerRow,numRows);
+        for (auto colIdx = 0; colIdx < numRows; colIdx++){
+            if ((colIdx < inactiveMicAtBorderY) || (colIdx>=numRows-inactiveMicAtBorderY)){
+                micGainsMtx.col(colIdx).setZero();
+            }else{
+                micGainsMtx.col(colIdx).head(inactiveMicAtBorderX).array() = 0;
+                micGainsMtx.col(colIdx).tail(inactiveMicAtBorderX).array() = 0;
+            }
+        }
+        
+        Eigen::Map<Vec> micGains(micGainsMtx.data(),micGainsMtx.size());
+        
         /** Normalize the power */
         micGains.array() *= referencePower / micGains.sum();
 

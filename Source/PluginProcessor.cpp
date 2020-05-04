@@ -43,12 +43,18 @@ AudioProcessorValueTreeState::ParameterLayout initializeParameters() {
 
     {
         for (auto beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx) {
-            auto defaultDirection = beamIdx == 0 ? -0.5 : 0.5;
-            params.push_back(std::make_unique<AudioParameterFloat>("steerBeam" + String(beamIdx + 1), //tag
-                                                                   "Steering beam" + String(beamIdx + 1), //name
+            auto defaultDirectionX = beamIdx == 0 ? -0.5 : 0.5;
+            params.push_back(std::make_unique<AudioParameterFloat>("steerBeamX" + String(beamIdx + 1), //tag
+                                                                   "Steer " + String(beamIdx + 1) + " hor", //name
                                                                    -1.0f, //min
                                                                    1.0f, //max
-                                                                   defaultDirection //default
+                                                                   defaultDirectionX //default
+            ));
+            params.push_back(std::make_unique<AudioParameterFloat>("steerBeamY" + String(beamIdx + 1), //tag
+                                                                   "Steer " + String(beamIdx + 1) + " ver", //name
+                                                                   -1.0f, //min
+                                                                   1.0f, //max
+                                                                   0 //default
             ));
             params.push_back(std::make_unique<AudioParameterFloat>("widthBeam" + String(beamIdx + 1), //tag
                                                                    "Width beam" + String(beamIdx + 1), //name
@@ -100,7 +106,8 @@ EbeamerAudioProcessor::EbeamerAudioProcessor()
     micGainParam = parameters.getRawParameterValue("gainMic");
 
     for (auto beamIdx = 0; beamIdx < NUM_BEAMS; beamIdx++) {
-        steeringBeamParam[beamIdx] = parameters.getRawParameterValue("steerBeam" + String(beamIdx + 1));
+        steerBeamXParam[beamIdx] = parameters.getRawParameterValue("steerBeamX" + String(beamIdx + 1));
+        steerBeamYParam[beamIdx] = parameters.getRawParameterValue("steerBeamY" + String(beamIdx + 1));
         widthBeamParam[beamIdx] = parameters.getRawParameterValue("widthBeam" + String(beamIdx + 1));
         panBeamParam[beamIdx] = parameters.getRawParameterValue("panBeam" + String(beamIdx + 1));
         levelBeamParam[beamIdx] = parameters.getRawParameterValue("levelBeam" + String(beamIdx + 1));
@@ -323,9 +330,10 @@ void EbeamerAudioProcessor::processBlock(AudioBuffer<float> &buffer, MidiBuffer 
 
     /** Set beams parameters */
     for (auto beamIdx = 0; beamIdx < NUM_BEAMS; beamIdx++) {
-        float beamDoa = *steeringBeamParam[beamIdx];
-        beamDoa = *frontFacingParam ? -beamDoa : beamDoa;
-        BeamParameters beamParams = {beamDoa, *widthBeamParam[beamIdx]};
+        float beamDoaX = *steerBeamXParam[beamIdx];
+        float beamDoaY = -(*steerBeamYParam[beamIdx]); //GUI and Beamforming use opposite vertical conventions
+        beamDoaX = *frontFacingParam ? -beamDoaX : beamDoaX;
+        BeamParameters beamParams = {{beamDoaX,beamDoaY}, *widthBeamParam[beamIdx]};
         beamformer->setBeamParameters(beamIdx, beamParams);
     }
 
@@ -477,8 +485,12 @@ const std::atomic<float> *EbeamerAudioProcessor::getBeamWidth(int idx) const {
     return parameters.getRawParameterValue("widthBeam" + String(idx + 1));
 }
 
-const std::atomic<float> *EbeamerAudioProcessor::getBeamSteer(int idx) const {
-    return parameters.getRawParameterValue("steerBeam" + String(idx + 1));
+const std::atomic<float> *EbeamerAudioProcessor::getBeamSteerX(int idx) const {
+    return parameters.getRawParameterValue("steerBeamX" + String(idx + 1));
+}
+
+const std::atomic<float> *EbeamerAudioProcessor::getBeamSteerY(int idx) const {
+    return parameters.getRawParameterValue("steerBeamY" + String(idx + 1));
 }
 
 void EbeamerAudioProcessor::getDoaEnergy(std::vector<float> &energy) const {
@@ -549,7 +561,7 @@ AudioProcessor *JUCE_CALLTYPE createPluginFilter() {
 
 //==============================================================================
 AudioProcessorEditor *EbeamerAudioProcessor::createEditor() {
-    return new JucebeamAudioProcessorEditor(*this, parameters);
+    return new EBeamerAudioProcessorEditor(*this, parameters);
 }
 
 bool EbeamerAudioProcessor::hasEditor() const {

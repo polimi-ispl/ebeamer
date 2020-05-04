@@ -103,7 +103,9 @@ public:
 
     const std::atomic<float> *getBeamWidth(int idx) const override;
 
-    const std::atomic<float> *getBeamSteer(int idx) const override;
+    const std::atomic<float> *getBeamSteerX(int idx) const override;
+            
+    const std::atomic<float> *getBeamSteerY(int idx) const override;
 
     void getDoaEnergy(std::vector<float> &energy) const override;
 
@@ -187,7 +189,8 @@ private:
 
     //==============================================================================
     // VST parameters
-    std::atomic<float> *steeringBeamParam[NUM_BEAMS];
+    std::atomic<float> *steerBeamXParam[NUM_BEAMS];
+    std::atomic<float> *steerBeamYParam[NUM_BEAMS];
     std::atomic<float> *widthBeamParam[NUM_BEAMS];
     std::atomic<float> *panBeamParam[NUM_BEAMS];
     std::atomic<float> *levelBeamParam[NUM_BEAMS];

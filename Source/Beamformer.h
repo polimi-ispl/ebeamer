@@ -150,6 +150,9 @@ private:
 
     /** Number of microphones */
     int numMic = 16;
+    
+    /** Number of rows */
+    int numRows = 1;
 
     /** Number of beams */
     int numBeams;
@@ -185,7 +188,7 @@ private:
     float alpha = 1;
 
     /** Microphones configuration */
-    MicConfig micConfig = LMA_1ESTICK;
+    MicConfig micConfig = ULA_1ESTICK;
 
     /** Initialize the beamforming algorithm */
     void initAlg();

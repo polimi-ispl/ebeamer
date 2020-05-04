@@ -35,7 +35,7 @@ BeamformerDoa::BeamformerDoa(Beamformer &b,
     AudioBuffer<float> tmpFir(numActiveInputChannels, firLen);
     BeamParameters tmpBeamParams{0, 0};
     for (auto dirIdx = 0; dirIdx < numDoas; dirIdx++) {
-        tmpBeamParams.doa = -1 + (2. / (numDoas - 1) * dirIdx);
+        tmpBeamParams.doa[0] = -1 + (2. / (numDoas - 1) * dirIdx);
         b.getFir(tmpFir, tmpBeamParams, 1);
         doaFirFFT[dirIdx] = AudioBufferFFT(numActiveInputChannels, fft);
         doaFirFFT[dirIdx].setTimeSeries(tmpFir);
@@ -95,25 +95,47 @@ void Beamformer::setMicConfig(MicConfig micConfig_) {
 
 void Beamformer::initAlg() {
 
+    /** Distance between microphones in eSticks*/
+    const float micDistX = 0.03;
+    const float micDistY = 0.03;
+    
     /** Determine configuration parameters */
     switch (micConfig) {
-        case LMA_1ESTICK:
+        case ULA_1ESTICK:
             numMic = 16;
+            numRows = 1;
             break;
-        case LMA_2ESTICK:
+        case ULA_2ESTICK:
             numMic = 32;
+            numRows = 1;
             break;
-        case LMA_3ESTICK:
+        case URA_2ESTICK:
+            numMic = 32;
+            numRows = 2;
+            break;
+        case ULA_3ESTICK:
             numMic = 48;
+            numRows = 1;
             break;
-        case LMA_4ESTICK:
+        case URA_3ESTICK:
+            numMic = 48;
+            numRows = 3;
+            break;
+        case ULA_4ESTICK:
             numMic = 64;
+            numRows = 1;
+            break;
+        case URA_4ESTICK:
+            numMic = 64;
+            numRows = 4;
+            break;
+        case URA_2x2ESTICK:
+            numMic = 64;
+            numRows = 2;
             break;
     }
-    /** Distance between microphones in eSticks*/
-    const float micDist = 0.03;
-    alg = std::make_unique<DAS::FarfieldLMA>(micDist, numMic, sampleRate, soundspeed);
-
+    alg = std::make_unique<DAS::FarfieldURA>(micDistX, micDistY, numMic, numRows, sampleRate, soundspeed);
+    
     firLen = alg->getFirLen();
 
     /** Create shared FFT object */

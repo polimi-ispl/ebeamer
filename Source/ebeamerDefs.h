@@ -45,15 +45,16 @@
 #define INPUT_GAIN_SLIDER_HEIGHT 40
 #define INPUT_GAIN_LABEL_WIDTH 50
 
-#define PREFORMANCE_MONITOR_HEIGHT 20
-#define CPULOAD_WIDTH 80
+#define FOOTER_MARGIN 10
+#define FOOTER_HEIGHT 20
+#define CPULOAD_WIDTH 140
 #define CPULOAD_UPDATE_FREQ 10 //Hz
 
 #define FRONT_TOGGLE_LABEL_WIDTH 40
 #define FRONT_TOGGLE_WIDTH 25
 
 #define CONFIG_COMBO_LABEL_WIDTH 65
-#define CONFIG_COMBO_WIDTH 80
+#define CONFIG_COMBO_WIDTH 105
 
 #define INPUT_METER_UPDATE_FREQ 10 //Hz
 #define BEAM_METER_UPDATE_FREQ 10 //Hz
@@ -62,16 +63,24 @@
 
 /** Available eSticks configurations type */
 typedef enum {
-    LMA_1ESTICK,
-    LMA_2ESTICK,
-    LMA_3ESTICK,
-    LMA_4ESTICK,
+    ULA_1ESTICK,
+    ULA_2ESTICK,
+    ULA_3ESTICK,
+    ULA_4ESTICK,
+    URA_2ESTICK,
+    URA_3ESTICK,
+    URA_4ESTICK,
+    URA_2x2ESTICK,
 } MicConfig;
 
 /** Available eSticks configurations labels */
 const StringArray micConfigLabels({
                                           "Single",
-                                          "Hor 2",
-                                          "Hor 3",
-                                          "Hor 4",
+                                          "Horiz 2",
+                                          "Horiz 3",
+                                          "Horiz 4",
+                                          "Stack 2",
+                                          "Stack 3",
+                                          "Stack 4",
+                                          "Stack 2x2",
                                   });
