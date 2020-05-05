@@ -491,6 +491,14 @@ const std::atomic<float> *EbeamerAudioProcessor::getBeamSteerY(int idx) const {
     return parameters.getRawParameterValue("steerBeamY" + String(idx + 1));
 }
 
+void EbeamerAudioProcessor::setBeamSteerX(int idx, float newVal){
+    parameters.getParameterAsValue("steerBeamX"+String(idx+1)).setValue(newVal);
+}
+
+void EbeamerAudioProcessor::setBeamSteerY(int idx, float newVal){
+    parameters.getParameterAsValue("steerBeamY"+String(idx+1)).setValue(newVal);
+}
+
 void EbeamerAudioProcessor::getDoaEnergy(Mtx &energy) const {
     if (beamformer != nullptr){
         beamformer->getDoaEnergy(energy);

@@ -230,8 +230,9 @@ void BeamComp::resized(){
 }
 
 void BeamComp::paint(Graphics &g) {
+
+    path.clear();
     
-    Path path;
     
     if (isLinearArray(static_cast<MicConfig>((int)*configParam))){
         const float positionX = *steerXParam;
@@ -257,6 +258,8 @@ void BeamComp::paint(Graphics &g) {
         path.startNewSubPath(0, 0);
         path.addEllipse(positionX-width/2, positionY-width/2, width, width);
     }
+        
+
     
     if (!(bool) *muteParam) {
         g.setColour(baseColour.brighter());
@@ -275,11 +278,13 @@ void BeamComp::paint(Graphics &g) {
 
 SceneComp::SceneComp() {
     addAndMakeVisible(grid);
-    for (int i = 0; i < NUM_BEAMS; i++)
-        addAndMakeVisible(beams[i]);
+    for (auto &b:beams){
+        addAndMakeVisible(b);
+        b.addMouseListener(this, true);
+    }
 }
 
-void SceneComp::setCallback(const Callback *c) {
+void SceneComp::setCallback(Callback *c) {
     callback = c;
     grid.setCallback(c);
     grid.setParams(c->getConfigParam(),c->getFrontFacingParam());
@@ -296,20 +301,20 @@ void SceneComp::paint(Graphics &g) {
 }
 
 void SceneComp::resized() {
-    auto sceneArea = getLocalBounds();
+    area = getLocalBounds();
     
     if (callback != nullptr)
         if (!isLinearArray(static_cast<MicConfig>((int)*callback->getConfigParam())))
-            sceneArea.removeFromTop(20);
+            area.removeFromTop(20);
     
-    if (grid.getBounds() == sceneArea){
+    if (grid.getBounds() == area){
         grid.resized();
     }else{
-        grid.setBounds(sceneArea);
+        grid.setBounds(area);
     }
     
     for (auto &b: beams)
-        b.setBounds(sceneArea);
+        b.setBounds(area);
 }
 
 void SceneComp::setBeamColors(const std::vector<Colour> &colours) {
@@ -317,6 +322,34 @@ void SceneComp::setBeamColors(const std::vector<Colour> &colours) {
     for (auto beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx) {
         beams[beamIdx].setBaseColor(colours[beamIdx]);
     }
+}
+
+void SceneComp::mouseDown (const MouseEvent& e){
+    for (int idx = 0; idx < NUM_BEAMS; idx++){
+        if (beams[idx].getPath().contains(e.getMouseDownPosition().toFloat())){
+            beamBeingDragged = idx;
+            dragStartX = *callback->getBeamSteerX(beamBeingDragged);
+            dragStartY = *callback->getBeamSteerY(beamBeingDragged);
+            break;
+        }
+    }
+}
+
+void SceneComp::mouseDrag (const MouseEvent& e){
+    if (beamBeingDragged >= 0){
+        const float deltaX = float(e.getDistanceFromDragStartX())/area.getWidth()*2;
+        const float deltaY = float(-e.getDistanceFromDragStartY())/area.getHeight()*2;
+        const float newX = jlimit(-1.f,1.f,dragStartX + deltaX);
+        const float newY = jlimit(-1.f,1.f,dragStartY + deltaY);
+        printf("deltaX: %.2f newX: %.2f\n",deltaX,newX);
+        printf("deltaY: %.2f newY: %.2f\n",deltaY,newY);
+        callback->setBeamSteerX(beamBeingDragged, newX);
+        callback->setBeamSteerY(beamBeingDragged, newY);
+    }
+}
+
+void SceneComp::mouseUp (const MouseEvent& e){
+    beamBeingDragged = -1;
 }
 
 //==============================================================================

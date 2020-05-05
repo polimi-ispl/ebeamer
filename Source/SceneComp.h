@@ -113,6 +113,10 @@ public:
     //TODO: Use LookAndFeel
     void setBaseColor(Colour colour) { baseColour = colour; }
     
+    const Path& getPath(){
+        return path;
+    };
+    
 private:
     
     const std::atomic<float> *frontFacingParam = nullptr;
@@ -125,6 +129,8 @@ private:
     Rectangle<int> area;
     
     Colour baseColour = Colours::lightblue;
+    
+    Path path;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BeamComp)
 };
@@ -152,9 +158,13 @@ public:
         virtual const std::atomic<float> *getBeamSteerX(int idx) const = 0;
         
         virtual const std::atomic<float> *getBeamSteerY(int idx) const = 0;
+        
+        virtual void setBeamSteerX(int idx, float newVal) = 0;
+        
+        virtual void setBeamSteerY(int idx, float newVal) = 0;
     };
     
-    void setCallback(const Callback *c);
+    void setCallback(Callback *c);
     
     void paint(Graphics &) override;
     
@@ -167,7 +177,18 @@ public:
 private:
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SceneComp)
-    const Callback *callback = nullptr;
+    Callback *callback = nullptr;
     BeamComp beams[NUM_BEAMS];
     GridComp grid;
+    
+    Rectangle<int> area;
+    
+    void mouseDown (const MouseEvent& e) override;
+    void mouseDrag (const MouseEvent& e) override;
+    void mouseUp (const MouseEvent& e) override;
+    
+    int beamBeingDragged = -1;
+    float dragStartX, dragStartY;
+
+    
 };
