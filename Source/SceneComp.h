@@ -77,7 +77,7 @@ private:
     std::vector<float> th;
     
     Mtx energy, energyPreGain;
-    float inertia = 0.95;
+    float inertia = 0.85;
     float gain = 0;
     const float maxGain = 60, minGain = -20;
     

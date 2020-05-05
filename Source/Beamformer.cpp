@@ -250,7 +250,6 @@ void Beamformer::getBeams(AudioBuffer<float> &outBuffer) {
     jassert(outBuffer.getNumChannels() == numBeams);
     auto numSplsOut = outBuffer.getNumSamples();
     auto numSplsShift = beamBuffer.getNumSamples() - numSplsOut;
-    AudioBuffer<float> tmp(1, numSplsShift);
     for (auto beamIdx = 0; beamIdx < numBeams; beamIdx++) {
         /** Copy beamBuffer to outBuffer */
         outBuffer.copyFrom(beamIdx, 0, beamBuffer, beamIdx, 0, numSplsOut);
