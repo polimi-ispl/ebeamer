@@ -5,7 +5,7 @@
               pluginVST3Category="Spatial" pluginAAXCategory="512" pluginRTASCategory="512"
               pluginVSTCategory="kPlugCategSpacializer" pluginAUMainType="'aufx'"
               pluginName="eBeamer" pluginDesc="eStick beam controller" pluginManufacturer="ISPL Polimi"
-              pluginManufacturerCode="Ispl" pluginCode="ebea" version="1.0.1"
+              pluginManufacturerCode="Ispl" pluginCode="ebea" version="1.1.0"
               bundleIdentifier="it.polimi.deib.ispl.ebeamer" companyWebsite="http://ispl.deib.polimi.it/"
               aaxIdentifier="it.polimi.deib.ispl.ebeamer" pluginAUExportPrefix="ebeamerAU"
               pluginCharacteristicsValue="pluginWantsMidiIn" headerPath="..\..\ASIO\common">
@@ -548,6 +548,7 @@
         <FILE id="RYq6o2" name="MeterDecay.cpp" compile="1" resource="0" file="Source/MeterDecay.cpp"/>
         <FILE id="gSP93w" name="MeterDecay.h" compile="0" resource="0" file="Source/MeterDecay.h"/>
       </GROUP>
+      <FILE id="hjY5Uc" name="ebeamerDefs.cpp" compile="1" resource="0" file="Source/ebeamerDefs.cpp"/>
       <FILE id="oM5jw0" name="ebeamerDefs.h" compile="0" resource="0" file="Source/ebeamerDefs.h"/>
       <FILE id="x4u9NK" name="MidiCC.h" compile="0" resource="0" file="Source/MidiCC.h"/>
       <FILE id="T0rnb7" name="PluginProcessor.cpp" compile="1" resource="0"

@@ -11,6 +11,7 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 
 typedef Eigen::Matrix<float, Eigen::Dynamic, 1> Vec;
+typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> Mtx;
 typedef Eigen::Matrix<std::complex<float>, Eigen::Dynamic, 1> CpxVec;
 typedef Eigen::Matrix<std::complex<float>, Eigen::Dynamic, Eigen::Dynamic> CpxMtx;
 

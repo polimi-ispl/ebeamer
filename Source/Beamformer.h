@@ -18,13 +18,14 @@
 
 class Beamformer;
 
-/** Class that computes periodically the Direction of Arrival of sound
+/** Thread that computes periodically the Direction of Arrival of sound
  */
-class BeamformerDoa : public Timer {
+class BeamformerDoa : public Thread {
 public:
 
     BeamformerDoa(Beamformer &b,
-                  int numDoas_,
+                  int numDoaHor_,
+                  int numDoaVer_,
                   float sampleRate_,
                   int numActiveInputChannels,
                   int firLen,
@@ -32,15 +33,18 @@ public:
 
     ~BeamformerDoa();
 
-    void timerCallback() override;
+    void run() override;
 
 private:
 
     /** Reference to the Beamformer */
     Beamformer &beamformer;
 
-    /** Number of directions of arrival */
-    int numDoas;
+    /** Number of directions of arrival, horizontal axis */
+    int numDoaHor;
+    
+    /** Number of directions of arrival, vertical axis */
+    int numDoaVer;
 
     /** Sampling frequency [Hz] */
     float sampleRate;
@@ -61,7 +65,7 @@ private:
     AudioBuffer<float> doaBeam;
 
     /** DOA levels [dB] */
-    std::vector<float> doaLevels;
+    Mtx doaLevels;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BeamformerDoa);
 
@@ -76,26 +80,17 @@ public:
 
     /** Initialize the Beamformer with a set of static parameters.
      @param numBeams: number of beams the beamformer has to compute
-     @param numDoas: number of directions of arrival to compute the energy
+     @param mic: microphone configuration
+     @param sampleRate:
+     @param maximumExpectedSamplesPerBlock: 
      */
-    Beamformer(int numBeams, int numDoas);
+    Beamformer(int numBeams, MicConfig mic, double sampleRate, int maximumExpectedSamplesPerBlock);
 
     /** Destructor. */
     ~Beamformer();
-
-    /** Set microphone configuration */
-    void setMicConfig(MicConfig micConfig_);
-
+    
     /** Get microphone configuration */
     MicConfig getMicConfig() const;
-
-    /** Set the parameters before execution.
-     
-     To be called inside AudioProcessor::prepareToPlay.
-     This method allocates the needed buffers and performs the necessary pre-calculations that are dependent
-     on sample rate, buffer size and channel configurations.
-     */
-    void prepareToPlay(double sampleRate_, int maximumExpectedSamplesPerBlock_);
 
     /** Process a new block of samples.
      
@@ -121,19 +116,14 @@ public:
     void getFir(AudioBuffer<float> &fir, const BeamParameters &params, float alpha = 1) const;
 
     /** Copy the estimated energy contribution from the directions of arrival */
-    void getDoaEnergy(std::vector<float> &energy) const;
+    void getDoaEnergy(Mtx &energy) const;
 
     /** Set the estimated energy contribution from the directions of arrival */
-    void setDoaEnergy(const std::vector<float> &energy);
+    void setDoaEnergy(const Mtx &energy);
 
     /** Get last doa filtered input buffer */
     void getDoaInputBuffer(AudioBufferFFT &dst) const;
 
-    /** Release not needed resources.
-     
-     To be called inside AudioProcessor::releaseResources.
-     */
-    void releaseResources();
 
 private:
 
@@ -150,12 +140,16 @@ private:
 
     /** Number of microphones */
     int numMic = 16;
+    
+    /** Number of rows */
+    int numRows = 1;
 
     /** Number of beams */
     int numBeams;
 
     /** Number of directions of arrival */
-    int numDoas;
+    int numDoaHor;
+    int numDoaVer;
 
     /** Beamforming algorithm */
     std::unique_ptr<BeamformingAlgorithm> alg;
@@ -185,7 +179,7 @@ private:
     float alpha = 1;
 
     /** Microphones configuration */
-    MicConfig micConfig = LMA_1ESTICK;
+    MicConfig micConfig = ULA_1ESTICK;
 
     /** Initialize the beamforming algorithm */
     void initAlg();
@@ -197,7 +191,7 @@ private:
     const float doaUpdateFrequency = 10;
 
     /** DOA levels [dB] */
-    std::vector<float> doaLevels;
+    Mtx doaLevels;
 
     /** DOA Band pass Filters */
     std::vector<IIRFilter> doaBPFilters;
