@@ -131,7 +131,7 @@ void GridComp::timerCallback() {
     if (maxLevel > 3) {
         gain = jmax(gain - 3, minGain);
     } else if (maxLevel < -18) {
-        gain = jmin(gain + 1, maxGain);
+        gain = jmin(gain - maxLevel, maxGain);
     } else if (maxLevel > 0) {
         gain = jmax(gain - 0.5f, minGain);
     } else if (maxLevel < -6) {
