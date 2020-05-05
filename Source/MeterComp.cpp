@@ -178,7 +178,7 @@ Colour SingleChannelLedBar::dbToColour(float valDb, float thDb) {
     if (thDb >= RED_LT) {
         col = active ? Colours::red : Colours::darkred;
     } else if (thDb >= ORANGE_LT) {
-        col = active ? Colours::orange : Colours::darkorange;
+        col = active ? Colours::orange : Colours::darkorange.darker();
     } else if (thDb >= YELLOW_LT) {
         col = active ? Colours::yellow : Colours::darkgoldenrod;
     } else {

@@ -129,13 +129,13 @@ void GridComp::timerCallback() {
     auto maxLevel = energyPreGain.maxCoeff() + gain;
     
     if (maxLevel > 3) {
-        gain = jmax(gain - maxLevel - 3, minGain);
+        gain = jmax(gain - 3, minGain);
     } else if (maxLevel < -18) {
-        gain = jmin(gain - maxLevel, maxGain);
+        gain = jmin(gain + 1, maxGain);
     } else if (maxLevel > 0) {
         gain = jmax(gain - 0.5f, minGain);
-    } else if (maxLevel < -9) {
-        gain = jmin(gain + 0.5f, maxGain);
+    } else if (maxLevel < -6) {
+        gain = jmin(gain + 0.1f, maxGain);
     }
     
     energy = energyPreGain.array() + gain;
@@ -341,8 +341,6 @@ void SceneComp::mouseDrag (const MouseEvent& e){
         const float deltaY = float(-e.getDistanceFromDragStartY())/area.getHeight()*2;
         const float newX = jlimit(-1.f,1.f,dragStartX + deltaX);
         const float newY = jlimit(-1.f,1.f,dragStartY + deltaY);
-        printf("deltaX: %.2f newX: %.2f\n",deltaX,newX);
-        printf("deltaY: %.2f newY: %.2f\n",deltaY,newY);
         callback->setBeamSteerX(beamBeingDragged, newX);
         callback->setBeamSteerY(beamBeingDragged, newY);
     }
