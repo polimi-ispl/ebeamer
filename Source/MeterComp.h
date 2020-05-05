@@ -9,8 +9,9 @@
 
 
 #define RED_LT -0.5f //dB
+#define ORANGE_LT -3.0f //dB
 #define YELLOW_LT -6.0f //dB
-#define GREEN_LT -20.0f //dB
+#define GREEN_LT -18.0f //dB
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "MidiComp.h"

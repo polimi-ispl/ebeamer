@@ -109,6 +109,10 @@ public:
     
     const std::atomic<float> *getBeamSteerY(int idx) const override;
     
+    void setBeamSteerX(int idx, float newVal) override;
+    
+    void setBeamSteerY(int idx, float newVal) override;
+    
     void getDoaEnergy(Mtx &energy) const override;
     
 private:

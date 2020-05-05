@@ -81,12 +81,14 @@ Colour MultiChannelLedBar::dbToColor(float valDb){
     Colour col;
     if (valDb > RED_LT) {
         col = Colours::red;
+    } else if (valDb > ORANGE_LT) {
+        col = Colours::orange;
     } else if (valDb > YELLOW_LT) {
         col = Colours::yellow;
     } else if (valDb > GREEN_LT) {
         col = Colours::lightgreen;
     } else {
-        col = Colours::grey;
+        col = Colours::darkgreen;
     }
     return col;
 }
@@ -172,20 +174,15 @@ void SingleChannelLedBar::timerCallback() {
 
 Colour SingleChannelLedBar::dbToColour(float valDb, float thDb) {
     const bool active = valDb >= thDb;
+    Colour col;
     if (thDb >= RED_LT) {
-        if (active)
-            return Colours::red;
-        else
-            return Colours::darkred;
+        col = active ? Colours::red : Colours::darkred;
+    } else if (thDb >= ORANGE_LT) {
+        col = active ? Colours::orange : Colours::darkorange;
     } else if (thDb >= YELLOW_LT) {
-        if (active)
-            return Colours::yellow;
-        else
-            return Colours::darkgoldenrod;
+        col = active ? Colours::yellow : Colours::darkgoldenrod;
     } else {
-        if (active)
-            return Colours::lightgreen;
-        else
-            return Colours::darkgreen;
+        col = active ? Colours::lightgreen : Colours::darkgreen;
     }
+    return col;
 }
