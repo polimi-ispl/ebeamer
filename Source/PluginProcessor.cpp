@@ -89,8 +89,15 @@ AudioProcessorValueTreeState::ParameterLayout initializeParameters() {
 
 
 //==============================================================================
+//The default bus layout accommodates for 4 buses of 16 channels each for VST3 mode, one bus with 64 channels for standalone mode.
 EbeamerAudioProcessor::EbeamerAudioProcessor()
-: AudioProcessor(BusesProperties() //The default bus layout accommodates for 4 buses of 16 channels each.
+: AudioProcessor(JUCEApplication::isStandaloneApp()
+                 ?
+                 BusesProperties()
+                 .withInput("eSticks", AudioChannelSet::channelSetsWithNumberOfChannels(64)[0])
+                 .withOutput("Output", AudioChannelSet::stereo(), true)
+                 :
+                 BusesProperties()
                  .withInput("eStick#1", AudioChannelSet::ambisonic(3), true)
                  .withInput("eStick#2", AudioChannelSet::ambisonic(3), true)
                  .withInput("eStick#3", AudioChannelSet::ambisonic(3), true)
@@ -118,21 +125,25 @@ EbeamerAudioProcessor::EbeamerAudioProcessor()
 
 //==============================================================================
 bool EbeamerAudioProcessor::isBusesLayoutSupported(const BusesLayout &layouts) const {
-    // This plug-in supports up to 4 eSticks, for a total amount of 64 channels in input.
-    // VST3 allows for a maximum of 25 channels per bus.
-    // To make things simpler in terms of patching, each input bus counts for at most 16 channels.
-    // This configuration allows REAPER to be configured with a 64 channels track.
-    for (auto bus : layouts.inputBuses) {
-        if (bus.size() > 16) {
-            return false;
+    if (!JUCEApplication::isStandaloneApp()){
+        // This plug-in supports up to 4 eSticks, for a total amount of 64 channels in input.
+        // VST3 allows for a maximum of 25 channels per bus.
+        // To make things simpler in terms of patching, for VST each input bus counts for at most 16 channels.
+        // This configuration allows REAPER to be configured with a 64 channels track.
+        
+        for (auto bus : layouts.inputBuses) {
+            if (bus.size() > 16) {
+                return false;
+            }
+        }
+        for (auto bus : layouts.outputBuses) {
+            if (bus.size() > 16) {
+                // We have to allow the output bus to grow to the size of the input bus for compatibility with REAPER
+                return false;
+            }
         }
     }
-    for (auto bus : layouts.outputBuses) {
-        if (bus.size() > 16) {
-            // We have to allow the output bus to grow to the size of the input bus for compatibility with REAPER
-            return false;
-        }
-    }
+
     if ((layouts.getMainInputChannels() < 2) || (layouts.getMainOutputChannels() < 2)) {
         // In any case don't allow less than 2 input and 2 output channels
         return false;
