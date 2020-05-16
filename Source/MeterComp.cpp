@@ -54,18 +54,18 @@ void MultiChannelLedBar::resized() {
     auto num = values.size();
     Rectangle<int> area = getLocalBounds();
     
-    int step = isHorizontal ? floor(area.getWidth() / num) : floor(area.getHeight() / num);
-    int otherDim = isHorizontal ? area.getHeight() : area.getWidth();
+    float step = isHorizontal ? floor(area.getWidth() / num) : floor(area.getHeight() / num);
+    float otherDim = isHorizontal ? area.getHeight() : area.getWidth();
     otherDim = jmin(otherDim, step - 1);
     
     const auto areaCtr = area.getCentre();
     
     // Re-center the area
     if (isHorizontal) {
-        area.setWidth((int) (step * num));
+        area.setWidth(step * num);
         area.setHeight(otherDim);
     } else {
-        area.setHeight((int) (step * num));
+        area.setHeight(step * num);
         area.setWidth(otherDim);
     }
     area.setCentre(areaCtr);
