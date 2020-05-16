@@ -25,7 +25,7 @@ MeterDecay::MeterDecay(float fs, float duration, float blockSize, int numChannel
 void MeterDecay::push(const AudioBuffer<float> &signal) {
     GenericScopedLock<SpinLock> l(minMaxCircularBufferLock);
 
-    for (auto channelIdx = 0; channelIdx < signal.getNumChannels(); ++channelIdx) {
+    for (auto channelIdx = 0; channelIdx < jmin((int)signal.getNumChannels(),(int)minMaxCircularBuffer.size()); ++channelIdx) {
         Range<float> minMax = FloatVectorOperations::findMinAndMax(signal.getReadPointer(channelIdx),
                                                                    signal.getNumSamples());
         float maxAbs = jmax(abs(minMax.getStart()), abs(minMax.getEnd()));

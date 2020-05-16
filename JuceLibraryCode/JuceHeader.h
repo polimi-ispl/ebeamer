@@ -48,9 +48,9 @@
 #if ! JUCE_DONT_DECLARE_PROJECTINFO
 namespace ProjectInfo
 {
-    const char* const  projectName    = "eBeamer";
+    const char* const  projectName    = "Ebeamer";
     const char* const  companyName    = "ISPL and Eventide";
-    const char* const  versionString  = "1.1.1";
-    const int          versionNumber  = 0x10101;
+    const char* const  versionString  = "1.1.2";
+    const int          versionNumber  = 0x10102;
 }
 #endif

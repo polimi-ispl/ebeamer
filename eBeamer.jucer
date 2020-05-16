@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="NEjZ3r" name="eBeamer" projectType="audioplug" jucerVersion="5.4.7"
+<JUCERPROJECT id="NEjZ3r" name="Ebeamer" projectType="audioplug" jucerVersion="5.4.7"
               companyName="ISPL and Eventide" pluginFormats="buildStandalone,buildVST3"
               pluginVST3Category="Spatial" pluginAAXCategory="512" pluginRTASCategory="512"
               pluginVSTCategory="kPlugCategSpacializer" pluginAUMainType="'aufx'"
-              pluginName="eBeamer" pluginDesc="eStick beam controller" pluginManufacturer="ISPL and Eventide"
-              pluginManufacturerCode="Ispl" pluginCode="ebea" version="1.1.1"
+              pluginName="Ebeamer" pluginDesc="Estick beam controller" pluginManufacturer="ISPL and Eventide"
+              pluginManufacturerCode="Ispl" pluginCode="ebea" version="1.1.2"
               bundleIdentifier="it.polimi.deib.ispl.ebeamer" companyWebsite="http://ispl.deib.polimi.it/"
-              aaxIdentifier="it.polimi.deib.ispl.ebeamer" pluginAUExportPrefix="ebeamerAU"
+              aaxIdentifier="it.polimi.deib.ispl.ebeamer" pluginAUExportPrefix="EbeamerAU"
               pluginCharacteristicsValue="pluginWantsMidiIn" headerPath="..\..\ASIO\common"
               companyCopyright="2020 ISPL and Eventide">
-  <MAINGROUP id="X7PQw9" name="eBeamer">
+  <MAINGROUP id="X7PQw9" name="Ebeamer">
     <GROUP id="{3D6AD065-0387-5993-02F4-EFEE30370E91}" name="Eigen">
       <GROUP id="{AEBD6D17-0D9F-6422-FDAF-3B90144ABB2C}" name="src">
         <GROUP id="{E9A98149-22CD-0FBA-1B1C-79BA5428D3CF}" name="Cholesky">
