@@ -354,10 +354,10 @@
  #define JucePlugin_Enable_IAA             0
 #endif
 #ifndef  JucePlugin_Name
- #define JucePlugin_Name                   "eBeamer"
+ #define JucePlugin_Name                   "Ebeamer"
 #endif
 #ifndef  JucePlugin_Desc
- #define JucePlugin_Desc                   "eStick beam controller"
+ #define JucePlugin_Desc                   "Estick beam controller"
 #endif
 #ifndef  JucePlugin_Manufacturer
  #define JucePlugin_Manufacturer           "ISPL and Eventide"
@@ -414,10 +414,10 @@
  #define JucePlugin_AUSubType              JucePlugin_PluginCode
 #endif
 #ifndef  JucePlugin_AUExportPrefix
- #define JucePlugin_AUExportPrefix         ebeamerAU
+ #define JucePlugin_AUExportPrefix         EbeamerAU
 #endif
 #ifndef  JucePlugin_AUExportPrefixQuoted
- #define JucePlugin_AUExportPrefixQuoted   "ebeamerAU"
+ #define JucePlugin_AUExportPrefixQuoted   "EbeamerAU"
 #endif
 #ifndef  JucePlugin_AUManufacturerCode
  #define JucePlugin_AUManufacturerCode     JucePlugin_ManufacturerCode
@@ -465,7 +465,7 @@
  #define JucePlugin_IAASubType             JucePlugin_PluginCode
 #endif
 #ifndef  JucePlugin_IAAName
- #define JucePlugin_IAAName                "ISPL and Eventide: eBeamer"
+ #define JucePlugin_IAAName                "ISPL and Eventide: Ebeamer"
 #endif
 #ifndef  JucePlugin_VSTNumMidiInputs
  #define JucePlugin_VSTNumMidiInputs       16
