@@ -5,7 +5,7 @@
               pluginVST3Category="Spatial" pluginAAXCategory="512" pluginRTASCategory="512"
               pluginVSTCategory="kPlugCategSpacializer" pluginAUMainType="'aufx'"
               pluginName="Ebeamer" pluginDesc="Estick beam controller" pluginManufacturer="ISPL and Eventide"
-              pluginManufacturerCode="Ispl" pluginCode="ebea" version="1.1.1"
+              pluginManufacturerCode="Ispl" pluginCode="ebea" version="1.1.2"
               bundleIdentifier="it.polimi.deib.ispl.ebeamer" companyWebsite="http://ispl.deib.polimi.it/"
               aaxIdentifier="it.polimi.deib.ispl.ebeamer" pluginAUExportPrefix="EbeamerAU"
               pluginCharacteristicsValue="pluginWantsMidiIn" headerPath="..\..\ASIO\common"
