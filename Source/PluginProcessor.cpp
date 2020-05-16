@@ -144,8 +144,8 @@ bool EbeamerAudioProcessor::isBusesLayoutSupported(const BusesLayout &layouts) c
         }
     }
 
-    if ((layouts.getMainInputChannels() < 2) || (layouts.getMainOutputChannels() < 2)) {
-        // In any case don't allow less than 2 input and 2 output channels
+    if ((layouts.getMainInputChannels() < 1) || (layouts.getMainOutputChannels() < 2)) {
+        // In any case don't allow less than 1 input and 2 output channels
         return false;
     }
     return true;
@@ -306,6 +306,7 @@ void EbeamerAudioProcessor::processBlock(AudioBuffer<float> &buffer, MidiBuffer 
         jassertfalse;
         return;
     }
+    
     
     ScopedNoDenormals noDenormals;
     

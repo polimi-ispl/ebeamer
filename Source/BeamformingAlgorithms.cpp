@@ -21,7 +21,8 @@ namespace DAS {
         soundspeed = soundspeed_;
 
         commonDelay = 64;
-        firLen = ceil(jmax(numMic/numRows * micDistX,numRows * micDistY) / soundspeed * fs) + 2 * commonDelay;
+        const float maxDistBetweenMics =sqrt(pow((numMicPerRow-1) * micDistX,2.f)+pow((numRows-1) * micDistY,2.f));
+        firLen = maxDistBetweenMics / soundspeed * fs + commonDelay;
 
         fft = std::make_unique<juce::dsp::FFT>(ceil(log2(firLen)));
 

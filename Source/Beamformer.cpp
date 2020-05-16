@@ -195,7 +195,7 @@ Beamformer::Beamformer(int numBeams_, MicConfig mic, double sampleRate_, int max
 }
 
 Beamformer::~Beamformer() {
-    doaThread->stopThread(500);
+    doaThread->stopThread(3000);
 }
 
 MicConfig Beamformer::getMicConfig() const {

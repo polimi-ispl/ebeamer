@@ -243,7 +243,7 @@ void EBeamerAudioProcessorEditor::paint(Graphics &g) {
     versionArea.removeFromBottom(2);
     g.setColour(Colours::lightgrey);
     g.setFont(12);
-    g.drawText("ISPL and Eventide - eBeamer v" + String(JucePlugin_VersionString), versionArea,
+    g.drawText("ISPL and Eventide - Ebeamer v" + String(JucePlugin_VersionString), versionArea,
                Justification::centredBottom, false);
     
 }
@@ -329,8 +329,8 @@ void EBeamerAudioProcessorEditor::resized() {
     hpfSlider.setBounds(area.removeFromTop(INPUT_HPF_SLIDER_HEIGHT).withTrimmedLeft(INPUT_HPF_LABEL_WIDTH));
     
     auto inputLedArea = area.removeFromTop(INPUT_LED_HEIGHT);
-    inputLedArea.removeFromLeft(INPUT_LEFT_RIGHT_MARGIN);
-    inputLedArea.removeFromRight(INPUT_LEFT_RIGHT_MARGIN);
+    inputLedArea.removeFromLeft(INPUT_LEFT_RIGHT_MARGIN+4);
+    inputLedArea.removeFromRight(INPUT_LEFT_RIGHT_MARGIN+23);
     inputMeter.setBounds(inputLedArea);
     
     gainSlider.setBounds(area.removeFromTop(INPUT_GAIN_SLIDER_HEIGHT).withTrimmedLeft(INPUT_GAIN_LABEL_WIDTH));
