@@ -5,11 +5,11 @@
               pluginAAXCategory="512" pluginRTASCategory="512" pluginVSTCategory="kPlugCategSpacializer"
               pluginAUMainType="'aufx'" pluginName="Ebeamer" pluginDesc="Estick beam controller"
               pluginManufacturer="ISPL and Eventide" pluginManufacturerCode="Ispl"
-              pluginCode="ebea" version="1.1.2" bundleIdentifier="it.polimi.deib.ispl.ebeamer"
+              pluginCode="ebea" version="1.1.3" bundleIdentifier="it.polimi.deib.ispl.ebeamer"
               companyWebsite="http://ispl.deib.polimi.it/" aaxIdentifier="it.polimi.deib.ispl.ebeamer"
               pluginAUExportPrefix="EbeamerAU" pluginCharacteristicsValue="pluginWantsMidiIn"
-              headerPath="..\..\ASIO\common" companyCopyright="2020 ISPL and Eventide"
-              displaySplashScreen="1" jucerFormatVersion="1">
+              headerPath="..\..\ASIO\common" companyCopyright="2021 ISPL and Eventide"
+              displaySplashScreen="1" jucerFormatVersion="1" cppLanguageStandard="latest">
   <MAINGROUP id="X7PQw9" name="Ebeamer">
     <GROUP id="{3D6AD065-0387-5993-02F4-EFEE30370E91}" name="Eigen">
       <GROUP id="{AEBD6D17-0D9F-6422-FDAF-3B90144ABB2C}" name="src">
