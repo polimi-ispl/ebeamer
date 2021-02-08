@@ -269,11 +269,10 @@ const std::map<String, MidiCC> &EbeamerAudioProcessor::getParamToCCMapping() {
 
 void EbeamerAudioProcessor::processMidi(MidiBuffer &midiMessages) {
     
-    // Loop over CC messages
-    MidiBuffer::Iterator midiIter(midiMessages);
-    MidiMessage midiMess;
-    int samplePosition;
-    while (midiIter.getNextEvent(midiMess, samplePosition)) {
+    // Loop over Midi messages
+    for (const MidiMessageMetadata metadata : midiMessages){
+        MidiMessage midiMess = metadata.getMessage();
+        
         if (midiMess.isController()) {
             
             MidiCC cc = {midiMess.getChannel(), midiMess.getControllerNumber()};
