@@ -61,6 +61,9 @@
 #define BEAM_METER_UPDATE_FREQ 10 //Hz
 #define ENERGY_UPDATE_FREQ 10 //Hz
 
+/** Uncomment to compile in headless mode, without GUI and DOA estimation */
+#define HEADLESS
+
 #include "../JuceLibraryCode/JuceHeader.h"
 
 /** Available eSticks configurations type */

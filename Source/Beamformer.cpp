@@ -190,7 +190,9 @@ Beamformer::Beamformer(int numBeams_, MicConfig mic, double sampleRate_, int max
     
     /** Prepare and start DOA thread */
     doaThread = std::make_unique<BeamformerDoa>(*this, numDoaHor, numDoaVer, sampleRate, numMic, firLen, fft);
+#ifndef HEADLESS
     doaThread->startThread();
+#endif
     
 }
 
