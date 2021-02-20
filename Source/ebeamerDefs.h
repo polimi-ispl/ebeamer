@@ -62,7 +62,7 @@
 #define ENERGY_UPDATE_FREQ 10 //Hz
 
 /** Uncomment to compile in headless mode, without GUI and DOA estimation */
-#define HEADLESS
+//#define HEADLESS
 
 #include "../JuceLibraryCode/JuceHeader.h"
 
