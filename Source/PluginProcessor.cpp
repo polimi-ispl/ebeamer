@@ -685,14 +685,14 @@ void EbeamerAudioProcessor::oscMessageReceived (const OSCMessage& message){
     }else {
         for (auto tag : paramsTag ){
             auto address = "/ebeamer/" + tag;
-            if (message.getAddressPattern()==address){
-                if (paramsType[tag]=="float"){
+            if (message.getAddressPattern()==address && message.size()==1){
+                if (paramsType[tag]=="float" && message[0].isFloat32()){
                     float newVal = jlimit(-1.f,1.f,message[0].getFloat32());
                     setParam(tag,newVal);
-                }else if(paramsType[tag]=="bool"){
+                }else if(paramsType[tag]=="bool" && message[0].isInt32()){
                     bool newVal = message[0].getInt32() > 0;
                     setParam(tag,newVal);
-                }else if(paramsType[tag]=="MicConfig"){
+                }else if(paramsType[tag]=="MicConfig" && message[0].isInt32()){
                     MicConfig newVal = static_cast<MicConfig>(message[0].getInt32());
                     setParam(tag,newVal);
                 }
