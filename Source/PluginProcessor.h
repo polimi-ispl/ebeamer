@@ -22,7 +22,9 @@ public AudioProcessorValueTreeState::Listener,
 public MeterDecay::Callback,
 public CpuLoadComp::Callback,
 public SceneComp::Callback,
-public MidiCC::Callback {
+public MidiCC::Callback,
+private OSCReceiver::Listener<juce::OSCReceiver::MessageLoopCallback>
+{
 public:
     
     //==============================================================================
@@ -190,6 +192,11 @@ private:
     
     //==============================================================================
     
+    /** Parameters Tags */
+    std::vector<String> paramsTag;
+    /** Parameters Types*/
+    std::map<String,String> paramsType;
+    
     /** Processor parameters tree */
     AudioProcessorValueTreeState parameters;
     
@@ -228,5 +235,31 @@ private:
     
     /** Parameter whose CC is being learned  */
     String paramCCToLearn = "";
+    
+    //==============================================================================
+    //OSC
+    
+    /** OSC receiver instance */
+    OSCReceiver oscReceiver;
+    
+    /** OSC callback */
+    void oscMessageReceived (const OSCMessage&) override;
+    
+    /** Set a state parameter  */
+    void setParam(const String&, float);
+    void setParam(const String&, bool);
+    void setParam(const String&, MicConfig);
+    
+    /** Message error */
+    void showConnectionErrorMessage (const String&);
+    
+    int oscReceiverPort = 9001;
+    
+    /** Send OSC message */
+    void sendOscMessage(OSCSender&, const String&, float) const;
+    void sendOscMessage(OSCSender&, const String&, bool) const;
+    void sendOscMessage(OSCSender&, const String&, MicConfig) const;
+    void sendOscMessage(OSCSender&, const String&, const Mtx&) const;
+    void sendOscMessage(OSCSender&, const String&, const std::vector<float>&) const;
     
 };

@@ -360,3 +360,4 @@ void EBeamerAudioProcessorEditor::parameterChanged (const String & parameterID, 
         scene.resized();
     }
 }
+

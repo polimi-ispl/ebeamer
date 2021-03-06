@@ -9,8 +9,13 @@
 #include "PluginEditor.h"
 
 //==============================================================================
+
 // Helper functions
-AudioProcessorValueTreeState::ParameterLayout initializeParameters() {
+AudioProcessorValueTreeState::ParameterLayout initializeParameters(
+                                                                   std::vector<String>& paramsTag,
+                                                                   std::map<String,String>& paramsType
+                                                                   ) {
+    
     
     std::vector<std::unique_ptr<RangedAudioParameter>> params;
     
@@ -20,11 +25,15 @@ AudioProcessorValueTreeState::ParameterLayout initializeParameters() {
                                                             micConfigLabels, //choices
                                                             0 //default
                                                             ));
+    paramsTag.push_back("config");
+    paramsType["config"] = "MicConfig";
     
     params.push_back(std::make_unique<AudioParameterBool>("frontFacing", //tag
                                                           "Front facing", //name
                                                           false //default
                                                           ));
+    paramsTag.push_back("frontFacing");
+    paramsType["frontFacing"] = "bool";
     
     params.push_back(std::make_unique<AudioParameterFloat>("gainMic", //tag
                                                            "Mic gain", //name
@@ -32,6 +41,8 @@ AudioProcessorValueTreeState::ParameterLayout initializeParameters() {
                                                            40.0f, //max
                                                            20.0f //default
                                                            ));
+    paramsTag.push_back("gainMic");
+    paramsType["gainMic"] = "float";
     
     // Values in Hz
     params.push_back(std::make_unique<AudioParameterFloat>("hpf", //tag
@@ -40,6 +51,8 @@ AudioProcessorValueTreeState::ParameterLayout initializeParameters() {
                                                            500.0f, //max
                                                            250.0f //default
                                                            ));
+    paramsTag.push_back("hpf");
+    paramsType["hpf"] = "float";
     
     {
         for (auto beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx) {
@@ -50,18 +63,27 @@ AudioProcessorValueTreeState::ParameterLayout initializeParameters() {
                                                                    1.0f, //max
                                                                    defaultDirectionX //default
                                                                    ));
+            paramsTag.push_back("steerBeamX" + String(beamIdx + 1));
+            paramsType["steerBeamX" + String(beamIdx + 1)] = "float";
+            
             params.push_back(std::make_unique<AudioParameterFloat>("steerBeamY" + String(beamIdx + 1), //tag
                                                                    "Steer " + String(beamIdx + 1) + " ver", //name
                                                                    -1.0f, //min
                                                                    1.0f, //max
                                                                    0 //default
                                                                    ));
+            paramsTag.push_back("steerBeamY" + String(beamIdx + 1));
+            paramsType["steerBeamY" + String(beamIdx + 1)] = "float";
+            
             params.push_back(std::make_unique<AudioParameterFloat>("widthBeam" + String(beamIdx + 1), //tag
                                                                    "Width beam" + String(beamIdx + 1), //name
                                                                    0.0f, //min
                                                                    1.0f,//max
                                                                    0.3f//default
                                                                    ));
+            paramsTag.push_back("widthBeam" + String(beamIdx + 1));
+            paramsType["widthBeam" + String(beamIdx + 1)] = "float";
+            
             auto defaultPan = beamIdx == 0 ? -0.5 : 0.5;
             params.push_back(std::make_unique<AudioParameterFloat>("panBeam" + String(beamIdx + 1), //tag
                                                                    "Pan beam" + String(beamIdx + 1), //name
@@ -69,17 +91,26 @@ AudioProcessorValueTreeState::ParameterLayout initializeParameters() {
                                                                    1.0f, //max
                                                                    defaultPan //default
                                                                    ));
+            paramsTag.push_back("panBeam" + String(beamIdx + 1));
+            paramsType["panBeam" + String(beamIdx + 1)] = "float";
+            
             params.push_back(std::make_unique<AudioParameterFloat>("levelBeam" + String(beamIdx + 1), //tag
                                                                    "Level beam" + String(beamIdx + 1), //name
                                                                    -10.0f, //min
                                                                    10.0f, //max
                                                                    0.0f //default
                                                                    ));
+            paramsTag.push_back("levelBeam" + String(beamIdx + 1));
+            paramsType["levelBeam" + String(beamIdx + 1)] = "float";
+            
             
             params.push_back(std::make_unique<AudioParameterBool>("muteBeam" + String(beamIdx + 1), //tag
                                                                   "Mute beam" + String(beamIdx + 1), //name
                                                                   false //default
                                                                   ));
+            paramsTag.push_back("muteBeam" + String(beamIdx + 1));
+            paramsType["muteBeam" + String(beamIdx + 1)] = "bool";
+            
             
         }
     }
@@ -103,7 +134,16 @@ EbeamerAudioProcessor::EbeamerAudioProcessor()
                  .withInput("eStick#3", AudioChannelSet::ambisonic(3), true)
                  .withInput("eStick#4", AudioChannelSet::ambisonic(3), true)
                  .withOutput("Output", AudioChannelSet::stereo(), true)
-                 ), parameters(*this, nullptr, Identifier("eBeamerParams"), initializeParameters()) {
+                 ),
+parameters(*this,
+           nullptr,
+           Identifier("eBeamerParams"),
+           initializeParameters(
+                                paramsTag,
+                                paramsType
+                                )
+           )
+{
     
     /** Get parameters pointers */
     configParam = parameters.getRawParameterValue("config");
@@ -120,6 +160,14 @@ EbeamerAudioProcessor::EbeamerAudioProcessor()
         levelBeamParam[beamIdx] = parameters.getRawParameterValue("levelBeam" + String(beamIdx + 1));
         muteBeamParam[beamIdx] = parameters.getRawParameterValue("muteBeam" + String(beamIdx + 1));
     }
+    
+    
+    /** Initialize OSC receiver */
+    if (! oscReceiver.connect (oscReceiverPort))
+        showConnectionErrorMessage ("Error: could not connect to UDP port 9001.");
+    
+    /** Listen to OSC messages */
+    oscReceiver.addListener(this);
     
 }
 
@@ -143,7 +191,7 @@ bool EbeamerAudioProcessor::isBusesLayoutSupported(const BusesLayout &layouts) c
             }
         }
     }
-
+    
     if ((layouts.getMainInputChannels() < 1) || (layouts.getMainOutputChannels() < 2)) {
         // In any case don't allow less than 1 input and 2 output channels
         return false;
@@ -589,4 +637,127 @@ bool EbeamerAudioProcessor::hasEditor() const {
 #else
     return true;
 #endif
+}
+
+
+//==============================================================================
+/** OSC listener */
+void EbeamerAudioProcessor::oscMessageReceived (const OSCMessage& message){
+    
+    if (message.getAddressPattern()=="/ebeamer/get"){
+        if (message.size() == 2 && message[0].isString() && message[1].isInt32()){
+            String senderAddress = message[0].getString();
+            int senderPort = message[1].getInt32();
+            
+            OSCSender sender;
+            if (sender.connect(senderAddress, senderPort)){
+                for (auto tag : paramsTag ){
+                    auto address = "/ebeamer/" + tag;
+                    if (paramsType[tag]=="float"){
+                        auto param = parameters.getParameter(tag);
+                        auto val01 = param->getValue();
+                        auto val = param->convertFrom0to1(val01);
+                        sendOscMessage(sender, tag, val);
+                    }else if(paramsType[tag]=="bool"){
+                        bool val = parameters.getParameter(tag)->getValue();
+                        sendOscMessage(sender, tag, val);
+                    }else if(paramsType[tag]=="MicConfig"){
+                        MicConfig val = static_cast<MicConfig>((int)parameters.getParameter(tag)->getValue());
+                        sendOscMessage(sender, tag, val);
+                    }
+                }
+                sendOscMessage(sender, "cpuLoad", getCpuLoad());
+                
+                std::vector<float> inMeters;
+                getMeterValues(inMeters, 0);
+                sendOscMessage(sender, "inMeters", inMeters);
+                
+                std::vector<float> outMeters;
+                getMeterValues(outMeters, 0);
+                sendOscMessage(sender, "outMeters", outMeters);
+                
+                Mtx doaMeters;
+                getDoaEnergy(doaMeters);
+                sendOscMessage(sender, "doaMeters", doaMeters);
+            }
+        }
+        
+    }else {
+        for (auto tag : paramsTag ){
+            auto address = "/ebeamer/" + tag;
+            if (message.getAddressPattern()==address){
+                if (paramsType[tag]=="float"){
+                    float newVal = jlimit(-1.f,1.f,message[0].getFloat32());
+                    setParam(tag,newVal);
+                }else if(paramsType[tag]=="bool"){
+                    bool newVal = message[0].getInt32() > 0;
+                    setParam(tag,newVal);
+                }else if(paramsType[tag]=="MicConfig"){
+                    MicConfig newVal = static_cast<MicConfig>(message[0].getInt32());
+                    setParam(tag,newVal);
+                }
+            }
+        }
+    }
+}
+
+/** Set a state parameter */
+void EbeamerAudioProcessor::setParam(const String& name, float newVal){
+    auto param = parameters.getParameter(name);
+    auto newVal01 = param->convertTo0to1(newVal);
+    param->setValueNotifyingHost(newVal01);
+}
+
+void EbeamerAudioProcessor::setParam(const String& name, bool newVal){
+    auto param = parameters.getParameter(name);
+    param->setValueNotifyingHost(newVal);
+}
+
+void EbeamerAudioProcessor::setParam(const String& name, MicConfig newVal){
+    auto param = parameters.getParameter(name);
+    param->setValueNotifyingHost(newVal);
+}
+
+void EbeamerAudioProcessor::showConnectionErrorMessage (const String& messageText){
+    juce::AlertWindow::showMessageBoxAsync (AlertWindow::WarningIcon,
+                                            "OSC connection error",
+                                            messageText,
+                                            "OK");
+}
+
+void EbeamerAudioProcessor::sendOscMessage(OSCSender& sender ,const String& tag, float value) const{
+    auto address = "/ebeamer/" + tag;
+    OSCMessage msg(address);
+    msg.addFloat32(value);
+    sender.send(msg);
+}
+
+void EbeamerAudioProcessor::sendOscMessage(OSCSender& sender ,const String& tag, bool value) const{
+    auto address = "/ebeamer/" + tag;
+    OSCMessage msg(address);
+    msg.addInt32(value);
+    sender.send(msg);
+}
+
+void EbeamerAudioProcessor::sendOscMessage(OSCSender& sender ,const String& tag, MicConfig value) const{
+    auto address = "/ebeamer/" + tag;
+    OSCMessage msg(address);
+    msg.addInt32(value);
+    sender.send(msg);
+}
+
+void EbeamerAudioProcessor::sendOscMessage(OSCSender& sender ,const String& tag, const Mtx& value) const{
+    auto address = "/ebeamer/" + tag;
+    OSCMessage msg(address);
+    MemoryBlock memBlock(value.data(),value.size());
+    msg.addBlob(memBlock);
+    sender.send(msg);
+}
+
+void EbeamerAudioProcessor::sendOscMessage(OSCSender& sender ,const String& tag, const std::vector<float>& value) const{
+    auto address = "/ebeamer/" + tag;
+    OSCMessage msg(address);
+    MemoryBlock memBlock(value.data(),value.size());
+    msg.addBlob(memBlock);
+    sender.send(msg);
 }
