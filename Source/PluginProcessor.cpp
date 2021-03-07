@@ -678,7 +678,7 @@ void EbeamerAudioProcessor::oscMessageReceived (const OSCMessage& message){
                 
                 Mtx doaMeters;
                 getDoaEnergy(doaMeters);
-                sendOscMessage(sender, "doaMeters", doaMeters);
+                sendOscMessage(sender, "doaEnergy", doaMeters);
             }
         }
         
@@ -749,7 +749,9 @@ void EbeamerAudioProcessor::sendOscMessage(OSCSender& sender ,const String& tag,
 void EbeamerAudioProcessor::sendOscMessage(OSCSender& sender ,const String& tag, const Mtx& value) const{
     auto address = "/ebeamer/" + tag;
     OSCMessage msg(address);
-    MemoryBlock memBlock(value.data(),value.size());
+    msg.addInt32((int)value.rows());
+    msg.addInt32((int)value.cols());
+    MemoryBlock memBlock(value.data(),value.size()*sizeof(float));
     msg.addBlob(memBlock);
     sender.send(msg);
 }
