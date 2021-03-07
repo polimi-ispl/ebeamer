@@ -228,6 +228,8 @@ EBeamerAudioProcessorEditor::EBeamerAudioProcessorEditor(EbeamerAudioProcessor &
 }
 
 EBeamerAudioProcessorEditor::~EBeamerAudioProcessorEditor() {
+    valueTreeState.removeParameterListener("config", this);
+    valueTreeState.removeParameterListener("frontFacing", this);
 }
 
 //==============================================================================
