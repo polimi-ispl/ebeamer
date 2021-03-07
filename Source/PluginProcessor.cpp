@@ -662,7 +662,7 @@ void EbeamerAudioProcessor::oscMessageReceived (const OSCMessage& message){
                         bool val = parameters.getParameter(tag)->getValue();
                         sendOscMessage(sender, tag, val);
                     }else if(paramsType[tag]=="MicConfig"){
-                        MicConfig val = static_cast<MicConfig>((int)parameters.getParameter(tag)->getValue());
+                        MicConfig val = static_cast<MicConfig>((int)(*configParam));
                         sendOscMessage(sender, tag, val);
                     }
                 }
@@ -673,7 +673,7 @@ void EbeamerAudioProcessor::oscMessageReceived (const OSCMessage& message){
                 sendOscMessage(sender, "inMeters", inMeters);
                 
                 std::vector<float> outMeters;
-                getMeterValues(outMeters, 0);
+                getMeterValues(outMeters, 1);
                 sendOscMessage(sender, "outMeters", outMeters);
                 
                 Mtx doaMeters;
@@ -687,7 +687,7 @@ void EbeamerAudioProcessor::oscMessageReceived (const OSCMessage& message){
             auto address = "/ebeamer/" + tag;
             if (message.getAddressPattern()==address && message.size()==1){
                 if (paramsType[tag]=="float" && message[0].isFloat32()){
-                    float newVal = jlimit(-1.f,1.f,message[0].getFloat32());
+                    float newVal = message[0].getFloat32();
                     setParam(tag,newVal);
                 }else if(paramsType[tag]=="bool" && message[0].isInt32()){
                     bool newVal = message[0].getInt32() > 0;
@@ -757,7 +757,7 @@ void EbeamerAudioProcessor::sendOscMessage(OSCSender& sender ,const String& tag,
 void EbeamerAudioProcessor::sendOscMessage(OSCSender& sender ,const String& tag, const std::vector<float>& value) const{
     auto address = "/ebeamer/" + tag;
     OSCMessage msg(address);
-    MemoryBlock memBlock(value.data(),value.size());
+    MemoryBlock memBlock(value.data(),value.size()*sizeof(float));
     msg.addBlob(memBlock);
     sender.send(msg);
 }
