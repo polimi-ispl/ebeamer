@@ -715,7 +715,8 @@ void EbeamerAudioProcessor::setParam(const String& name, bool newVal){
 
 void EbeamerAudioProcessor::setParam(const String& name, MicConfig newVal){
     auto param = parameters.getParameter(name);
-    param->setValueNotifyingHost(newVal);
+    auto newVal01 = param->convertTo0to1(newVal);
+    param->setValueNotifyingHost(newVal01);
 }
 
 void EbeamerAudioProcessor::showConnectionErrorMessage (const String& messageText){
