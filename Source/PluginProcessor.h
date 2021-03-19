@@ -71,6 +71,11 @@ public:
     void setStateInformation(const void *data, int sizeInBytes) override;
     
     //==============================================================================
+    // OSC Callback
+    int getOscPort() const;
+    bool isOscReady() const;
+    
+    //==============================================================================
     // MeterDecay Callback
     void getMeterValues(std::vector<float> &meter, int meterId) const override;
     
@@ -116,6 +121,7 @@ public:
     void setBeamSteerY(int idx, float newVal) override;
     
     void getDoaEnergy(Mtx &energy) const override;
+    
     
 private:
     //==============================================================================
@@ -239,8 +245,14 @@ private:
     //==============================================================================
     //OSC
     
+    /** UDP socket */
+    DatagramSocket socket;
+    
     /** OSC receiver instance */
     OSCReceiver oscReceiver;
+    
+    /** OSC status */
+    bool oscReceiverConnected = true;
     
     /** OSC callback */
     void oscMessageReceived (const OSCMessage&) override;
@@ -254,6 +266,7 @@ private:
     void showConnectionErrorMessage (const String&);
     
     int oscReceiverPort = 9001;
+    
     
     /** Send OSC message */
     void sendOscMessage(OSCSender&, const String&, float) const;

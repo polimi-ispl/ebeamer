@@ -24,6 +24,28 @@ void RoundLed::resized() {
     
 }
 
+void RoundLed::setColour(const Colour& newColour){
+    colour = newColour;
+    repaint();
+}
+
+void ActivityLed::setColours(const Colour& colour1_,const Colour& colour2_){
+    colour1 = colour1_;
+    colour2 = colour2_;
+    
+    setColour(colour1);
+}
+
+
+void ActivityLed::toggle(){
+    
+    if (colour == colour1){
+        setColour(colour2);
+    }else{
+        setColour(colour1);
+    }
+}
+
 
 void MultiChannelLedBar::makeLayout() {
     removeAllChildren();
@@ -186,3 +208,4 @@ Colour SingleChannelLedBar::dbToColour(float valDb, float thDb) {
     }
     return col;
 }
+

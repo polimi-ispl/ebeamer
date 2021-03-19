@@ -163,11 +163,32 @@ parameters(*this,
     
     
     /** Initialize OSC receiver */
-    if (! oscReceiver.connect (oscReceiverPort))
-        showConnectionErrorMessage ("Error: could not connect to UDP port 9001.");
+    while (socket.getBoundPort()==-1 && !socket.bindToPort(oscReceiverPort) && (oscReceiverPort<65535))
+        oscReceiverPort++;
+    if (oscReceiverPort==65535){
+        oscReceiverConnected=false;
+        std::ostringstream errMsg;
+        errMsg << "Error: cannot find a free port to listen on";
+#ifdef HEADLESS
+        cout << errMsg << endl;
+#else
+        showConnectionErrorMessage (errMsg.str());
+#endif
+    }
+    if (!oscReceiver.connectToSocket(socket)){
+        oscReceiverConnected=false;
+        std::ostringstream errMsg;
+        errMsg << "Error: cannot listen on port " << socket.getBoundPort();
+#ifdef HEADLESS
+        cout << errMsg << endl;
+#else
+        showConnectionErrorMessage (errMsg.str());
+#endif
+    }
     
     /** Listen to OSC messages */
-    oscReceiver.addListener(this);
+    if (oscReceiverConnected)
+        oscReceiver.addListener(this);
     
 }
 
@@ -763,4 +784,12 @@ void EbeamerAudioProcessor::sendOscMessage(OSCSender& sender ,const String& tag,
     MemoryBlock memBlock(value.data(),value.size()*sizeof(float));
     msg.addBlob(memBlock);
     sender.send(msg);
+}
+
+int EbeamerAudioProcessor::getOscPort() const{
+    return oscReceiverPort;
+}
+
+bool EbeamerAudioProcessor::isOscReady() const{
+    return oscReceiverConnected;
 }

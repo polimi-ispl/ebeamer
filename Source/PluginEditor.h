@@ -103,6 +103,12 @@ private:
     std::unique_ptr<ComboBoxAttachment> configComboLabelAttachment;
     
     //==============================================================================
+    /** OSC  */
+    TextEditor oscPort;
+    Label oscPortLabel;
+    ActivityLed oscStatus;
+    
+    //==============================================================================
     const std::vector<Colour> beamColours = {Colours::orangered, Colours::royalblue};
     
     //==============================================================================
