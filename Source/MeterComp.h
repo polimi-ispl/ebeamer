@@ -39,7 +39,7 @@ private:
 
 //==============================================================================
 
-class ActivityLed: public RoundLed{
+class ActivityLed: public RoundLed, public Timer{
     
 public:
     
@@ -49,9 +49,25 @@ public:
     
     void toggle();
     
+    class Callback {
+    public:
+        virtual ~Callback() = default;
+
+        virtual bool isActive(int ledId) = 0;
+
+    };
+    
+    void setCallback(Callback *cb, int ledId);
+    
 private:
     
     Colour colour1, colour2;
+    
+    int ledId;
+    
+    Callback *callback = nullptr;
+    
+    void timerCallback() override;
     
 };
 

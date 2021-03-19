@@ -234,6 +234,8 @@ EBeamerAudioProcessorEditor::EBeamerAudioProcessorEditor(EbeamerAudioProcessor &
     oscPort.setEnabled(false);
     addAndMakeVisible(oscPort);
     addAndMakeVisible(oscStatus);
+    oscStatus.setCallback(&processor, 1);
+    oscStatus.startTimerHz(OSC_STATUS_UPDATE_FREQ);
     
 }
 

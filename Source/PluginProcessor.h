@@ -23,6 +23,7 @@ public MeterDecay::Callback,
 public CpuLoadComp::Callback,
 public SceneComp::Callback,
 public MidiCC::Callback,
+public ActivityLed::Callback,
 private OSCReceiver::Listener<juce::OSCReceiver::MessageLoopCallback>
 {
 public:
@@ -74,6 +75,8 @@ public:
     // OSC Callback
     int getOscPort() const;
     bool isOscReady() const;
+    
+    bool isActive(int ledId) override;
     
     //==============================================================================
     // MeterDecay Callback
@@ -267,12 +270,13 @@ private:
     
     int oscReceiverPort = 9001;
     
+    bool oscActive = false;
     
     /** Send OSC message */
-    void sendOscMessage(OSCSender&, const String&, float) const;
-    void sendOscMessage(OSCSender&, const String&, bool) const;
-    void sendOscMessage(OSCSender&, const String&, MicConfig) const;
-    void sendOscMessage(OSCSender&, const String&, const Mtx&) const;
-    void sendOscMessage(OSCSender&, const String&, const std::vector<float>&) const;
+    void sendOscMessage(OSCSender&, const String&, float);
+    void sendOscMessage(OSCSender&, const String&, bool);
+    void sendOscMessage(OSCSender&, const String&, MicConfig);
+    void sendOscMessage(OSCSender&, const String&, const Mtx&);
+    void sendOscMessage(OSCSender&, const String&, const std::vector<float>&);
     
 };

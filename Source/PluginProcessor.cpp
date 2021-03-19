@@ -666,6 +666,7 @@ bool EbeamerAudioProcessor::hasEditor() const {
 void EbeamerAudioProcessor::oscMessageReceived (const OSCMessage& message){
     
     if (message.getAddressPattern()=="/ebeamer/get"){
+        oscActive = true;
         if (message.size() == 2 && message[0].isString() && message[1].isInt32()){
             String senderAddress = message[0].getString();
             int senderPort = message[1].getInt32();
@@ -747,28 +748,31 @@ void EbeamerAudioProcessor::showConnectionErrorMessage (const String& messageTex
                                             "OK");
 }
 
-void EbeamerAudioProcessor::sendOscMessage(OSCSender& sender ,const String& tag, float value) const{
+void EbeamerAudioProcessor::sendOscMessage(OSCSender& sender ,const String& tag, float value){
     auto address = "/ebeamer/" + tag;
     OSCMessage msg(address);
     msg.addFloat32(value);
     sender.send(msg);
+    oscActive = true;
 }
 
-void EbeamerAudioProcessor::sendOscMessage(OSCSender& sender ,const String& tag, bool value) const{
+void EbeamerAudioProcessor::sendOscMessage(OSCSender& sender ,const String& tag, bool value){
     auto address = "/ebeamer/" + tag;
     OSCMessage msg(address);
     msg.addInt32(value);
     sender.send(msg);
+    oscActive = true;
 }
 
-void EbeamerAudioProcessor::sendOscMessage(OSCSender& sender ,const String& tag, MicConfig value) const{
+void EbeamerAudioProcessor::sendOscMessage(OSCSender& sender ,const String& tag, MicConfig value){
     auto address = "/ebeamer/" + tag;
     OSCMessage msg(address);
     msg.addInt32(value);
     sender.send(msg);
+    oscActive = true;
 }
 
-void EbeamerAudioProcessor::sendOscMessage(OSCSender& sender ,const String& tag, const Mtx& value) const{
+void EbeamerAudioProcessor::sendOscMessage(OSCSender& sender ,const String& tag, const Mtx& value){
     auto address = "/ebeamer/" + tag;
     OSCMessage msg(address);
     msg.addInt32((int)value.rows());
@@ -776,14 +780,16 @@ void EbeamerAudioProcessor::sendOscMessage(OSCSender& sender ,const String& tag,
     MemoryBlock memBlock(value.data(),value.size()*sizeof(float));
     msg.addBlob(memBlock);
     sender.send(msg);
+    oscActive = true;
 }
 
-void EbeamerAudioProcessor::sendOscMessage(OSCSender& sender ,const String& tag, const std::vector<float>& value) const{
+void EbeamerAudioProcessor::sendOscMessage(OSCSender& sender ,const String& tag, const std::vector<float>& value){
     auto address = "/ebeamer/" + tag;
     OSCMessage msg(address);
     MemoryBlock memBlock(value.data(),value.size()*sizeof(float));
     msg.addBlob(memBlock);
     sender.send(msg);
+    oscActive = true;
 }
 
 int EbeamerAudioProcessor::getOscPort() const{
@@ -792,4 +798,15 @@ int EbeamerAudioProcessor::getOscPort() const{
 
 bool EbeamerAudioProcessor::isOscReady() const{
     return oscReceiverConnected;
+}
+
+bool EbeamerAudioProcessor::isActive(int ledId){
+    
+    if (ledId == 1){
+        auto val = oscActive;
+        oscActive = false;
+        return val;
+    }
+    return false;
+    
 }

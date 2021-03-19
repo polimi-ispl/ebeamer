@@ -66,6 +66,7 @@
 #define INPUT_METER_UPDATE_FREQ 10 //Hz
 #define BEAM_METER_UPDATE_FREQ 10 //Hz
 #define ENERGY_UPDATE_FREQ 10 //Hz
+#define OSC_STATUS_UPDATE_FREQ 4 //Hz
 
 /** Uncomment to compile in headless mode, without GUI and DOA estimation */
 //#define HEADLESS

@@ -46,6 +46,20 @@ void ActivityLed::toggle(){
     }
 }
 
+void ActivityLed::timerCallback() {
+    
+    if (callback == nullptr)
+        return;
+    
+    if (callback->isActive(ledId))
+        toggle();
+}
+
+void ActivityLed::setCallback(Callback* cb, int ledId_){
+    callback = cb;
+    ledId = ledId_;
+}
+
 
 void MultiChannelLedBar::makeLayout() {
     removeAllChildren();
