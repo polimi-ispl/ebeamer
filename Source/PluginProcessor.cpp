@@ -524,7 +524,7 @@ void EbeamerAudioProcessor::setStateInformation(const void *data, int sizeInByte
     
     if (xmlState.get() != nullptr) {
         if (xmlState->hasTagName("eBeamerRoot")) {
-            forEachXmlChildElement (*xmlState, rootElement) {
+            for (auto rootElement : xmlState->getChildIterator()){
                 if (rootElement->hasTagName(parameters.state.getType())) {
                     /** Parameters state */
                     parameters.replaceState(ValueTree::fromXml(*rootElement));
@@ -533,7 +533,7 @@ void EbeamerAudioProcessor::setStateInformation(const void *data, int sizeInByte
                     ccToParamMap.clear();
                     paramToCcMap.clear();
                     stopCCLearning();
-                    forEachXmlChildElement (*rootElement, e) {
+                    for (auto e : rootElement->getChildIterator()){
                         String tag = e->getTagName();
                         int channel = e->getIntAttribute("channel");
                         int number = e->getIntAttribute("number");
