@@ -232,6 +232,7 @@ EBeamerAudioProcessorEditor::EBeamerAudioProcessorEditor(EbeamerAudioProcessor &
     oscPortLabel.attachToComponent(&oscPort, true);
     oscPort.setText(String(processor.getOscPort()));
     oscPort.setEnabled(false);
+    oscPort.setKeyboardType(TextInputTarget::numericKeyboard);
     addAndMakeVisible(oscPort);
     addAndMakeVisible(oscStatus);
     oscStatus.setCallback(&processor, 1);

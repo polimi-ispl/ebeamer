@@ -163,6 +163,7 @@ parameters(*this,
     
     
     /** Initialize OSC receiver */
+    socket.setEnablePortReuse(true);
     while (socket.getBoundPort()==-1 && !socket.bindToPort(oscReceiverPort) && (oscReceiverPort<65535))
         oscReceiverPort++;
     if (oscReceiverPort==65535){
@@ -187,8 +188,11 @@ parameters(*this,
     }
     
     /** Listen to OSC messages */
-    if (oscReceiverConnected)
+    if (oscReceiverConnected){
         oscReceiver.addListener(this);
+        /** Start broadcast timer */
+        startTimerHz(1);
+    }
     
 }
 
@@ -808,5 +812,23 @@ bool EbeamerAudioProcessor::isActive(int ledId){
         return val;
     }
     return false;
+    
+}
+
+void EbeamerAudioProcessor::timerCallback(){
+    
+    auto ipArray = IPAddress::getAllAddresses(false);
+    ipArray.remove(0);
+    auto address = "/ebeamer/announce";
+    
+    for (auto ip : ipArray){
+        OSCSender sender;
+        sender.connectToSocket(socket,IPAddress::getInterfaceBroadcastAddress(ip).toString(), OSC_BROADCAST_PORT);
+        OSCMessage msg(address);
+        msg.addString(ip.toString());
+        msg.addInt32(oscReceiverPort);
+        sender.send(msg);
+    }
+    
     
 }

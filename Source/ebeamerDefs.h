@@ -68,6 +68,8 @@
 #define ENERGY_UPDATE_FREQ 10 //Hz
 #define OSC_STATUS_UPDATE_FREQ 4 //Hz
 
+#define OSC_BROADCAST_PORT 9011
+
 /** Uncomment to compile in headless mode, without GUI and DOA estimation */
 //#define HEADLESS
 

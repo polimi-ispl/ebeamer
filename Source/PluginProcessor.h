@@ -24,7 +24,8 @@ public CpuLoadComp::Callback,
 public SceneComp::Callback,
 public MidiCC::Callback,
 public ActivityLed::Callback,
-private OSCReceiver::Listener<juce::OSCReceiver::MessageLoopCallback>
+private OSCReceiver::Listener<juce::OSCReceiver::MessageLoopCallback>,
+private Timer
 {
 public:
     
@@ -249,7 +250,7 @@ private:
     //OSC
     
     /** UDP socket */
-    DatagramSocket socket;
+    DatagramSocket socket = DatagramSocket(true);
     
     /** OSC receiver instance */
     OSCReceiver oscReceiver;
@@ -279,4 +280,6 @@ private:
     void sendOscMessage(OSCSender&, const String&, const Mtx&);
     void sendOscMessage(OSCSender&, const String&, const std::vector<float>&);
     
+    /** Broadcast timer callback */
+    void timerCallback() override;
 };
