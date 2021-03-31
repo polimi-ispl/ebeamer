@@ -171,7 +171,7 @@ parameters(*this,
         std::ostringstream errMsg;
         errMsg << "Error: cannot find a free port to listen on";
 #ifdef HEADLESS
-        cout << errMsg << endl;
+        std::cout << errMsg.str() << std::endl;
 #else
         showConnectionErrorMessage (errMsg.str());
 #endif
@@ -181,7 +181,7 @@ parameters(*this,
         std::ostringstream errMsg;
         errMsg << "Error: cannot listen on port " << socket.getBoundPort();
 #ifdef HEADLESS
-        cout << errMsg << endl;
+        std::cout << errMsg.str() << std::endl;
 #else
         showConnectionErrorMessage (errMsg.str());
 #endif
