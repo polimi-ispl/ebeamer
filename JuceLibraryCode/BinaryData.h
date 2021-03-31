@@ -8,6 +8,9 @@
 
 namespace BinaryData
 {
+    extern const char*   icon_png;
+    const int            icon_pngSize = 335629;
+
     extern const char*   Cholesky;
     const int            CholeskySize = 1206;
 
@@ -99,7 +102,7 @@ namespace BinaryData
     const int            UmfPackSupportSize = 1382;
 
     // Number of elements in the namedResourceList and originalFileNames arrays.
-    const int namedResourceListSize = 30;
+    const int namedResourceListSize = 31;
 
     // Points to the start of a list of resource names.
     extern const char* namedResourceList[];

@@ -11,6 +11,9 @@
               headerPath="..\..\ASIO\common" companyCopyright="2021 ISPL and Eventide"
               displaySplashScreen="1" jucerFormatVersion="1" cppLanguageStandard="latest">
   <MAINGROUP id="X7PQw9" name="Ebeamer">
+    <GROUP id="{B4EEABF4-DAA3-979C-9DFA-76ED49E72338}" name="Resources">
+      <FILE id="A6ImnF" name="icon.png" compile="0" resource="1" file="docs/icon.png"/>
+    </GROUP>
     <GROUP id="{3D6AD065-0387-5993-02F4-EFEE30370E91}" name="Eigen">
       <GROUP id="{AEBD6D17-0D9F-6422-FDAF-3B90144ABB2C}" name="src">
         <GROUP id="{E9A98149-22CD-0FBA-1B1C-79BA5428D3CF}" name="Cholesky">
@@ -565,7 +568,7 @@
     <XCODE_MAC targetFolder="Builds/MacOSX" hardenedRuntime="1" microphonePermissionNeeded="1"
                hardenedRuntimeOptions="com.apple.security.device.audio-input"
                microphonePermissionsText="The eBeamer requires to access your audio input in order to work properly"
-               iosDevelopmentTeamID="9UVTQTKNV4">
+               iosDevelopmentTeamID="9UVTQTKNV4" smallIcon="A6ImnF" bigIcon="A6ImnF">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug"/>
         <CONFIGURATION isDebug="0" name="Release"/>
@@ -587,7 +590,7 @@
         <MODULEPATH id="juce_osc" path="../../../JUCE/modules"/>
       </MODULEPATHS>
     </XCODE_MAC>
-    <VS2019 targetFolder="Builds/VisualStudio2019">
+    <VS2019 targetFolder="Builds/VisualStudio2019" smallIcon="A6ImnF" bigIcon="A6ImnF">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug"/>
         <CONFIGURATION isDebug="0" name="Release"/>
@@ -609,7 +612,8 @@
         <MODULEPATH id="juce_osc" path="../../../JUCE/modules"/>
       </MODULEPATHS>
     </VS2019>
-    <LINUX_MAKE targetFolder="Builds/LinuxMakefile" extraDefs="HEADLESS" externalLibraries="atomic">
+    <LINUX_MAKE targetFolder="Builds/LinuxMakefile" extraDefs="HEADLESS" externalLibraries="atomic"
+                smallIcon="A6ImnF" bigIcon="A6ImnF">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug"/>
         <CONFIGURATION isDebug="0" name="Release"/>
