@@ -16,7 +16,10 @@
 
 //==============================================================================
 
-class EBeamerAudioProcessorEditor : public AudioProcessorEditor, public AudioProcessorValueTreeState::Listener {
+class EBeamerAudioProcessorEditor :
+public AudioProcessorEditor,
+public AudioProcessorValueTreeState::Listener
+{
 public:
     
     typedef AudioProcessorValueTreeState::SliderAttachment SliderAttachment;
@@ -100,10 +103,17 @@ private:
     std::unique_ptr<ComboBoxAttachment> configComboLabelAttachment;
     
     //==============================================================================
+    /** OSC  */
+    TextEditor oscPort;
+    Label oscPortLabel;
+    ActivityLed oscStatus;
+    
+    //==============================================================================
     const std::vector<Colour> beamColours = {Colours::orangered, Colours::royalblue};
     
     //==============================================================================
-    /** Listener for parameter changes that requre a broad Editor change */
+    /** Listener for parameter changes that require a broad Editor change */
     void parameterChanged (const String & parameterID, float newValue) override;
+
     
 };

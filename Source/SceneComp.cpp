@@ -237,7 +237,7 @@ void BeamComp::paint(Graphics &g) {
     if (isLinearArray(static_cast<MicConfig>((int)*configParam))){
         const float positionX = *steerXParam;
         
-        const float width = (0.1 + 2.9 * (*widthParam)) * area.getWidth() / 10;
+        const float width = (0.3 + 2.9 * (*widthParam)) * area.getWidth() / 10;
         path.startNewSubPath(0, 0);
         path.cubicTo(width, -area.getWidth() / 3, width, -area.getWidth() / 2, 0, -area.getWidth() / 2);
         path.cubicTo(-width, -area.getWidth() / 2, -width, -area.getWidth() / 3, 0, 0);
