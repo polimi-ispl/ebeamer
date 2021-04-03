@@ -225,9 +225,24 @@ EBeamerAudioProcessorEditor::EBeamerAudioProcessorEditor(EbeamerAudioProcessor &
     valueTreeState.addParameterListener("config", this);
     valueTreeState.addParameterListener("frontFacing", this);
     
+    //==============================================================================
+    /* OSC */
+    oscStatus.setColours(processor.isOscReady() ? Colours::green : Colours::red,Colours::grey);
+    oscPortLabel.setText("OSC PORT", dontSendNotification);
+    oscPortLabel.attachToComponent(&oscPort, true);
+    oscPort.setText(String(processor.getOscPort()));
+    oscPort.setEnabled(false);
+    oscPort.setKeyboardType(TextInputTarget::numericKeyboard);
+    addAndMakeVisible(oscPort);
+    addAndMakeVisible(oscStatus);
+    oscStatus.setCallback(&processor, 1);
+    oscStatus.startTimerHz(OSC_STATUS_UPDATE_FREQ);
+    
 }
 
 EBeamerAudioProcessorEditor::~EBeamerAudioProcessorEditor() {
+    valueTreeState.removeParameterListener("config", this);
+    valueTreeState.removeParameterListener("frontFacing", this);
 }
 
 //==============================================================================
@@ -343,13 +358,20 @@ void EBeamerAudioProcessorEditor::resized() {
     /** Set area for CPU Load */
     cpuLoad.setBounds(footerArea.removeFromLeft(CPULOAD_WIDTH));
     
-    /** Set area for front toggle */
-    frontToggle.setBounds(footerArea.removeFromRight(FRONT_TOGGLE_WIDTH));
-    footerArea.removeFromRight(FRONT_TOGGLE_LABEL_WIDTH);
+    /** OSC Port and activity LED */
+    footerArea.removeFromLeft(OSC_PORT_LABEL_WIDTH);
+    oscPort.setBounds(footerArea.removeFromLeft(OSC_PORT_WIDTH));
+    
+    footerArea.removeFromLeft(MEDIUM_MARGIN);
+    oscStatus.setBounds(footerArea.removeFromLeft(OSC_LED_SIZE));
     
     /** Set area for config combo */
     footerArea.removeFromLeft(CONFIG_COMBO_LABEL_WIDTH);
     configCombo.setBounds(footerArea.removeFromLeft(CONFIG_COMBO_WIDTH));
+    
+    /** Set area for front toggle */
+    footerArea.removeFromLeft(FRONT_TOGGLE_LABEL_WIDTH);
+    frontToggle.setBounds(footerArea.removeFromLeft(FRONT_TOGGLE_WIDTH));
 }
 
 void EBeamerAudioProcessorEditor::parameterChanged (const String & parameterID, float newValue){
@@ -360,3 +382,4 @@ void EBeamerAudioProcessorEditor::parameterChanged (const String & parameterID, 
         scene.resized();
     }
 }
+

@@ -47,7 +47,7 @@
  #define JucePlugin_Manufacturer           "ISPL and Eventide"
 #endif
 #ifndef  JucePlugin_ManufacturerWebsite
- #define JucePlugin_ManufacturerWebsite    "http://ispl.deib.polimi.it/"
+ #define JucePlugin_ManufacturerWebsite    "https://www.eventideaudio.com/"
 #endif
 #ifndef  JucePlugin_ManufacturerEmail
  #define JucePlugin_ManufacturerEmail      ""
@@ -74,13 +74,13 @@
  #define JucePlugin_EditorRequiresKeyboardFocus  0
 #endif
 #ifndef  JucePlugin_Version
- #define JucePlugin_Version                1.1.3
+ #define JucePlugin_Version                2.0.0
 #endif
 #ifndef  JucePlugin_VersionCode
- #define JucePlugin_VersionCode            0x10103
+ #define JucePlugin_VersionCode            0x20000
 #endif
 #ifndef  JucePlugin_VersionString
- #define JucePlugin_VersionString          "1.1.3"
+ #define JucePlugin_VersionString          "2.0.0"
 #endif
 #ifndef  JucePlugin_VSTUniqueID
  #define JucePlugin_VSTUniqueID            JucePlugin_PluginCode
@@ -107,7 +107,7 @@
  #define JucePlugin_AUManufacturerCode     JucePlugin_ManufacturerCode
 #endif
 #ifndef  JucePlugin_CFBundleIdentifier
- #define JucePlugin_CFBundleIdentifier     it.polimi.deib.ispl.ebeamer
+ #define JucePlugin_CFBundleIdentifier     com.eventideaudio.ebeamer
 #endif
 #ifndef  JucePlugin_RTASCategory
  #define JucePlugin_RTASCategory           512

@@ -28,6 +28,8 @@ public:
     
     void paint(Graphics &) override;
     
+    void setColour(const Colour&);
+    
     void resized() override;
     
 private:
@@ -35,6 +37,39 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RoundLed)
 };
 
+//==============================================================================
+
+class ActivityLed: public RoundLed, public Timer{
+    
+public:
+    
+    ActivityLed(){};
+    
+    void setColours(const Colour& colour1_,const Colour& colour2_);
+    
+    void toggle();
+    
+    class Callback {
+    public:
+        virtual ~Callback() = default;
+
+        virtual bool isActive(int ledId) = 0;
+
+    };
+    
+    void setCallback(Callback *cb, int ledId);
+    
+private:
+    
+    Colour colour1, colour2;
+    
+    int ledId;
+    
+    Callback *callback = nullptr;
+    
+    void timerCallback() override;
+    
+};
 
 //==============================================================================
 class MultiChannelLedBar : public Component, public Timer {

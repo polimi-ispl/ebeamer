@@ -22,7 +22,11 @@ public AudioProcessorValueTreeState::Listener,
 public MeterDecay::Callback,
 public CpuLoadComp::Callback,
 public SceneComp::Callback,
-public MidiCC::Callback {
+public MidiCC::Callback,
+public ActivityLed::Callback,
+private OSCReceiver::Listener<juce::OSCReceiver::MessageLoopCallback>,
+private Timer
+{
 public:
     
     //==============================================================================
@@ -67,6 +71,13 @@ public:
     void getStateInformation(MemoryBlock &destData) override;
     
     void setStateInformation(const void *data, int sizeInBytes) override;
+    
+    //==============================================================================
+    // OSC Callback
+    int getOscPort() const;
+    bool isOscReady() const;
+    
+    bool isActive(int ledId) override;
     
     //==============================================================================
     // MeterDecay Callback
@@ -114,6 +125,7 @@ public:
     void setBeamSteerY(int idx, float newVal) override;
     
     void getDoaEnergy(Mtx &energy) const override;
+    
     
 private:
     //==============================================================================
@@ -190,6 +202,11 @@ private:
     
     //==============================================================================
     
+    /** Parameters Tags */
+    std::vector<String> paramsTag;
+    /** Parameters Types*/
+    std::map<String,String> paramsType;
+    
     /** Processor parameters tree */
     AudioProcessorValueTreeState parameters;
     
@@ -229,4 +246,40 @@ private:
     /** Parameter whose CC is being learned  */
     String paramCCToLearn = "";
     
+    //==============================================================================
+    //OSC
+    
+    /** UDP socket */
+    DatagramSocket socket = DatagramSocket(true);
+    
+    /** OSC receiver instance */
+    OSCReceiver oscReceiver;
+    
+    /** OSC status */
+    bool oscReceiverConnected = true;
+    
+    /** OSC callback */
+    void oscMessageReceived (const OSCMessage&) override;
+    
+    /** Set a state parameter  */
+    void setParam(const String&, float);
+    void setParam(const String&, bool);
+    void setParam(const String&, MicConfig);
+    
+    /** Message error */
+    void showConnectionErrorMessage (const String&);
+    
+    int oscReceiverPort = 9001;
+    
+    bool oscActive = false;
+    
+    /** Send OSC message */
+    void sendOscMessage(OSCSender&, const String&, float);
+    void sendOscMessage(OSCSender&, const String&, bool);
+    void sendOscMessage(OSCSender&, const String&, MicConfig);
+    void sendOscMessage(OSCSender&, const String&, const Mtx&);
+    void sendOscMessage(OSCSender&, const String&, const std::vector<float>&);
+    
+    /** Broadcast timer callback */
+    void timerCallback() override;
 };
