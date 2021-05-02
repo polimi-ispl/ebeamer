@@ -48,6 +48,9 @@
 #define JUCE_PROJUCER_VERSION 0x60008
 
 //==============================================================================
+#define JUCE_MODULE_AVAILABLE_ebeamer_common                1
+#define JUCE_MODULE_AVAILABLE_ebeamer_gui                   1
+#define JUCE_MODULE_AVAILABLE_ebeamer_osc                   1
 #define JUCE_MODULE_AVAILABLE_juce_audio_basics             1
 #define JUCE_MODULE_AVAILABLE_juce_audio_devices            1
 #define JUCE_MODULE_AVAILABLE_juce_audio_formats            1

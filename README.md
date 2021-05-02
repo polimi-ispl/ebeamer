@@ -10,6 +10,9 @@ A JUCE-based VST3 plug-in and standalone application to support the [Estick](htt
 - If you're developing on Windows, download and extract the [ASIO ASK](https://www.steinberg.net/en/company/developers.html) in the *ASIO/* folder.
 - Don't have the Esticks yet? Start developing with the [Estick simulator](https://github.com/luca-bondi/estick-simulator).
 
+## Dependencies
+- [Ebeamer JUCE modules](https://github.com/luca-bondi/ebeamer-modules)
+
 ## Contributing
 - Any contribution to the project is highly appreciated! Get in touch to know more.
 

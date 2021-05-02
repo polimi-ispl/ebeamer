@@ -15,7 +15,6 @@ typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> Mtx;
 typedef Eigen::Matrix<std::complex<float>, Eigen::Dynamic, 1> CpxVec;
 typedef Eigen::Matrix<std::complex<float>, Eigen::Dynamic, Eigen::Dynamic> CpxMtx;
 
-const float pi = MathConstants<float>::pi;
 const Eigen::scomplex j2pi = std::complex<float>(0, 2 * pi);
 
 /** Design a Tukey window

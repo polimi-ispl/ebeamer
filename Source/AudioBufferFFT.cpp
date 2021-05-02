@@ -145,15 +145,49 @@ void AudioBufferFFT::prepareForConvolution() {
     }
 }
 
-void AudioBufferFFT::convolve(int outputChannel, const AudioBufferFFT &in_, int inChannel, AudioBufferFFT &filter_,
+void AudioBufferFFT::convolveAndAdd(int outputChannel, const AudioBufferFFT &in_, int inChannel, AudioBufferFFT &filter_,
                               int filterChannel) {
 
     jassert(in_.isReadyForConvolution());
     jassert(filter_.isReadyForConvolution());
 
-    clear(outputChannel, 0, getNumSamples());
     convolutionProcessingAndAccumulate(in_.getReadPointer(inChannel), filter_.getReadPointer(filterChannel),
                                        getWritePointer(outputChannel), fft->getSize());
 
     readyForConvolution = true;
 }
+
+void AudioBufferFFT::convolve(int outputChannel, const AudioBufferFFT &in_, int inChannel, AudioBufferFFT &filter_,
+                              int filterChannel) {
+
+    clear(outputChannel, 0, getNumSamples());
+    convolveAndAdd(outputChannel, in_, inChannel, filter_, filterChannel);
+}
+
+AudioBufferFFT& AudioBufferFFT::operator= (const AudioBufferFFT& other){
+    
+    if (this != &other)
+    {
+        setSize (other.getNumChannels(), other.getNumSamples(), false, false, false);
+
+        if (other.hasBeenCleared())
+        {
+            clear();
+        }
+        else
+        {
+            
+            for (int i = 0; i < getNumChannels(); ++i)
+                FloatVectorOperations::copy (getWritePointer(i), other.getReadPointer(i), getNumSamples());
+        }
+        
+        readyForConvolution = other.readyForConvolution;
+        fft = other.fft;
+        convBuffer = other.convBuffer;
+        
+    }
+
+    return *this;
+    
+}
+

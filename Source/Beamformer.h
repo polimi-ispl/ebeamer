@@ -8,13 +8,14 @@
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
-#include "ebeamerDefs.h"
 #include "AudioBufferFFT.h"
 #include "BeamformingAlgorithms.h"
 
 
 
 // ==============================================================================
+
+typedef Eigen::Matrix<std::complex<float>,Eigen::Dynamic,1> CplxVec;
 
 class Beamformer;
 
@@ -29,6 +30,7 @@ public:
                   float sampleRate_,
                   int numActiveInputChannels,
                   int firLen,
+                  float expectedRate,
                   std::shared_ptr<dsp::FFT> fft_);
 
     ~BeamformerDoa();
@@ -61,11 +63,25 @@ private:
     /** FIR filters for DOA estimation */
     std::vector<AudioBufferFFT> doaFirFFT;
 
-    /** DOA beam */
-    AudioBuffer<float> doaBeam;
-
     /** DOA levels [dB] */
     Mtx doaLevels;
+    
+    /** New DOA levels [dB], pre-smoothing */
+    Mtx newDoaLevels;
+    
+    /** Smoothing factor */
+    float alpha = 1;
+    
+    /** Time constant for smothing [s] */
+    const float timeConst = 0.2;
+    
+    /**DOA update requency [Hz] */
+    float doaUpdateFrequency = 1;
+    
+    const float lowFreq = 500;
+    const float highFreq = 8000;
+    int lowFreqIdx = 0;
+    int numFreqBins = 1;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BeamformerDoa);
 
@@ -82,9 +98,10 @@ public:
      @param numBeams: number of beams the beamformer has to compute
      @param mic: microphone configuration
      @param sampleRate:
-     @param maximumExpectedSamplesPerBlock: 
+     @param maximumExpectedSamplesPerBlock:
+     @param doaRefreshRate:
      */
-    Beamformer(int numBeams, MicConfig mic, double sampleRate, int maximumExpectedSamplesPerBlock);
+    Beamformer(int numBeams, MicConfig mic, double sampleRate, int maximumExpectedSamplesPerBlock, float doaRefreshRate);
 
     /** Destructor. */
     ~Beamformer();
@@ -116,13 +133,18 @@ public:
     void getFir(AudioBuffer<float> &fir, const BeamParameters &params, float alpha = 1) const;
 
     /** Copy the estimated energy contribution from the directions of arrival */
-    void getDoaEnergy(Mtx &energy) const;
+    void getDoaEnergy(Mtx &energy);
+    
+    /** Get the estimated energy contribution from the directions of arrival */
+    MemoryBlock getDoaEnergy();
 
     /** Set the estimated energy contribution from the directions of arrival */
     void setDoaEnergy(const Mtx &energy);
 
     /** Get last doa filtered input buffer */
-    void getDoaInputBuffer(AudioBufferFFT &dst) const;
+    void getDoaInputBuffer(AudioBufferFFT &dst);
+    
+    bool isDoaOutputBufferNew() const;
 
 
 private:
@@ -187,25 +209,24 @@ private:
     /** DOA thread */
     std::unique_ptr<BeamformerDoa> doaThread;
 
-    /**DOA update requency [Hz] */
-    const float doaUpdateFrequency = 10;
 
     /** DOA levels [dB] */
     Mtx doaLevels;
-
-    /** DOA Band pass Filters */
-    std::vector<IIRFilter> doaBPFilters;
-    const float doaBPfreq = 2000;
-    const float doaBPQ = 1;
 
     /** inputBuffer lock */
     SpinLock doaInputBufferLock;
 
     /** Input buffer with DOA-filtered input signal */
-    AudioBuffer<float> doaInputBuffer;
+    AudioBufferFFT doaInputBuffer;
+    
+    /** Flag to avoid useless copy if the previous doaInputBuffer hasn't been used yet */
+    bool doaInputBufferNew = false;
 
     /** DOA Lock */
     SpinLock doaLock;
+    
+    /** DOA Lock */
+    bool doaOutputBufferNew = false;
 
 
 };
