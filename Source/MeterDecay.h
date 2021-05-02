@@ -20,17 +20,10 @@ public:
     void push(const AudioBuffer<float> &signal);
 
     void get(std::vector<float> &meter) const;
+    
+    MemoryBlock get() const;
 
     float get(int ch) const;
-
-    class Callback {
-    public:
-        virtual ~Callback() = default;
-
-        virtual float getMeterValue(int meterId, int channel) const = 0;
-
-        virtual void getMeterValues(std::vector<float> &values, int meterId) const = 0;
-    };
 
 private:
 

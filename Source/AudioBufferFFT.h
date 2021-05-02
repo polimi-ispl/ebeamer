@@ -32,24 +32,26 @@ public:
 
     void
     convolve(int outputChannel, const AudioBufferFFT &in_, int inChannel, AudioBufferFFT &filter_, int filterChannel);
-
+    
+    void
+    convolveAndAdd(int outputChannel, const AudioBufferFFT &in_, int inChannel, AudioBufferFFT &filter_, int filterChannel);
+    
     void prepareForConvolution();
+    
+    void updateSymmetricFrequency();
 
     bool isReadyForConvolution() const { return readyForConvolution; };
+    
+    AudioBufferFFT& operator= (const AudioBufferFFT& other);
 
 private:
     AudioBuffer<float> convBuffer;
     std::shared_ptr<dsp::FFT> fft;
+    bool readyForConvolution = false;
 
     void prepareForConvolution(float *samples, int fftSize) const;
-
     void convolutionProcessingAndAccumulate(const float *input, const float *impulse, float *output, int fftSize) const;
-
     void updateSymmetricFrequencyDomainData(float *samples, int fftSize) const;
-
-    void updateSymmetricFrequency();
-
-    bool readyForConvolution = false;
 
 };
 

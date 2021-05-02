@@ -126,7 +126,7 @@ namespace DAS {
         Vec freqAxes;
 
         /** Reference power for normalization */
-        const float referencePower = 3;
+        const float referencePower = 1;
 
     };
 

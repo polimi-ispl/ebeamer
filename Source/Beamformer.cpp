@@ -7,23 +7,33 @@
 
 #include "Beamformer.h"
 
+#define NUM_DOAX 25
+#define NUM_DOAY 9
+
 BeamformerDoa::BeamformerDoa(Beamformer &b,
                              int numDoaHor_,
                              int numDoaVer_,
                              float sampleRate_,
                              int numActiveInputChannels,
                              int firLen,
+                             float expectedRate,
                              std::shared_ptr<dsp::FFT> fft_) : Thread("DOA"), beamformer(b) {
     
     numDoaHor = numDoaHor_;
     numDoaVer = numDoaVer_;
     fft = fft_;
     sampleRate = sampleRate_;
+    doaUpdateFrequency = expectedRate;
     
     /** Initialize levels and FIR */
     doaLevels.resize(numDoaVer,numDoaHor);
     doaLevels.setConstant(-100);
+    newDoaLevels.resize(numDoaVer,numDoaHor);
+    newDoaLevels.setConstant(-100);
     doaFirFFT.resize(numDoaHor*numDoaVer);
+    
+    /** Time constants */
+    alpha = 1 - exp(-(1/doaUpdateFrequency) / timeConst);
     
     /** Allocate inputBuffer */
     inputBuffer = AudioBufferFFT(numActiveInputChannels, fft);
@@ -31,8 +41,9 @@ BeamformerDoa::BeamformerDoa(Beamformer &b,
     /** Allocate convolution buffer */
     convolutionBuffer = AudioBufferFFT(1, fft);
     
-    /** Allocate DOA beam */
-    doaBeam.setSize(1, fft->getSize());
+    /* Determine frequency bins for energy average */
+    lowFreqIdx = lowFreq/sampleRate*fft->getSize();
+    numFreqBins = highFreq/sampleRate*fft->getSize() - lowFreqIdx;
     
     /** Compute FIR for DOA estimation */
     AudioBuffer<float> tmpFir(numActiveInputChannels, firLen);
@@ -56,6 +67,12 @@ void BeamformerDoa::run() {
     
     while (!threadShouldExit()){
         
+        /* Wait for previous doa to be consumed before computing a new one */
+        while (!threadShouldExit() && beamformer.isDoaOutputBufferNew())
+            sleep(5);
+        if (threadShouldExit())
+            return;
+            
         const auto startTick = Time::getHighResolutionTicks();
         
         beamformer.getDoaInputBuffer(inputBuffer);
@@ -64,27 +81,35 @@ void BeamformerDoa::run() {
         for (auto vDirIdx = 0; vDirIdx < numDoaVer; vDirIdx++) {
             for (auto hDirIdx = 0; hDirIdx < numDoaHor; hDirIdx++) {
                 auto dirIdx = vDirIdx * numDoaHor + hDirIdx;
-                doaBeam.clear();
+                
+                convolutionBuffer.clear();
                 for (auto inCh = 0; inCh < inputBuffer.getNumChannels(); inCh++) {
-                    /** Convolve inputs and DOA FIR */
-                    convolutionBuffer.convolve(0, inputBuffer, inCh, doaFirFFT[dirIdx], inCh);
-                    convolutionBuffer.addToTimeSeries(0, doaBeam, 0);
+                    /** Convolve inputs and DOA FIR and sum*/
+                    convolutionBuffer.convolveAndAdd(0, inputBuffer, inCh, doaFirFFT[dirIdx], inCh);
                 }
                 
-                const Range<float> minMax = FloatVectorOperations::findMinAndMax(doaBeam.getReadPointer(0),
-                                                                                 doaBeam.getNumSamples());
-                const float dirEnergy = jmax(abs(minMax.getStart()), abs(minMax.getEnd()));
+                /** Back to regular FFT data */
+                convolutionBuffer.updateSymmetricFrequency();
+                
+                std::complex<float>* cplxData = (std::complex<float>*)convolutionBuffer.getReadPointer(0);
+                Eigen::Map<CplxVec> doaBeamMap(cplxData,convolutionBuffer.getNumSamples()/2);
+
+                const float dirEnergy = doaBeamMap.segment(lowFreqIdx,numFreqBins).array().abs().sum()/float(numFreqBins);
                 const float dirEnergyDb = Decibels::gainToDecibels(dirEnergy);
-                doaLevels(vDirIdx,hDirIdx) = dirEnergyDb;
+                newDoaLevels(vDirIdx,hDirIdx) = dirEnergyDb;
             }
         }
+        doaLevels = (doaLevels * (1 - alpha)) + (newDoaLevels * alpha);
         beamformer.setDoaEnergy(doaLevels);
         
         const auto endTick = Time::getHighResolutionTicks();
         const float elapsedTime = Time::highResolutionTicksToSeconds(endTick-startTick);
-        const float expectedPeriod = 1.f/ENERGY_UPDATE_FREQ;
-        if (elapsedTime < expectedPeriod){
-            Time::waitForMillisecondCounter(Time::getMillisecondCounter() + (expectedPeriod-elapsedTime));
+        const float expectedPeriod = 1.f/doaUpdateFrequency;
+        const float sleepTime = expectedPeriod-elapsedTime;
+        if (sleepTime > 0){
+            sleep(expectedPeriod-elapsedTime);
+        }else{
+            //TODO: can't keep up, reduce complexity
         }
         
     }
@@ -95,7 +120,7 @@ BeamformerDoa::~BeamformerDoa(){
 }
 
 // ==============================================================================
-Beamformer::Beamformer(int numBeams_, MicConfig mic, double sampleRate_, int maximumExpectedSamplesPerBlock_) {
+Beamformer::Beamformer(int numBeams_, MicConfig mic, double sampleRate_, int maximumExpectedSamplesPerBlock_,float doaRefreshRate) {
     
     numBeams = numBeams_;
     numDoaVer = isLinearArray(mic) ? 1 : NUM_DOAY;
@@ -177,22 +202,12 @@ Beamformer::Beamformer(int numBeams_, MicConfig mic, double sampleRate_, int max
     beamBuffer.clear();
     
     /** Allocate DOA input buffer */
-    doaInputBuffer.setSize(numMic, maximumExpectedSamplesPerBlock);
-    doaInputBuffer.clear();
-    
-    /** Set DOA input Filter  */
-    doaBPFilters.clear();
-    doaBPFilters.resize(numMic);
-    IIRCoefficients doaIIRCoeff = IIRCoefficients::makeBandPass(sampleRate, doaBPfreq, doaBPQ);
-    for (auto &f : doaBPFilters) {
-        f.setCoefficients(doaIIRCoeff);
-    }
+    doaInputBuffer = AudioBufferFFT(numMic, fft);
+    doaInputBuffer.prepareForConvolution();
     
     /** Prepare and start DOA thread */
-    doaThread = std::make_unique<BeamformerDoa>(*this, numDoaHor, numDoaVer, sampleRate, numMic, firLen, fft);
-#ifndef HEADLESS
+    doaThread = std::make_unique<BeamformerDoa>(*this, numDoaHor, numDoaVer, sampleRate, numMic, firLen, doaRefreshRate, fft);
     doaThread->startThread();
-#endif
     
 }
 
@@ -215,17 +230,15 @@ void Beamformer::setBeamParameters(int beamIdx, const BeamParameters &beamParams
 
 void Beamformer::processBlock(const AudioBuffer<float> &inBuffer) {
     
-    {
-        GenericScopedLock<SpinLock> lock(doaInputBufferLock);
-        for (auto chIdx = 0; chIdx < jmin(numMic, inBuffer.getNumChannels()); chIdx++) {
-            doaInputBuffer.copyFrom(chIdx, 0, inBuffer, chIdx, 0, inBuffer.getNumSamples());
-            doaBPFilters[chIdx].processSamples(doaInputBuffer.getWritePointer(chIdx), inBuffer.getNumSamples());
-        }
-    }
-    
     /** Compute inputs FFT */
     inputBuffer.setTimeSeries(inBuffer);
     inputBuffer.prepareForConvolution();
+    
+    if (!doaInputBufferNew){
+        GenericScopedLock<SpinLock> lock(doaInputBufferLock);
+        doaInputBuffer = inputBuffer;
+        doaInputBufferNew = true;
+    }
     
     for (auto beamIdx = 0; beamIdx < numBeams; beamIdx++) {
         for (auto inCh = 0; inCh < inputBuffer.getNumChannels(); inCh++) {
@@ -242,10 +255,10 @@ void Beamformer::getFir(AudioBuffer<float> &fir, const BeamParameters &params, f
     alg->getFir(fir, params, alpha);
 }
 
-void Beamformer::getDoaInputBuffer(AudioBufferFFT &dst) const {
+void Beamformer::getDoaInputBuffer(AudioBufferFFT &dst) {
     GenericScopedLock<SpinLock> lock(doaInputBufferLock);
-    dst.setTimeSeries(doaInputBuffer);
-    dst.prepareForConvolution();
+    dst = doaInputBuffer;
+    doaInputBufferNew = false;
 }
 
 void Beamformer::getBeams(AudioBuffer<float> &outBuffer) {
@@ -265,9 +278,27 @@ void Beamformer::getBeams(AudioBuffer<float> &outBuffer) {
 void Beamformer::setDoaEnergy(const Mtx &energy) {
     GenericScopedLock<SpinLock> lock(doaLock);
     doaLevels = energy;
+    doaOutputBufferNew = true;
 }
 
-void Beamformer::getDoaEnergy(Mtx &outDoaLevels) const {
+void Beamformer::getDoaEnergy(Mtx &outDoaLevels) {
     GenericScopedLock<SpinLock> lock(doaLock);
     outDoaLevels = doaLevels;
+    doaOutputBufferNew = false;
+}
+
+MemoryBlock Beamformer::getDoaEnergy(){
+    GenericScopedLock<SpinLock> lock(doaLock);
+    
+    MemoryBlock mb(doaLevels.size()*sizeof(float)+2);
+    mb[0] = (uint8)doaLevels.rows();
+    mb[1] = (uint8)doaLevels.cols();
+    mb.copyFrom(doaLevels.data(), 2, doaLevels.size()*sizeof(float));
+    
+    doaOutputBufferNew = false;
+    return mb;
+}
+
+bool Beamformer::isDoaOutputBufferNew() const{
+    return doaOutputBufferNew;
 }

@@ -11,106 +11,81 @@
 //==============================================================================
 
 // Helper functions
-AudioProcessorValueTreeState::ParameterLayout initializeParameters(
-                                                                   std::vector<String>& paramsTag,
-                                                                   std::map<String,String>& paramsType
-                                                                   ) {
+AudioProcessorValueTreeState::ParameterLayout initializeParameters() {
     
     
     std::vector<std::unique_ptr<RangedAudioParameter>> params;
     
     // Values in dB
-    params.push_back(std::make_unique<AudioParameterChoice>("config", //tag
+    params.push_back(std::make_unique<AudioParameterChoice>(configIdentifier.toString(), //tag
                                                             "Configuration", //name
                                                             micConfigLabels, //choices
                                                             0 //default
                                                             ));
-    paramsTag.push_back("config");
-    paramsType["config"] = "MicConfig";
     
-    params.push_back(std::make_unique<AudioParameterBool>("frontFacing", //tag
+    params.push_back(std::make_unique<AudioParameterBool>(frontIdentifier.toString(), //tag
                                                           "Front facing", //name
                                                           false //default
                                                           ));
-    paramsTag.push_back("frontFacing");
-    paramsType["frontFacing"] = "bool";
     
-    params.push_back(std::make_unique<AudioParameterFloat>("gainMic", //tag
+    params.push_back(std::make_unique<AudioParameterFloat>(gainIdentifier.toString(), //tag
                                                            "Mic gain", //name
-                                                           0.0f, //min
-                                                           40.0f, //max
-                                                           20.0f //default
+                                                           MIN_GAIN, //min
+                                                           MAX_GAIN, //max
+                                                           DEFAULT_GAIN //default
                                                            ));
-    paramsTag.push_back("gainMic");
-    paramsType["gainMic"] = "float";
     
     // Values in Hz
-    params.push_back(std::make_unique<AudioParameterFloat>("hpf", //tag
+    params.push_back(std::make_unique<AudioParameterFloat>(hpfIdentifier.toString(), //tag
                                                            "HPF",
-                                                           20.0f, //min
-                                                           500.0f, //max
-                                                           250.0f //default
+                                                           MIN_HPF, //min
+                                                           MAX_HPF, //max
+                                                           DEFAULT_HPF //default
                                                            ));
-    paramsTag.push_back("hpf");
-    paramsType["hpf"] = "float";
     
     {
-        for (auto beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx) {
+        for (auto beamIdx = 0; beamIdx < 2; ++beamIdx) {
             auto defaultDirectionX = beamIdx == 0 ? -0.5 : 0.5;
-            params.push_back(std::make_unique<AudioParameterFloat>("steerBeamX" + String(beamIdx + 1), //tag
+            params.push_back(std::make_unique<AudioParameterFloat>(steerXIdentifierPrefix + String(beamIdx + 1), //tag
                                                                    "Steer " + String(beamIdx + 1) + " hor", //name
                                                                    -1.0f, //min
                                                                    1.0f, //max
                                                                    defaultDirectionX //default
                                                                    ));
-            paramsTag.push_back("steerBeamX" + String(beamIdx + 1));
-            paramsType["steerBeamX" + String(beamIdx + 1)] = "float";
             
-            params.push_back(std::make_unique<AudioParameterFloat>("steerBeamY" + String(beamIdx + 1), //tag
+            params.push_back(std::make_unique<AudioParameterFloat>(steerYIdentifierPrefix + String(beamIdx + 1), //tag
                                                                    "Steer " + String(beamIdx + 1) + " ver", //name
                                                                    -1.0f, //min
                                                                    1.0f, //max
                                                                    0 //default
                                                                    ));
-            paramsTag.push_back("steerBeamY" + String(beamIdx + 1));
-            paramsType["steerBeamY" + String(beamIdx + 1)] = "float";
             
-            params.push_back(std::make_unique<AudioParameterFloat>("widthBeam" + String(beamIdx + 1), //tag
+            params.push_back(std::make_unique<AudioParameterFloat>(widthIdentifierPrefix + String(beamIdx + 1), //tag
                                                                    "Width beam" + String(beamIdx + 1), //name
                                                                    0.0f, //min
                                                                    1.0f,//max
                                                                    0.3f//default
                                                                    ));
-            paramsTag.push_back("widthBeam" + String(beamIdx + 1));
-            paramsType["widthBeam" + String(beamIdx + 1)] = "float";
             
             auto defaultPan = beamIdx == 0 ? -0.5 : 0.5;
-            params.push_back(std::make_unique<AudioParameterFloat>("panBeam" + String(beamIdx + 1), //tag
+            params.push_back(std::make_unique<AudioParameterFloat>(panIdentifierPrefix + String(beamIdx + 1), //tag
                                                                    "Pan beam" + String(beamIdx + 1), //name
                                                                    -1.0f, //min
                                                                    1.0f, //max
                                                                    defaultPan //default
                                                                    ));
-            paramsTag.push_back("panBeam" + String(beamIdx + 1));
-            paramsType["panBeam" + String(beamIdx + 1)] = "float";
             
-            params.push_back(std::make_unique<AudioParameterFloat>("levelBeam" + String(beamIdx + 1), //tag
+            params.push_back(std::make_unique<AudioParameterFloat>(levelIdentifierPrefix + String(beamIdx + 1), //tag
                                                                    "Level beam" + String(beamIdx + 1), //name
-                                                                   -10.0f, //min
-                                                                   10.0f, //max
+                                                                   MIN_LEVEL, //min
+                                                                   MAX_LEVEL, //max
                                                                    0.0f //default
                                                                    ));
-            paramsTag.push_back("levelBeam" + String(beamIdx + 1));
-            paramsType["levelBeam" + String(beamIdx + 1)] = "float";
             
-            
-            params.push_back(std::make_unique<AudioParameterBool>("muteBeam" + String(beamIdx + 1), //tag
+            params.push_back(std::make_unique<AudioParameterBool>(muteIdentifierPrefix + String(beamIdx + 1), //tag
                                                                   "Mute beam" + String(beamIdx + 1), //name
                                                                   false //default
                                                                   ));
-            paramsTag.push_back("muteBeam" + String(beamIdx + 1));
-            paramsType["muteBeam" + String(beamIdx + 1)] = "bool";
-            
             
         }
     }
@@ -138,60 +113,58 @@ EbeamerAudioProcessor::EbeamerAudioProcessor()
 parameters(*this,
            nullptr,
            Identifier("eBeamerParams"),
-           initializeParameters(
-                                paramsTag,
-                                paramsType
-                                )
+           initializeParameters()
            )
 {
     
-    /** Get parameters pointers */
-    configParam = parameters.getRawParameterValue("config");
-    parameters.addParameterListener("config", this);
-    frontFacingParam = parameters.getRawParameterValue("frontFacing");
-    hpfFreqParam = parameters.getRawParameterValue("hpf");
-    micGainParam = parameters.getRawParameterValue("gainMic");
+    /** Setup parameters listener and pointers */
+    configParam = parameters.getRawParameterValue(configIdentifier.toString());
+    frontFacingParam = parameters.getRawParameterValue(frontIdentifier.toString());
+    hpfFreqParam = parameters.getRawParameterValue(hpfIdentifier.toString());
+    micGainParam = parameters.getRawParameterValue(gainIdentifier.toString());
     
-    for (auto beamIdx = 0; beamIdx < NUM_BEAMS; beamIdx++) {
-        steerBeamXParam[beamIdx] = parameters.getRawParameterValue("steerBeamX" + String(beamIdx + 1));
-        steerBeamYParam[beamIdx] = parameters.getRawParameterValue("steerBeamY" + String(beamIdx + 1));
-        widthBeamParam[beamIdx] = parameters.getRawParameterValue("widthBeam" + String(beamIdx + 1));
-        panBeamParam[beamIdx] = parameters.getRawParameterValue("panBeam" + String(beamIdx + 1));
-        levelBeamParam[beamIdx] = parameters.getRawParameterValue("levelBeam" + String(beamIdx + 1));
-        muteBeamParam[beamIdx] = parameters.getRawParameterValue("muteBeam" + String(beamIdx + 1));
+    parameters.addParameterListener(configIdentifier.toString(), this);
+    parameters.addParameterListener(frontIdentifier.toString(), this);
+    parameters.addParameterListener(hpfIdentifier.toString(), this);
+    parameters.addParameterListener(gainIdentifier.toString(), this);
+    
+    for (auto beamIdx = 0; beamIdx < 2; beamIdx++) {
+        steerBeamXParam[beamIdx] = parameters.getRawParameterValue(steerXIdentifierPrefix + String(beamIdx + 1));
+        steerBeamYParam[beamIdx] = parameters.getRawParameterValue(steerYIdentifierPrefix + String(beamIdx + 1));
+        widthBeamParam[beamIdx] = parameters.getRawParameterValue(widthIdentifierPrefix + String(beamIdx + 1));
+        panBeamParam[beamIdx] = parameters.getRawParameterValue(panIdentifierPrefix + String(beamIdx + 1));
+        levelBeamParam[beamIdx] = parameters.getRawParameterValue(levelIdentifierPrefix + String(beamIdx + 1));
+        muteBeamParam[beamIdx] = parameters.getRawParameterValue(muteIdentifierPrefix + String(beamIdx + 1));
+        
+        parameters.addParameterListener(steerXIdentifierPrefix + String(beamIdx + 1), this);
+        parameters.addParameterListener(steerYIdentifierPrefix + String(beamIdx + 1), this);
+        parameters.addParameterListener(widthIdentifierPrefix + String(beamIdx + 1), this);
+        parameters.addParameterListener(panIdentifierPrefix + String(beamIdx + 1), this);
+        parameters.addParameterListener(levelIdentifierPrefix + String(beamIdx + 1), this);
+        parameters.addParameterListener(muteIdentifierPrefix + String(beamIdx + 1), this);
     }
     
+    /* Value tree for session parameters */
+    valueTree = ValueTree("Ebeamer");
+    initValueTreeParameters(valueTree);
+    valueTree.setProperty(serverPortIdentifier, 0, nullptr);
     
-    /** Initialize OSC receiver */
-    socket.setEnablePortReuse(true);
-    while (socket.getBoundPort()==-1 && !socket.bindToPort(oscReceiverPort) && (oscReceiverPort<65535))
-        oscReceiverPort++;
-    if (oscReceiverPort==65535){
-        oscReceiverConnected=false;
+    syncParametersToValueTree();
+    
+    /** Listen to valueTree to keep in sync with parameters */
+    valueTree.addListener(this);
+    
+    //==============================================================================
+    /* OSC controller */
+    oscController.init(valueTree);
+    registerCommonOscParameters(oscController);
+    if (oscController.startReceiver()){
+        valueTree.setProperty(serverPortIdentifier, oscController.getReceiverPort(), nullptr);
+        oscController.startBroadcast();
+    }else{
         std::ostringstream errMsg;
-        errMsg << "Error: cannot find a free port to listen on";
-#ifdef HEADLESS
-        std::cout << errMsg.str() << std::endl;
-#else
+        errMsg << "Error: cannot initialize OSC receiver";
         showConnectionErrorMessage (errMsg.str());
-#endif
-    }
-    if (!oscReceiver.connectToSocket(socket)){
-        oscReceiverConnected=false;
-        std::ostringstream errMsg;
-        errMsg << "Error: cannot listen on port " << socket.getBoundPort();
-#ifdef HEADLESS
-        std::cout << errMsg.str() << std::endl;
-#else
-        showConnectionErrorMessage (errMsg.str());
-#endif
-    }
-    
-    /** Listen to OSC messages */
-    if (oscReceiverConnected){
-        oscReceiver.addListener(this);
-        /** Start broadcast timer */
-        startTimerHz(1);
     }
     
 }
@@ -229,6 +202,8 @@ void EbeamerAudioProcessor::prepareToPlay(double sampleRate_, int maximumExpecte
     
     GenericScopedLock<SpinLock> lock(processingLock);
     
+    stopTimer();
+    
     sampleRate = sampleRate_;
     maximumExpectedSamplesPerBlock = maximumExpectedSamplesPerBlock_;
     
@@ -236,7 +211,7 @@ void EbeamerAudioProcessor::prepareToPlay(double sampleRate_, int maximumExpecte
     numActiveInputChannels = getTotalNumInputChannels();
     
     /** Number of active output channels */
-    numActiveOutputChannels = jmin(NUM_BEAMS, getTotalNumOutputChannels());
+    numActiveOutputChannels = jmin(2, getTotalNumOutputChannels());
     
     /** Initialize the input gain */
     micGain.reset();
@@ -250,13 +225,13 @@ void EbeamerAudioProcessor::prepareToPlay(double sampleRate_, int maximumExpecte
     prevHpfFreq = 0;
     
     /** Initialize the beamformer */
-    beamformer = std::make_unique<Beamformer>(NUM_BEAMS, static_cast<MicConfig>((int) *configParam),sampleRate, maximumExpectedSamplesPerBlock);
+    beamformer = std::make_unique<Beamformer>(2, static_cast<MicConfig>((int) *configParam),sampleRate, maximumExpectedSamplesPerBlock, metersUpdateRate);
     
     /** Initialize beams' buffer  */
-    beamBuffer.setSize(NUM_BEAMS, maximumExpectedSamplesPerBlock);
+    beamBuffer.setSize(2, maximumExpectedSamplesPerBlock);
     
     /** Initialize beam level gains */
-    for (auto beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx) {
+    for (auto beamIdx = 0; beamIdx < 2; ++beamIdx) {
         beamGain[beamIdx].reset();
         beamGain[beamIdx].prepare({sampleRate, static_cast<uint32>(maximumExpectedSamplesPerBlock), 1});
         beamGain[beamIdx].setGainDecibels(*levelBeamParam[beamIdx]);
@@ -266,13 +241,14 @@ void EbeamerAudioProcessor::prepareToPlay(double sampleRate_, int maximumExpecte
     /** initialize meters */
     inputMeterDecay = std::make_unique<MeterDecay>(sampleRate, metersDecay, maximumExpectedSamplesPerBlock,
                                                    numActiveInputChannels);
-    beamMeterDecay = std::make_unique<MeterDecay>(sampleRate, metersDecay, maximumExpectedSamplesPerBlock, NUM_BEAMS);
+    beamMeterDecay = std::make_unique<MeterDecay>(sampleRate, metersDecay, maximumExpectedSamplesPerBlock, 2);
     
     resourcesAllocated = true;
     
     /** Time constants */
     loadAlpha = 1 - exp(-(maximumExpectedSamplesPerBlock / sampleRate) / loadTimeConst);
     
+    startTimerHz(metersUpdateRate);
 }
 
 void EbeamerAudioProcessor::releaseResources() {
@@ -282,7 +258,7 @@ void EbeamerAudioProcessor::releaseResources() {
     resourcesAllocated = false;
     
     /** Clear beam buffer */
-    beamBuffer.setSize(NUM_BEAMS, 0);
+    beamBuffer.setSize(2, 0);
     
     /** Clear the HPF */
     iirHPFfilters.clear();
@@ -408,7 +384,7 @@ void EbeamerAudioProcessor::processBlock(AudioBuffer<float> &buffer, MidiBuffer 
     }
     
     /** Set beams parameters */
-    for (auto beamIdx = 0; beamIdx < NUM_BEAMS; beamIdx++) {
+    for (auto beamIdx = 0; beamIdx < 2; beamIdx++) {
         float beamDoaX = *steerBeamXParam[beamIdx];
         float beamDoaY = -(*steerBeamYParam[beamIdx]); //GUI and Beamforming use opposite vertical conventions
         beamDoaX = *frontFacingParam ? -beamDoaX : beamDoaX;
@@ -423,7 +399,7 @@ void EbeamerAudioProcessor::processBlock(AudioBuffer<float> &buffer, MidiBuffer 
     beamformer->getBeams(beamBuffer);
     
     /** Apply beams mute and volume */
-    for (auto beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx) {
+    for (auto beamIdx = 0; beamIdx < 2; ++beamIdx) {
         if ((bool) *muteBeamParam[beamIdx] == false) {
             beamGain[beamIdx].setGainDecibels(*levelBeamParam[beamIdx]);
         } else {
@@ -444,7 +420,7 @@ void EbeamerAudioProcessor::processBlock(AudioBuffer<float> &buffer, MidiBuffer 
     /** Sum beams in output channels */
     for (int outChannel = 0; outChannel < numActiveOutputChannels; ++outChannel) {
         /** Sum the contributes from each beam */
-        for (int beamIdx = 0; beamIdx < NUM_BEAMS; ++beamIdx) {
+        for (int beamIdx = 0; beamIdx < 2; ++beamIdx) {
             auto channelBeamGain = panToLinearGain((float) *panBeamParam[beamIdx], outChannel == 0);
             buffer.addFrom(outChannel, 0, beamBuffer, beamIdx, 0, buffer.getNumSamples(), channelBeamGain);
         }
@@ -458,48 +434,6 @@ void EbeamerAudioProcessor::processBlock(AudioBuffer<float> &buffer, MidiBuffer 
         load = (load * (1 - loadAlpha)) + (curLoad * loadAlpha);
     }
     
-}
-
-//==============================================================================
-// Meters
-void EbeamerAudioProcessor::getMeterValues(std::vector<float> &meter, int meterId) const {
-    switch (meterId) {
-        case 0:
-            inputMeterDecay->get(meter);
-            break;
-        case 1:
-            beamMeterDecay->get(meter);
-            break;
-    }
-}
-
-float EbeamerAudioProcessor::getMeterValue(int meterId, int channel) const {
-    switch (meterId) {
-        case 0:
-            return inputMeterDecay->get(channel);
-        case 1:
-            return beamMeterDecay->get(channel);
-        default:
-            return 0;
-    }
-}
-//==============================================================================
-
-void EbeamerAudioProcessor::parameterChanged(const String &parameterID, float newValue) {
-    if (parameterID == "config") {
-        setMicConfig(static_cast<MicConfig>((int) (newValue)));
-    }
-}
-
-//==============================================================================
-void EbeamerAudioProcessor::setMicConfig(const MicConfig &mc) {
-    prepareToPlay(sampleRate, maximumExpectedSamplesPerBlock);
-}
-
-//==============================================================================
-float EbeamerAudioProcessor::getCpuLoad() const {
-    GenericScopedLock<SpinLock> lock(loadLock);
-    return load;
 }
 
 //==============================================================================
@@ -532,6 +466,7 @@ void EbeamerAudioProcessor::setStateInformation(const void *data, int sizeInByte
                 if (rootElement->hasTagName(parameters.state.getType())) {
                     /** Parameters state */
                     parameters.replaceState(ValueTree::fromXml(*rootElement));
+                    syncParametersToValueTree();
                 } else if (rootElement->hasTagName("eBeamerMidiMap")) {
                     /** Load Midi CC - Params Maping */
                     ccToParamMap.clear();
@@ -546,46 +481,6 @@ void EbeamerAudioProcessor::setStateInformation(const void *data, int sizeInByte
                 }
             }
         }
-    }
-}
-
-//==============================================================================
-
-const std::atomic<float> *EbeamerAudioProcessor::getConfigParam() const {
-    return parameters.getRawParameterValue("config");
-}
-
-const std::atomic<float> *EbeamerAudioProcessor::getFrontFacingParam() const {
-    return parameters.getRawParameterValue("frontFacing");
-}
-
-const std::atomic<float> *EbeamerAudioProcessor::getBeamMute(int idx) const {
-    return parameters.getRawParameterValue("muteBeam" + String(idx + 1));
-}
-
-const std::atomic<float> *EbeamerAudioProcessor::getBeamWidth(int idx) const {
-    return parameters.getRawParameterValue("widthBeam" + String(idx + 1));
-}
-
-const std::atomic<float> *EbeamerAudioProcessor::getBeamSteerX(int idx) const {
-    return parameters.getRawParameterValue("steerBeamX" + String(idx + 1));
-}
-
-const std::atomic<float> *EbeamerAudioProcessor::getBeamSteerY(int idx) const {
-    return parameters.getRawParameterValue("steerBeamY" + String(idx + 1));
-}
-
-void EbeamerAudioProcessor::setBeamSteerX(int idx, float newVal){
-    parameters.getParameterAsValue("steerBeamX"+String(idx+1)).setValue(newVal);
-}
-
-void EbeamerAudioProcessor::setBeamSteerY(int idx, float newVal){
-    parameters.getParameterAsValue("steerBeamY"+String(idx+1)).setValue(newVal);
-}
-
-void EbeamerAudioProcessor::getDoaEnergy(Mtx &energy) const {
-    if (beamformer != nullptr){
-        beamformer->getDoaEnergy(energy);
     }
 }
 
@@ -653,96 +548,11 @@ AudioProcessor *JUCE_CALLTYPE createPluginFilter() {
 
 //==============================================================================
 AudioProcessorEditor *EbeamerAudioProcessor::createEditor() {
-    return new EBeamerAudioProcessorEditor(*this, parameters);
+    return new EBeamerAudioProcessorEditor(*this, valueTree);
 }
 
 bool EbeamerAudioProcessor::hasEditor() const {
-#ifdef HEADLESS
-    return false;
-#else
     return true;
-#endif
-}
-
-
-//==============================================================================
-/** OSC listener */
-void EbeamerAudioProcessor::oscMessageReceived (const OSCMessage& message){
-    
-    if (message.getAddressPattern()=="/ebeamer/get"){
-        oscActive = true;
-        if (message.size() == 2 && message[0].isString() && message[1].isInt32()){
-            String senderAddress = message[0].getString();
-            int senderPort = message[1].getInt32();
-            
-            OSCSender sender;
-            if (sender.connect(senderAddress, senderPort)){
-                for (auto tag : paramsTag ){
-                    auto address = "/ebeamer/" + tag;
-                    if (paramsType[tag]=="float"){
-                        auto param = parameters.getParameter(tag);
-                        auto val01 = param->getValue();
-                        auto val = param->convertFrom0to1(val01);
-                        sendOscMessage(sender, tag, val);
-                    }else if(paramsType[tag]=="bool"){
-                        bool val = parameters.getParameter(tag)->getValue();
-                        sendOscMessage(sender, tag, val);
-                    }else if(paramsType[tag]=="MicConfig"){
-                        MicConfig val = static_cast<MicConfig>((int)(*configParam));
-                        sendOscMessage(sender, tag, val);
-                    }
-                }
-                sendOscMessage(sender, "cpuLoad", getCpuLoad());
-                
-                std::vector<float> inMeters;
-                getMeterValues(inMeters, 0);
-                sendOscMessage(sender, "inMeters", inMeters);
-                
-                std::vector<float> outMeters;
-                getMeterValues(outMeters, 1);
-                sendOscMessage(sender, "outMeters", outMeters);
-                
-                Mtx doaMeters;
-                getDoaEnergy(doaMeters);
-                sendOscMessage(sender, "doaEnergy", doaMeters);
-            }
-        }
-        
-    }else {
-        for (auto tag : paramsTag ){
-            auto address = "/ebeamer/" + tag;
-            if (message.getAddressPattern()==address && message.size()==1){
-                if (paramsType[tag]=="float" && message[0].isFloat32()){
-                    float newVal = message[0].getFloat32();
-                    setParam(tag,newVal);
-                }else if(paramsType[tag]=="bool" && message[0].isInt32()){
-                    bool newVal = message[0].getInt32() > 0;
-                    setParam(tag,newVal);
-                }else if(paramsType[tag]=="MicConfig" && message[0].isInt32()){
-                    MicConfig newVal = static_cast<MicConfig>(message[0].getInt32());
-                    setParam(tag,newVal);
-                }
-            }
-        }
-    }
-}
-
-/** Set a state parameter */
-void EbeamerAudioProcessor::setParam(const String& name, float newVal){
-    auto param = parameters.getParameter(name);
-    auto newVal01 = param->convertTo0to1(newVal);
-    param->setValueNotifyingHost(newVal01);
-}
-
-void EbeamerAudioProcessor::setParam(const String& name, bool newVal){
-    auto param = parameters.getParameter(name);
-    param->setValueNotifyingHost(newVal);
-}
-
-void EbeamerAudioProcessor::setParam(const String& name, MicConfig newVal){
-    auto param = parameters.getParameter(name);
-    auto newVal01 = param->convertTo0to1(newVal);
-    param->setValueNotifyingHost(newVal01);
 }
 
 void EbeamerAudioProcessor::showConnectionErrorMessage (const String& messageText){
@@ -752,83 +562,172 @@ void EbeamerAudioProcessor::showConnectionErrorMessage (const String& messageTex
                                             "OK");
 }
 
-void EbeamerAudioProcessor::sendOscMessage(OSCSender& sender ,const String& tag, float value){
-    auto address = "/ebeamer/" + tag;
-    OSCMessage msg(address);
-    msg.addFloat32(value);
-    sender.send(msg);
-    oscActive = true;
+//==============================================================================
+
+
+/** Set a state parameter */
+void EbeamerAudioProcessor::setParam(const Identifier& name, float newVal){
+    auto param = parameters.getParameter(name);
+    auto newVal01 = param->convertTo0to1(newVal);
+    param->setValueNotifyingHost(newVal01);
 }
 
-void EbeamerAudioProcessor::sendOscMessage(OSCSender& sender ,const String& tag, bool value){
-    auto address = "/ebeamer/" + tag;
-    OSCMessage msg(address);
-    msg.addInt32(value);
-    sender.send(msg);
-    oscActive = true;
+/** Set a state parameter */
+void EbeamerAudioProcessor::setParam(const Identifier& name, bool newVal){
+    auto param = parameters.getParameter(name);
+    param->setValueNotifyingHost(newVal);
 }
 
-void EbeamerAudioProcessor::sendOscMessage(OSCSender& sender ,const String& tag, MicConfig value){
-    auto address = "/ebeamer/" + tag;
-    OSCMessage msg(address);
-    msg.addInt32(value);
-    sender.send(msg);
-    oscActive = true;
+/** Set a state parameter */
+void EbeamerAudioProcessor::setParam(const Identifier& name, MicConfig newVal){
+    auto param = parameters.getParameter(name);
+    auto newVal01 = param->convertTo0to1(newVal);
+    param->setValueNotifyingHost(newVal01);
 }
 
-void EbeamerAudioProcessor::sendOscMessage(OSCSender& sender ,const String& tag, const Mtx& value){
-    auto address = "/ebeamer/" + tag;
-    OSCMessage msg(address);
-    msg.addInt32((int)value.rows());
-    msg.addInt32((int)value.cols());
-    MemoryBlock memBlock(value.data(),value.size()*sizeof(float));
-    msg.addBlob(memBlock);
-    sender.send(msg);
-    oscActive = true;
-}
-
-void EbeamerAudioProcessor::sendOscMessage(OSCSender& sender ,const String& tag, const std::vector<float>& value){
-    auto address = "/ebeamer/" + tag;
-    OSCMessage msg(address);
-    MemoryBlock memBlock(value.data(),value.size()*sizeof(float));
-    msg.addBlob(memBlock);
-    sender.send(msg);
-    oscActive = true;
-}
-
-int EbeamerAudioProcessor::getOscPort() const{
-    return oscReceiverPort;
-}
-
-bool EbeamerAudioProcessor::isOscReady() const{
-    return oscReceiverConnected;
-}
-
-bool EbeamerAudioProcessor::isActive(int ledId){
-    
-    if (ledId == 1){
-        auto val = oscActive;
-        oscActive = false;
-        return val;
+/**
+ Sync parameters changes to valueTree
+ */
+void EbeamerAudioProcessor::parameterChanged(const String &parameterID, float newValue) {
+    if (parameterID == configIdentifier.toString()) {
+        valueTree.setPropertyExcludingListener(this,configIdentifier, (int)newValue, nullptr);
+        prepareToPlay(sampleRate, maximumExpectedSamplesPerBlock);
+        return;
     }
-    return false;
-    
+    if (parameterID == frontIdentifier.toString()){
+        valueTree.setPropertyExcludingListener(this,frontIdentifier, (bool)newValue, nullptr);
+        return;
+    }
+    if (parameterID == gainIdentifier.toString()){
+        valueTree.setPropertyExcludingListener(this,gainIdentifier, (float)newValue, nullptr);
+        return;
+    }
+    if (parameterID == hpfIdentifier.toString()){
+        valueTree.setPropertyExcludingListener(this,hpfIdentifier, (float)newValue, nullptr);
+        return;
+    }
+    String identifier;
+    for (auto beamIdx = 0; beamIdx < 2; beamIdx++) {
+        identifier = (steerXIdentifierPrefix + String(beamIdx + 1));
+        if (parameterID==identifier){
+            valueTree.setPropertyExcludingListener(this,identifier, (float)newValue, nullptr);
+            return;
+        }
+        identifier = (steerYIdentifierPrefix + String(beamIdx + 1));
+        if (parameterID==identifier){
+            valueTree.setPropertyExcludingListener(this,identifier, (float)newValue, nullptr);
+            return;
+        }
+        identifier = (widthIdentifierPrefix + String(beamIdx + 1));
+        if (parameterID==identifier){
+            valueTree.setPropertyExcludingListener(this,identifier, (float)newValue, nullptr);
+            return;
+        }
+        identifier = (panIdentifierPrefix + String(beamIdx + 1));
+        if (parameterID==identifier){
+            valueTree.setPropertyExcludingListener(this,identifier, (float)newValue, nullptr);
+            return;
+        }
+        identifier = (levelIdentifierPrefix + String(beamIdx + 1));
+        if (parameterID==identifier){
+            valueTree.setPropertyExcludingListener(this,identifier, (float)newValue, nullptr);
+            return;
+        }
+        identifier = (muteIdentifierPrefix + String(beamIdx + 1));
+        if (parameterID==identifier){
+            valueTree.setPropertyExcludingListener(this,identifier, (bool)newValue, nullptr);
+            return;
+        }
+    }
 }
 
+/**
+ Sync valueTree changes to parameters
+ */
+void EbeamerAudioProcessor::valueTreePropertyChanged (ValueTree &vt, const Identifier &property){
+    if (property==configIdentifier){
+        setParam(configIdentifier,static_cast<MicConfig>(int(vt[property])));
+        return;
+    }
+    if (property==frontIdentifier){
+        setParam(frontIdentifier,bool(vt[property]));
+        return;
+    }
+    if (property==gainIdentifier){
+        setParam(gainIdentifier,float(vt[property]));
+        return;
+    }
+    if (property==hpfIdentifier){
+        setParam(hpfIdentifier,float(vt[property]));
+        return;
+    }
+    Identifier identifier;
+    for (auto beamIdx = 0; beamIdx < 2; beamIdx++) {
+        identifier = (steerXIdentifierPrefix + String(beamIdx + 1));
+        if (property==identifier){
+            setParam(identifier,float(vt[property]));
+            return;
+        }
+        identifier = (steerYIdentifierPrefix + String(beamIdx + 1));
+        if (property==identifier){
+            setParam(identifier,float(vt[property]));
+            return;
+        }
+        identifier = (widthIdentifierPrefix + String(beamIdx + 1));
+        if (property==identifier){
+            setParam(identifier,float(vt[property]));
+            return;
+        }
+        identifier = (panIdentifierPrefix + String(beamIdx + 1));
+        if (property==identifier){
+            setParam(identifier,float(vt[property]));
+            return;
+        }
+        identifier = (levelIdentifierPrefix + String(beamIdx + 1));
+        if (property==identifier){
+            setParam(identifier,float(vt[property]));
+            return;
+        }
+        identifier = (muteIdentifierPrefix + String(beamIdx + 1));
+        if (property==identifier){
+            setParam(identifier,bool(vt[property]));
+            return;
+        }
+    }
+}
+
+void EbeamerAudioProcessor::syncParametersToValueTree(){
+    valueTree.setPropertyExcludingListener(this,configIdentifier, (int)*configParam, nullptr);
+    valueTree.setPropertyExcludingListener(this,frontIdentifier, (bool)*frontFacingParam, nullptr);
+    valueTree.setPropertyExcludingListener(this,gainIdentifier, (float)*micGainParam, nullptr);
+    valueTree.setPropertyExcludingListener(this,hpfIdentifier, (float)*hpfFreqParam, nullptr);
+    
+    Identifier identifier;
+    for (auto beamIdx = 0; beamIdx < 2; beamIdx++) {
+        identifier = (steerXIdentifierPrefix + String(beamIdx + 1));
+        valueTree.setPropertyExcludingListener(this,identifier, (float)(*steerBeamXParam[beamIdx]), nullptr);
+        identifier = (steerYIdentifierPrefix + String(beamIdx + 1));
+        valueTree.setPropertyExcludingListener(this,identifier, (float)(*steerBeamYParam[beamIdx]), nullptr);
+        identifier = (widthIdentifierPrefix + String(beamIdx + 1));
+        valueTree.setPropertyExcludingListener(this,identifier, (float)(*widthBeamParam[beamIdx]), nullptr);
+        identifier = (panIdentifierPrefix + String(beamIdx + 1));
+        valueTree.setPropertyExcludingListener(this,identifier, (float)(*panBeamParam[beamIdx]), nullptr);
+        identifier = (levelIdentifierPrefix + String(beamIdx + 1));
+        valueTree.setPropertyExcludingListener(this,identifier, (float)(*levelBeamParam[beamIdx]), nullptr);
+        identifier = (muteIdentifierPrefix + String(beamIdx + 1));
+        valueTree.setPropertyExcludingListener(this,identifier, (bool)(*muteBeamParam[beamIdx]), nullptr);
+    }
+}
+
+/**
+ Push cpu load, meters, energy updates at a human rate
+ */
 void EbeamerAudioProcessor::timerCallback(){
     
-    auto ipArray = IPAddress::getAllAddresses(false);
-    ipArray.remove(0);
-    auto address = "/ebeamer/announce";
-    
-    for (auto ip : ipArray){
-        OSCSender sender;
-        sender.connectToSocket(socket,IPAddress::getInterfaceBroadcastAddress(ip).toString(), OSC_BROADCAST_PORT);
-        OSCMessage msg(address);
-        msg.addString(ip.toString());
-        msg.addInt32(oscReceiverPort);
-        sender.send(msg);
-    }
-    
+    valueTree.setProperty(cpuIdentifier, load, nullptr);
+    valueTree.setProperty(outMeter1Identifier, beamMeterDecay->get(0), nullptr);
+    valueTree.setProperty(outMeter2Identifier, beamMeterDecay->get(1), nullptr);
+    valueTree.setProperty(inMetersIdentifier, inputMeterDecay->get(), nullptr);
+    valueTree.setProperty(energyIdentifier, beamformer->getDoaEnergy(), nullptr);
     
 }

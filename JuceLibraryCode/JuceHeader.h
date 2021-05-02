@@ -14,6 +14,9 @@
 
 #include "AppConfig.h"
 
+#include <ebeamer_common/ebeamer_common.h>
+#include <ebeamer_gui/ebeamer_gui.h>
+#include <ebeamer_osc/ebeamer_osc.h>
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_audio_devices/juce_audio_devices.h>
 #include <juce_audio_formats/juce_audio_formats.h>
@@ -51,7 +54,7 @@ namespace ProjectInfo
 {
     const char* const  projectName    = "Ebeamer";
     const char* const  companyName    = "ISPL and Eventide";
-    const char* const  versionString  = "2.0.0";
-    const int          versionNumber  = 0x20000;
+    const char* const  versionString  = "2.1.0";
+    const int          versionNumber  = 0x20100;
 }
 #endif

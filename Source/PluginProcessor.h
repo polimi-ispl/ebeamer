@@ -8,24 +8,17 @@
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
-#include "MidiCC.h"
 #include "MeterDecay.h"
 #include "Beamformer.h"
-#include "CpuLoadComp.h"
-#include "SceneComp.h"
 
 //==============================================================================
 
 class EbeamerAudioProcessor :
 public AudioProcessor,
 public AudioProcessorValueTreeState::Listener,
-public MeterDecay::Callback,
-public CpuLoadComp::Callback,
-public SceneComp::Callback,
+public ValueTree::Listener,
 public MidiCC::Callback,
-public ActivityLed::Callback,
-private OSCReceiver::Listener<juce::OSCReceiver::MessageLoopCallback>,
-private Timer
+public Timer
 {
 public:
     
@@ -73,23 +66,6 @@ public:
     void setStateInformation(const void *data, int sizeInBytes) override;
     
     //==============================================================================
-    // OSC Callback
-    int getOscPort() const;
-    bool isOscReady() const;
-    
-    bool isActive(int ledId) override;
-    
-    //==============================================================================
-    // MeterDecay Callback
-    void getMeterValues(std::vector<float> &meter, int meterId) const override;
-    
-    float getMeterValue(int meterId, int channel) const override;
-    
-    //==============================================================================
-    // CpuLoadComp Callback
-    float getCpuLoad() const override;
-    
-    //==============================================================================
     // MidiCC Callback
     /** Start learning the specified parameter */
     void startCCLearning(const String &p) override;
@@ -105,28 +81,7 @@ public:
     
     /** Remove mapping between MidiCC and parameter */
     void removeCCParamMapping(const String &param) override;
-    
-    //==============================================================================
-    //SceneComponent Callback
-    const std::atomic<float> *getConfigParam() const override;
-    
-    const std::atomic<float> *getFrontFacingParam() const override;
-    
-    const std::atomic<float> *getBeamMute(int idx) const override;
-    
-    const std::atomic<float> *getBeamWidth(int idx) const override;
-    
-    const std::atomic<float> *getBeamSteerX(int idx) const override;
-    
-    const std::atomic<float> *getBeamSteerY(int idx) const override;
-    
-    void setBeamSteerX(int idx, float newVal) override;
-    
-    void setBeamSteerY(int idx, float newVal) override;
-    
-    void getDoaEnergy(Mtx &energy) const override;
-    
-    
+
 private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EbeamerAudioProcessor)
@@ -143,7 +98,7 @@ private:
     /** Input gain, common to all microphones */
     dsp::Gain<float> micGain;
     /** Beam gain for each beam */
-    dsp::Gain<float> beamGain[NUM_BEAMS];
+    dsp::Gain<float> beamGain[2];
     
     //==============================================================================
     /** Previous HPF cut frequency */
@@ -163,7 +118,14 @@ private:
     std::unique_ptr<MeterDecay> beamMeterDecay;
     
     /** Decay of  meters [s] */
-    const float metersDecay = 0.2;
+    const float metersDecay = 0.3;
+    
+    //==============================================================================
+    // Timer to push cpu load, meters, energy updates at a human rate
+    void timerCallback() override;
+    
+    /** Meters update rate [Hz] */
+    const float metersUpdateRate = 15;
     
     //==============================================================================
     // Beams buffers
@@ -186,10 +148,6 @@ private:
     int maximumExpectedSamplesPerBlock = 4096;
     
     //==============================================================================
-    /** Set a new microphone configuration */
-    void setMicConfig(const MicConfig &mc);
-    
-    //==============================================================================
     
     /** Measured average load */
     float load = 0;
@@ -201,29 +159,31 @@ private:
     SpinLock loadLock;
     
     //==============================================================================
-    
-    /** Parameters Tags */
-    std::vector<String> paramsTag;
-    /** Parameters Types*/
-    std::map<String,String> paramsType;
-    
+        
     /** Processor parameters tree */
     AudioProcessorValueTreeState parameters;
     
     //==============================================================================
     // VST parameters
-    std::atomic<float> *steerBeamXParam[NUM_BEAMS];
-    std::atomic<float> *steerBeamYParam[NUM_BEAMS];
-    std::atomic<float> *widthBeamParam[NUM_BEAMS];
-    std::atomic<float> *panBeamParam[NUM_BEAMS];
-    std::atomic<float> *levelBeamParam[NUM_BEAMS];
-    std::atomic<float> *muteBeamParam[NUM_BEAMS];
+    std::atomic<float> *steerBeamXParam[2];
+    std::atomic<float> *steerBeamYParam[2];
+    std::atomic<float> *widthBeamParam[2];
+    std::atomic<float> *panBeamParam[2];
+    std::atomic<float> *levelBeamParam[2];
+    std::atomic<float> *muteBeamParam[2];
     std::atomic<float> *micGainParam;
     std::atomic<float> *hpfFreqParam;
     std::atomic<float> *frontFacingParam;
     std::atomic<float> *configParam;
     
     void parameterChanged(const String &parameterID, float newValue) override;
+    
+    //==============================================================================
+    // Parameters
+    ValueTree valueTree;
+    void valueTreePropertyChanged (ValueTree &treeWhosePropertyHasChanged, const Identifier &property) override;
+    
+    void syncParametersToValueTree();
     
     //==============================================================================
     // MIDI management
@@ -249,37 +209,14 @@ private:
     //==============================================================================
     //OSC
     
-    /** UDP socket */
-    DatagramSocket socket = DatagramSocket(true);
-    
-    /** OSC receiver instance */
-    OSCReceiver oscReceiver;
-    
-    /** OSC status */
-    bool oscReceiverConnected = true;
-    
-    /** OSC callback */
-    void oscMessageReceived (const OSCMessage&) override;
-    
     /** Set a state parameter  */
-    void setParam(const String&, float);
-    void setParam(const String&, bool);
-    void setParam(const String&, MicConfig);
+    void setParam(const Identifier&, float);
+    void setParam(const Identifier&, bool);
+    void setParam(const Identifier&, MicConfig);
     
     /** Message error */
     void showConnectionErrorMessage (const String&);
     
-    int oscReceiverPort = 9001;
-    
-    bool oscActive = false;
-    
-    /** Send OSC message */
-    void sendOscMessage(OSCSender&, const String&, float);
-    void sendOscMessage(OSCSender&, const String&, bool);
-    void sendOscMessage(OSCSender&, const String&, MicConfig);
-    void sendOscMessage(OSCSender&, const String&, const Mtx&);
-    void sendOscMessage(OSCSender&, const String&, const std::vector<float>&);
-    
-    /** Broadcast timer callback */
-    void timerCallback() override;
+    /** OSC controller instance */
+    OSCController oscController;
 };
