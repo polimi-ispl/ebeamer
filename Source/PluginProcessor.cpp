@@ -552,7 +552,11 @@ AudioProcessorEditor *EbeamerAudioProcessor::createEditor() {
 }
 
 bool EbeamerAudioProcessor::hasEditor() const {
+#ifdef HEADLESS
+    return false;
+#else
     return true;
+#endif
 }
 
 void EbeamerAudioProcessor::showConnectionErrorMessage (const String& messageText){

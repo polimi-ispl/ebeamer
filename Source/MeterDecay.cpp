@@ -50,10 +50,7 @@ void MeterDecay::get(std::vector<float> &values) const {
 
 MemoryBlock MeterDecay::get() const {
     GenericScopedLock<SpinLock> l(minMaxCircularBufferLock);
-    MemoryBlock mb(2+minMaxCircularBuffer.size()*sizeof(float));
-    mb[0] = 1;
-    mb[1] = minMaxCircularBuffer.size();
-    float* data = (float*)((char*)mb.getData()+2);
+    std::vector<float> data(minMaxCircularBuffer.size());
     
     for (auto channelIdx = 0; channelIdx < minMaxCircularBuffer.size(); ++channelIdx) {
         float maxVal = 0;
@@ -62,6 +59,11 @@ MemoryBlock MeterDecay::get() const {
         }
         data[channelIdx] = maxVal;
     }
+    
+    MemoryBlock mb(2+minMaxCircularBuffer.size()*sizeof(float));
+    mb[0] = 1;
+    mb[1] = minMaxCircularBuffer.size();
+    mb.copyFrom(data.data(), 2, data.size()*sizeof(float));
     return mb;
 }
 
