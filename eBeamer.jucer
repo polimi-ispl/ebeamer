@@ -8,7 +8,7 @@
               pluginCode="ebea" version="2.1.1" bundleIdentifier="com.eventideaudio.ebeamer"
               companyWebsite="https://www.eventideaudio.com/" aaxIdentifier="it.polimi.deib.ispl.ebeamer"
               pluginAUExportPrefix="EbeamerAU" pluginCharacteristicsValue="pluginWantsMidiIn"
-              headerPath="..\..\ASIO\common&#10;../../../modules/" companyCopyright="2021 ISPL and Eventide"
+              headerPath="..\..\ASIO\common&#10;../../../modules/" companyCopyright="2022 ISPL and Eventide"
               displaySplashScreen="1" jucerFormatVersion="1" cppLanguageStandard="latest">
   <MAINGROUP id="X7PQw9" name="Ebeamer">
     <GROUP id="{B4EEABF4-DAA3-979C-9DFA-76ED49E72338}" name="Resources">
