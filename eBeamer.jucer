@@ -5,7 +5,7 @@
               pluginAAXCategory="512" pluginRTASCategory="512" pluginVSTCategory="kPlugCategSpacializer"
               pluginAUMainType="'aufx'" pluginName="Ebeamer" pluginDesc="Estick beam controller"
               pluginManufacturer="ISPL and Eventide" pluginManufacturerCode="Ispl"
-              pluginCode="ebea" version="2.1.0" bundleIdentifier="com.eventideaudio.ebeamer"
+              pluginCode="ebea" version="2.1.1" bundleIdentifier="com.eventideaudio.ebeamer"
               companyWebsite="https://www.eventideaudio.com/" aaxIdentifier="it.polimi.deib.ispl.ebeamer"
               pluginAUExportPrefix="EbeamerAU" pluginCharacteristicsValue="pluginWantsMidiIn"
               headerPath="..\..\ASIO\common&#10;../../../modules/" companyCopyright="2021 ISPL and Eventide"

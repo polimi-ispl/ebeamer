@@ -45,7 +45,7 @@
 
 #define JUCE_USE_DARK_SPLASH_SCREEN 1
 
-#define JUCE_PROJUCER_VERSION 0x60008
+#define JUCE_PROJUCER_VERSION 0x60105
 
 //==============================================================================
 #define JUCE_MODULE_AVAILABLE_ebeamer_common                1
